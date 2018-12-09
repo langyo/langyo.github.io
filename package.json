@@ -3,20 +3,59 @@
   "version": "0.1.0",
   "description": "博客生成器",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/langyo/langyo.github.io.git"
   },
-  "author": "langyo",
-  "license": "Unlicense",
   "bugs": {
     "url": "https://github.com/langyo/langyo.github.io/issues"
   },
   "homepage": "https://github.com/langyo/langyo.github.io#readme",
+  "scripts": {
+    "start": "electron .",
+    "watch": "watchify app/index.js -t babelify -o public/js/bundle.js --debug --verbose",
+    "package": "electron-packager ./ DemoApps --overwrite --app-version=1.0.0 --platform=win32 --arch=all --out=../DemoApps --version=1.2.1 --icon=./public/img/app-icon.icns"
+  },
+  "author": "langyo",
+  "license": "Unlicense",
   "dependencies": {
-    "react": "^16.6.3"
+    "@babel/core": "^7.2.0",
+    "@babel/preset-env": "^7.2.0",
+    "@babel/preset-react": "^7.0.0",
+    "@material-ui/core": "^3.6.1",
+    "@material-ui/icons": "^3.0.1",
+    "babel-loader": "^8.0.0-beta.0",
+    "classnames": "^2.2.6",
+    "dexie": "^2.0.4",
+    "firebase": "^5.6.0",
+    "prop-types": "^15.6.2",
+    "react": "^16.6.3",
+    "react-dom": "^16.6.3",
+    "react-swipeable-views": "^0.13.0",
+    "watchify": "^3.11.0",
+    "webpack": "^4.26.1"
+  },
+  "keywords": [],
+  "devDependencies": {
+    "babelify": "^10.0.0",
+    "electron": "^3.0.10",
+    "electron-packager": "^12.2.0",
+    "react-desktop": "^0.3.7"
+  },
+  "babel": {
+    "presets": [
+      [
+        "@babel/preset-env",
+        {
+          "modules": "commonjs",
+          "targets": {
+            "node": "current"
+          }
+        }
+      ],
+      [
+        "@babel/preset-react"
+      ]
+    ]
   }
 }
