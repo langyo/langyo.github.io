@@ -12,10 +12,8 @@
   },
   "homepage": "https://github.com/langyo/langyo.github.io#readme",
   "scripts": {
-    "start": "electron .",
-    "watch": "watchify app/index.js -t babelify -o public/js/bundle.js --debug --verbose",
-    "package": "electron-packager ./ DemoApps --overwrite --app-version=1.0.0 --platform=win32 --arch=all --out=../DemoApps --version=1.2.1 --icon=./public/img/app-icon.icns"
-  },
+    "watch": "watchify index.js -t babelify -o public/js/bundle.js --debug --verbose"
+   },
   "author": "langyo",
   "license": "Unlicense",
   "dependencies": {
