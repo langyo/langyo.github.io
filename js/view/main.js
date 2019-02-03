@@ -11,11 +11,13 @@ import Hidden from "@material-ui/core/Hidden";
 
 import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
+import Fab from "@material-ui/core/Fab";
 import IconButton from "@material-ui/core/IconButton";
 import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
+import Paper from "@material-ui/core/Paper";
 import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
 
@@ -26,6 +28,7 @@ import CardContent from '@material-ui/core/CardContent';
 import CardActions from '@material-ui/core/CardActions';
 
 import MenuIcon from "mdi-material-ui/Menu";
+import AddIcon from "mdi-material-ui/Plus";
 
 const drawerWidth = 240;
 
@@ -46,6 +49,19 @@ const styles = theme => ({
   content: {
     flexGrow: 1,
     padding: theme.spacing.unit * 3
+  },
+  fab: {
+    position: 'absolute',
+    bottom: theme.spacing.unit * 2,
+    right: theme.spacing.unit * 2,
+  },
+  paper: {
+    ...theme.mixins.gutters(),
+    paddingTop: theme.spacing.unit * 2,
+    paddingBottom: theme.spacing.unit * 2,
+    width: '63%',
+    marginLeft: 'auto',
+    marginRight: 'auto'
   }
 });
 
@@ -108,12 +124,17 @@ class ResponsiveDrawer extends React.Component {
         </nav>
         <main className={classes.content}>
           <div className={classes.toolbar} />
-          <Typography paragraph variant="h5">
-            博客正在建设中，敬请期待！
-          </Typography>
-          <Typography paragraph variant="h6">
-            P.S. 严格来讲，这并不是一个传统的博客。该博客将完成我几年前就有的计划，实现一个笔记存贮与整理平台。
-          </Typography>
+          <Paper className={classes.paper}>
+            <Typography paragraph variant="h5">
+              博客正在建设中，敬请期待！
+            </Typography>
+            <Typography paragraph variant="h6">
+              P.S. 严格来讲，这并不是一个传统的博客。该博客将完成我几年前就有的计划，实现一个笔记存贮与整理平台。
+            </Typography>
+          </Paper>
+          <Fab className={classes.fab}>
+            <AddIcon />
+          </Fab>
         </main>
       </div>
     );
