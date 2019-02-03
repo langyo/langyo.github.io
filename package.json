@@ -13,7 +13,7 @@
   "homepage": "https://github.com/langyo/langyo.github.io#readme",
   "scripts": {
     "watch": "watchify index.js -t babelify -o public/js/bundle.js --debug --verbose"
-   },
+  },
   "author": "langyo",
   "license": "Unlicense",
   "dependencies": {
@@ -28,8 +28,9 @@
     "classnames": "^2.2.6",
     "prop-types": "^15.6.2",
     "react": "^16.6.3",
-    "react-dom": "^16.6.3",
     "react-desktop": "^0.3.7",
+    "react-dom": "^16.6.3",
+    "react-markdown": "^4.0.6",
     "react-swipeable-views": "^0.13.0",
     "watchify": "^3.11.0",
     "webpack": "^4.26.1"

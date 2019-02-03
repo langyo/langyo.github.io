@@ -73,7 +73,7 @@ class ResponsiveDrawer extends React.Component {
           <Toolbar>
             <IconButton
               color="inherit"
-              aria-label="Open drawer"
+              aria-label="打开侧边栏"
               onClick={this.handleDrawerToggle}
               className={classes.menuButton}
             >
