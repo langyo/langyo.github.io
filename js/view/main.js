@@ -1,5 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
+import classNames from 'classnames';
+import { withStyles } from "@material-ui/core/styles";
 
 import AppBar from "@material-ui/core/AppBar";
 import CssBaseline from "@material-ui/core/CssBaseline";
@@ -7,17 +9,23 @@ import Divider from "@material-ui/core/Divider";
 import Drawer from "@material-ui/core/Drawer";
 import Hidden from "@material-ui/core/Hidden";
 
+import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
 import IconButton from "@material-ui/core/IconButton";
 import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
-
-import MenuIcon from "@material-ui/icons/Menu";
 import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
-import { withStyles } from "@material-ui/core/styles";
+
+import Card from '@material-ui/core/Card';
+import CardHeader from '@material-ui/core/CardHeader';
+import CardMedia from '@material-ui/core/CardMedia';
+import CardContent from '@material-ui/core/CardContent';
+import CardActions from '@material-ui/core/CardActions';
+
+import MenuIcon from "mdi-material-ui/Menu";
 
 const drawerWidth = 240;
 
@@ -53,19 +61,6 @@ class ResponsiveDrawer extends React.Component {
   render() {
     const { classes, theme } = this.props;
 
-    const drawer = (
-      <div>
-        <div className={classes.toolbar} />
-        <Divider />
-        <List>
-          <ListItem button key={1}>
-            <ListItemIcon />
-            <ListItemText primary={1} />
-          </ListItem>
-        </List>
-      </div>
-    );
-
     return (
       <div className={classes.root}>
         <CssBaseline />
@@ -85,23 +80,39 @@ class ResponsiveDrawer extends React.Component {
           </Toolbar>
         </AppBar>
         <nav>
-            <Drawer
-              container={this.props.container}
-              variant="temporary"
-              anchor={theme.direction === "rtl" ? "right" : "left"}
-              open={this.state.open}
-              onClose={this.handleDrawerToggle}
-              classes={{
-                paper: classes.drawerPaper
-              }}
-            >
-              {drawer}
-            </Drawer>
+          <Drawer
+            container={this.props.container}
+            variant="temporary"
+            anchor={theme.direction === "rtl" ? "right" : "left"}
+            open={this.state.open}
+            onClose={this.handleDrawerToggle}
+            classes={{
+              paper: classes.drawerPaper
+            }}
+          >
+            <CardHeader
+              avatar={
+                <Avatar src="https://avatars0.githubusercontent.com/u/23103705" aria-label="Langyo" className={classes.avatar} />
+              }
+              title="Welcome!"
+              subheader="欢迎来到我的个人笔记站！"
+            />
+            <Divider />
+            <List>
+              <ListItem button key={1} disabled>
+                <ListItemText primary={"No any content"} />
+              </ListItem>
+            </List>
+            <Divider />
+          </Drawer>
         </nav>
         <main className={classes.content}>
           <div className={classes.toolbar} />
           <Typography paragraph variant="h5">
             博客正在建设中，敬请期待！
+          </Typography>
+          <Typography paragraph variant="h6">
+            P.S. 严格来讲，这并不是一个传统的博客。该博客将完成我几年前就有的计划，实现一个笔记存贮与整理平台。
           </Typography>
         </main>
       </div>
