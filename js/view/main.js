@@ -3,12 +3,13 @@ import PropTypes from "prop-types";
 import classNames from 'classnames';
 import { withStyles } from "@material-ui/core/styles";
 
-import AppBar from "@material-ui/core/AppBar";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import Divider from "@material-ui/core/Divider";
 import Drawer from "@material-ui/core/Drawer";
+import Grid from "@material-ui/core/Grid";
 import Hidden from "@material-ui/core/Hidden";
 
+import AppBar from "@material-ui/core/AppBar";
 import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
 import Fab from "@material-ui/core/Fab";
@@ -58,10 +59,7 @@ const styles = theme => ({
   paper: {
     ...theme.mixins.gutters(),
     paddingTop: theme.spacing.unit * 2,
-    paddingBottom: theme.spacing.unit * 2,
-    width: '63%',
-    marginLeft: 'auto',
-    marginRight: 'auto'
+    paddingBottom: theme.spacing.unit * 2
   }
 });
 
@@ -97,23 +95,12 @@ class ResponsiveDrawer extends React.Component {
         </AppBar>
         <nav>
           <Drawer
-            container={this.props.container}
-            variant="temporary"
-            anchor={theme.direction === "rtl" ? "right" : "left"}
             open={this.state.open}
             onClose={this.handleDrawerToggle}
             classes={{
               paper: classes.drawerPaper
             }}
           >
-            <CardHeader
-              avatar={
-                <Avatar src="https://avatars0.githubusercontent.com/u/23103705" aria-label="Langyo" className={classes.avatar} />
-              }
-              title="Welcome!"
-              subheader="欢迎来到我的个人笔记站！"
-            />
-            <Divider />
             <List>
               <ListItem button key={1} disabled>
                 <ListItemText primary={"No any content"} />
@@ -124,17 +111,23 @@ class ResponsiveDrawer extends React.Component {
         </nav>
         <main className={classes.content}>
           <div className={classes.toolbar} />
-          <Paper className={classes.paper}>
-            <Typography paragraph variant="h5">
-              博客正在建设中，敬请期待！
-            </Typography>
-            <Typography paragraph variant="h6">
-              P.S. 严格来讲，这并不是一个传统的博客。该博客将完成我几年前就有的计划，实现一个笔记存贮与整理平台。
-            </Typography>
-          </Paper>
-          <Fab className={classes.fab}>
-            <AddIcon />
-          </Fab>
+          <Grid container xs={20}>
+            <Grid item xs />
+            <Grid item xs={6}>
+              <Paper className={classes.paper}>
+                <Typography paragraph variant="h5">
+                  博客正在建设中，敬请期待！
+                </Typography>
+                <Typography paragraph variant="h6">
+                  P.S. 严格来讲，这并不是一个传统的博客。该博客将完成我几年前就有的计划，实现一个笔记存贮与整理平台。
+                </Typography>
+              </Paper>
+              <Fab className={classes.fab}>
+                <AddIcon />
+              </Fab>
+            </Grid>
+            <Grid item xs />
+          </Grid>
         </main>
       </div>
     );
