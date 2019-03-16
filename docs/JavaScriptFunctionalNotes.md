@@ -110,6 +110,6 @@ compose(count, splitInfoSpaces)("Hello, world!") === pipe(splitInfoSpaces, count
 
 使用函子的目的主要是为完全以纯函数处理错误，而无需依赖命令式的抛出 - 捕捉方式(try - throw- catch)。
 
-  - 容器(Container)
+**容器(Container)**
 
-  任何函子都依赖（或也可以理解为继承）一个可以存储值的容器，每个容器都具有一个 value 属性，用于存储这个容器持有的值。
+任何函子都依赖（或也可以理解为继承）一个可以存储值的容器，每个容器都具有一个 value 属性，用于存储这个容器持有的值。
