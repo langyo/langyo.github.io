@@ -1,10 +1,10 @@
 # JavaScript 函数式编程 知识点笔记
 
 - 函数式编程中纯函数的特征
-        - 函数必须总是接受至少一个参数（提倡有且只有一个参数）
-        - 函数必须总是返回一个值
-        - 函数应该完全依赖接收到的参数（以及由函数闭包特性保存的上下文），而不能依赖外部环境（例如全局变量、IO）执行
-        - 函数的每个有效输入必须有且只有唯一一个与之对应的输出
+  - 函数必须总是接受至少一个参数（提倡有且只有一个参数）
+  - 函数必须总是返回一个值
+  - 函数应该完全依赖接收到的参数（以及由函数闭包特性保存的上下文），而不能依赖外部环境（例如全局变量、IO）执行
+  - 函数的每个有效输入必须有且只有唯一一个与之对应的输出
 
 - 纯函数的定义
 给定一个输入，其总是返回相同的输出。
@@ -71,3 +71,37 @@ const setTimeoutTemMs = partial(setTimeout, undefined, 10);
 ```
 
 以上代码便设定了末尾参数的默认值，并凭此打包成一个新的高阶函数，由原本需要 2 个参数变为了只要前一个，而后一个则自动填充为 10。
+
+- 组合与管道
+组合(compose)与关道(pipeline)实际上在做同一件事情，它们都用于实现函数与函数间的衔接，一个函数的输出（返回值）直接作为下一个函数的输入（参数）。
+
+对于纯函数的组合，它满足结合律：
+
+```javascript
+compose(f, compose(g, h)) == compose(compose(f, g), h);     // true，执行顺序为 h, g, f
+pipe(pipe(a, b), c) == pipe(a, pipe(b, c));                 // true，执行顺序为 a, b, c
+```
+
+组合与管道的区别仅在于数据流，它们正好相反，compose 从右往左执行，pipe 从左往右执行：
+
+```javascript
+let splitInfoSpaces = str => str.split("");
+let count = arr => arr.length;
+compose(count, slitInfoSpaces) == pipe(splitInfoSpaces, count);     // ture
+```
+
+由 compose 或 pipe 构造得到的高阶函数接收一个参数，作为这批函数流头部的输入。
+
+```javascript
+compose(count, splitInfoSpaces)("Hello, world!") === pipe(splitInfoSpaces, count)("Hellp, world!");     // true
+```
+
+- 函子的定义
+函子是一个普通对象（在其它语言中，可能是一个类或对象），它重新实现了 map 函数，使得其在遍历每个对象值的时候生成一个新对象。
+
+上述的解释刚开始看可能会有点迷糊，但随着下面的举例，你将能从感性上理解函子的实际用法，进而理解函子的工作原理与本质。
+
+使用函子的目的主要是为完全以纯函数处理错误，而无需依赖命令式的抛出 - 捕捉方式(try - throw- catch)。
+
+  - 容器(Container)
+  任何函子都依赖（或也可以理解为继承）一个可以存储值的容器，每个容器都具有一个 value 属性，用于存储这个容器持有的值。
