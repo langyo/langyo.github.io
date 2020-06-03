@@ -2,7 +2,7 @@
   "name": "langyo.github.io",
   "private": true,
   "scripts": {
-    "start": "babel main.js",
+    "start": "babel-node main.js",
     "test": "jest --watch"
   },
   "dependencies": {
@@ -21,8 +21,10 @@
     "koa": "^2.11.0",
     "koa-bodyparser": "^4.2.1",
     "koa-router": "^8.0.8",
-    "nickelcat": "^0.3.4",
-    "nickelcat-action-preset": "^0.3.4",
-    "nickelcat-dev-server": "^0.3.4"
+    "nickelcat": "latest",
+    "nickelcat-action-preset": "latest",
+    "nickelcat-dev-server": "latest",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1"
   }
 }
