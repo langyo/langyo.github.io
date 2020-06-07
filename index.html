@@ -238,16 +238,20 @@
             z-index: 1000;
         }
 
+        .text {
+            margin: 4px;
+        }
+
         .button {
             background-color: #666;
             border: 8px solid #666;
             border-radius: 8px;
             color: white;
-            padding: 15px 32px;
+            padding: 8px 16px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
-            font-size: 16px;
+            font-size: 1.25em;
         }
 
         .button:hover {
@@ -265,10 +269,10 @@
         <div class="clouds_three"></div>
 
         <div class="content">
-            <h1>嗨，我是伊欧。</h1>
-            <h2>既是一名在读的高中生，也是一名开源社区开发者。</h2>
-            <h2>这是一个临时主页，站点本体部分还在开发中，敬请期待！</h2>
-            <button class="button" onclick="window.open('https:\/\/github.com\/langyo')">访问我的 Github 主页</button>
+            <h1 class="text">嗨，我是伊欧。</h1>
+            <h2 class="text">既是一名在读的高中生，也是一名开源社区开发者。</h2>
+            <h2 class="text">这是一个临时主页，站点本体部分还在开发中，敬请期待！</h2>
+            <button class="button text" onclick="window.open('https:\/\/github.com\/langyo')">访问我的 Github 主页</button>
         </div>
     </div>
 </body>
