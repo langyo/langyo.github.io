@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "start": "babel-node main.js",
+    "temp_start": "babel-node tempmain.js",
     "test": "jest --watch"
   },
   "dependencies": {
