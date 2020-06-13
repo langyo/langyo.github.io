@@ -4,7 +4,7 @@ import Koa from 'koa';
 import bodyParserMiddleware from 'koa-bodyparser';
 
 import { serverLog as log } from 'nickelcat/utils/logger';
-import { readFile } from "fs";
+import { readFile, writeFileSync } from "fs";
 import { promisify } from "util";
 
 const app = new Koa();
@@ -15,7 +15,8 @@ app.use(bodyParserMiddleware());
   // The middleware to print the request info to the console.
   app.use(async (ctx, next) => {
     log('info', `${chalk.green(ctx.request.method)} ${chalk.whiteBright(ctx.request.ip)}: Hit ${chalk.blue(ctx.request.url)}`);
-    await next();
+    writeFileSync('./latest.log', `${(new Date()).toLocaleDateString()} ${ctx.request.method} ${ctx.request.ip} ${ctx.request.url}\n`, { flag: 'a' });
+    await next()
   });
 
   app.use(async (ctx, next) => {
