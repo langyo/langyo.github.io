@@ -15,7 +15,7 @@ app.use(bodyParserMiddleware());
   // The middleware to print the request info to the console.
   app.use(async (ctx, next) => {
     log('info', `${chalk.green(ctx.request.method)} ${chalk.whiteBright(ctx.request.ip)}: Hit ${chalk.blue(ctx.request.url)}`);
-    writeFileSync('./latest.log', `${(new Date()).toLocaleDateString()} ${ctx.request.method} ${ctx.request.ip} ${ctx.request.url}\n`, { flag: 'a' });
+    writeFileSync('./latest.log', `${(new Date()).toLocaleString()} ${ctx.request.method} ${ctx.request.ip} ${ctx.request.url}\n`, { flag: 'a' });
     await next()
   });
 
