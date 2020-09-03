@@ -18,9 +18,9 @@ app.use(bodyParserMiddleware());
   });
 
   app.use(staticServer({ rootDir: 'public', rootPath: '/' }));
-  let port = process.env.PORT || 80;
+  let port = 8080;
 
   app.listen(port);
 
-  console.log('info', `Server has been running at the port ${port}.`);
+  console.log(`Server has been running at the port ${port}.`);
 })();
