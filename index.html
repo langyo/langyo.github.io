@@ -261,11 +261,16 @@
 
         footer {
             position: absolute;
-            bottom: 0px;
+            bottom: 8px;
             text-align: center;
             text-decoration: none;
             width: 100%;
-            font-style: 0.1em;
+        }
+
+        footer > a {
+            font-size: 0.8em;
+            text-decoration: none;
+            color: white;
         }
     </style>
 </head>
@@ -283,11 +288,12 @@
             <h2 class="text">I'm not only a high school student, but also a developer in the open source community.</h2>
             <h2 class="text">这是一个临时主页。</h2>
             <h2 class="text">This is an temporary page.</h2>
-            <button class="button text" onclick="window.open('https:\/\/github.com\/langyo')">Visit my Github homepage</button>
+            <button class="button text" onclick="window.open('https:\/\/github.com\/langyo')">Visit my Github
+                homepage</button>
         </div>
     </div>
 
-    <footer>沪ICP备20025013号</footer>
+    <footer><a href="https://beian.miit.gov.cn/">沪ICP备20025013号-1</a></footer>
 </body>
 
 </html>

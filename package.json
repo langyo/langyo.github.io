@@ -6,12 +6,12 @@
     "test": "jest --watch"
   },
   "dependencies": {
-    "chalk": "^3.0.0",
-    "jest": "^25.1.0",
-    "koa": "^2.11.0",
-    "koa-bodyparser": "^4.2.1",
+    "chalk": "^5.0.1",
+    "jest": "^27.5.1",
+    "koa": "^2.13.4",
+    "koa-bodyparser": "^4.3.0",
     "koa-static-server": "^1.5.2",
-    "ts-node": "^9.0.0",
-    "typescript": "^4.0.2"
+    "ts-node": "^10.7.0",
+    "typescript": "^4.6.3"
   }
 }
