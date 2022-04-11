@@ -1,0 +1,12 @@
+{
+  overview: {
+    title: '欢迎，这里是伊欧的个人主页',
+    subTitle: '尚在施工中，敬请期待'
+  },
+  footer: {
+    disclaimer: []
+  },
+  oops: {
+    title: '该区域已被泰伯利亚污染'
+  }
+}
