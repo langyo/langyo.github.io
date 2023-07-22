@@ -1,0 +1,42 @@
+base_url = "https://langyo.xyz"
+
+compile_sass = true
+build_search_index = false
+
+theme = "hermit_zola"
+title="LANGYO"
+
+[markdown]
+highlight_code = true
+
+[extra]
+home_subtitle = "这里是伊欧的个人站"
+
+footer_copyright = ' &#183; <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a>'
+
+hermit_menu = [
+    { link = "/posts", name = "记录" },
+    { link = "/about", name = "关于" }
+]
+
+hermit_social = [
+    { name = "github", link = "https://github.com/langyo" },
+    { name = "email", link = "mailto:langyo.china@gmail.com" }
+]
+
+[extra.highlightjs]
+enable = true
+clipboard = true
+theme = "night-owl"
+
+[extra.disqus]
+enable = false
+shortname = "langyo-blog"
+
+[extra.author]
+name = "langyo"
+email = "langyo.china@gmail.com"
+
+[extra.google_analytics]
+enable = false
+id = "UA-4XXXXXXX-X"
