@@ -63,6 +63,13 @@
 					{% endif %}
 				</a>
 			</p>
+			<p>
+				{% if config.extra.footer_recordation_text %}
+				<a href="https://beian.miit.gov.cn/" target="_blank">
+					{{config.extra.footer_recordation_text}}
+				</a>
+				{% endif %}
+			</p>
 		</div>
 		{% endblock footer %}
 	</div>
