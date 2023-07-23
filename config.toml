@@ -3,7 +3,6 @@ base_url = "https://langyo.xyz"
 compile_sass = true
 build_search_index = false
 
-theme = "hermit_zola"
 title="LANGYO"
 
 [markdown]
