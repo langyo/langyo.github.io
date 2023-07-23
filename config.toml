@@ -38,5 +38,5 @@ name = "langyo"
 email = "langyo.china@gmail.com"
 
 [extra.google_analytics]
-enable = false
-id = "UA-4XXXXXXX-X"
+enable = true
+id = "G-QHZB20Q6RQ"
