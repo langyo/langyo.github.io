@@ -27,7 +27,7 @@ hermit_social = [
 [extra.highlightjs]
 enable = true
 clipboard = true
-theme = "night-owl"
+theme = "obsidian"
 
 [extra.disqus]
 enable = false
