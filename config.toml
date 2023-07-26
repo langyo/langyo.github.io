@@ -3,7 +3,8 @@ base_url = "https://langyo.xyz"
 compile_sass = true
 build_search_index = false
 
-title="LANGYO"
+title = "LANGYO"
+description = "伊欧的个人空间站点"
 
 [markdown]
 highlight_code = true
@@ -16,12 +17,14 @@ footer_recordation_text = '沪ICP备20025013号-2'
 
 hermit_menu = [
     { link = "/posts", name = "记录" },
-    { link = "/about", name = "关于" }
+    { link = "/about", name = "关于" },
 ]
 
 hermit_social = [
     { name = "github", link = "https://github.com/langyo" },
-    { name = "email", link = "mailto:langyo.china@gmail.com" }
+    { name = "email", link = "mailto:langyo.china@gmail.com" },
+    { name = "bilibili", link = "https://space.bilibili.com/5741197" },
+    { name = "steam", link = "https://steamcommunity.com/id/langyo_china" },
 ]
 
 [extra.highlightjs]
