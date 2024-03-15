@@ -11,7 +11,11 @@
         <loc>https://langyo.xyz/posts/</loc>
     </url>
     <url>
-        <loc>https://langyo.xyz/posts/test/</loc>
-        <lastmod>2023-07-23</lastmod>
+        <loc>https://langyo.xyz/posts/nginx-certbot-config/</loc>
+        <lastmod>2024-03-15</lastmod>
+    </url>
+    <url>
+        <loc>https://langyo.xyz/posts/rust-win-hook/</loc>
+        <lastmod>2024-03-15</lastmod>
     </url>
 </urlset>
