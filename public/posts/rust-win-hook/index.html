@@ -120,10 +120,10 @@
     <header class="post-header">
       <div class="post-meta">
         
-        <span>Mar 15, 2024</span>
+        <span>Mar 22, 2024</span>
         <small> - 
 <span class="reading-time" title="Estimated read time">
-   1 min read  </span>
+   12 min read  </span>
     </small>
         
         
@@ -133,7 +133,454 @@
 
     <div class="content">
 
-      <p>准备中</p>
+      <p>有关以 Rust 语言进行各种逆向注入的研究，我断断续续拿零碎时间研究了一年，现在总算拼凑了些成果可以讲讲。<del>其实这文章是为了我能留住 52破解的论坛账号才写的，免得又被当成机器人误删。</del></p>
+<p>Rust 是一门十分讲究安全的语言，看起来它与逆向工程这种听起来就很不安全的事情似乎有些水火不容，以至于我第一次向他人提出这个想法时，大家的反应基本是不太接受的。不过比起拿 C++ 做，Rust 有个很大的优势是很容易做工程——C++ 的生态过于离谱，IDE、编译器、链接器和依赖库全都不在一个阵线上，相比较而言 Rust 就方便太多了。</p>
+<p>碎碎念完了，下面就大概讲一下思路吧。</p>
+<p>以下过程的最终代码存放在了<a href="https://github.com/langyo/rust-winhook-demo">我的 Github 仓库</a>。</p>
+<h2 id="1-zhun-bei-yi-ge-yong-yu-zhu-ru-de-dll">1. 准备一个用于注入的 DLL</h2>
+<p>为了能侵入修改我们要改动的目标进程，我们首先需要制作一个动态链接库（DLL）。这个 DLL 会被注入到目标进程的地址空间中，然后在目标进程中执行我们的代码。</p>
+<p>毕竟，在保护模式下，如果我们写的程序和目标程序不在一个地址空间，那怎么也没办法直接修改目标程序的内存。</p>
+<p>在正式开始前，先准备个空文件夹作为整个工作集的根目录。我们在这个根目录新建一个 <code>Cargo.toml</code>，并在里头写上有关 <code>workspace</code> 的配置：</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[workspace]
+</span><span style="color:#bf616a;">members </span><span>= [
+</span><span>    &quot;</span><span style="color:#a3be8c;">_dll</span><span>&quot;,
+</span><span>    &quot;</span><span style="color:#a3be8c;">rust-winhook-demo-core</span><span>&quot;,
+</span><span>    &quot;</span><span style="color:#a3be8c;">_injector</span><span>&quot;,
+</span><span>]
+</span></code></pre>
+<p>下面以 <code>cargo new</code> 创建一个 DLL 项目 <code>_dll</code>，然后在 <code>Cargo.toml</code> 中添加 <code>windows</code> 依赖：</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[lib]
+</span><span style="color:#bf616a;">crate-type </span><span>= [&quot;</span><span style="color:#a3be8c;">cdylib</span><span>&quot;]
+</span><span>
+</span><span>[dependencies]
+</span><span style="color:#bf616a;">windows </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">^0.54</span><span>&quot;, </span><span style="color:#bf616a;">features </span><span>= [
+</span><span>    &quot;</span><span style="color:#a3be8c;">Win32_Foundation</span><span>&quot;,
+</span><span>    &quot;</span><span style="color:#a3be8c;">Win32_System_LibraryLoader</span><span>&quot;,
+</span><span>    &quot;</span><span style="color:#a3be8c;">Win32_System_SystemServices</span><span>&quot;,  </span><span style="color:#65737e;"># 这些 features 可以根据自己需要增减
+</span><span>] }
+</span></code></pre>
+<p>注意这里我们要将 <code>crate-type</code> 字段设置为 <code>cdylib</code>，这样我们才能生成一个以 C 风格 ABI 编译的 DLL。这一点很重要，因为 Rust 默认生成的是其特有的 <code>dylib</code>，尽管它直接可以用于 Rust 编译链接的联动，但这种库是不符合 Windows 的标准的。</p>
+<p>然后我们新建 <code>src/lib.rs</code>，写入以下代码：</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>#![</span><span style="color:#bf616a;">cfg</span><span>(windows)]
+</span><span>
+</span><span style="color:#b48ead;">use </span><span>std::os::raw::</span><span style="color:#b48ead;">c_void</span><span>;
+</span><span>
+</span><span style="color:#b48ead;">use </span><span>windows::Win32::{
+</span><span>    Foundation::{</span><span style="color:#d08770;">BOOL</span><span>, </span><span style="color:#d08770;">HANDLE</span><span>},
+</span><span>    System::SystemServices::{
+</span><span>        </span><span style="color:#d08770;">DLL_PROCESS_ATTACH</span><span>, </span><span style="color:#d08770;">DLL_PROCESS_DETACH</span><span>, </span><span style="color:#d08770;">DLL_THREAD_ATTACH</span><span>, </span><span style="color:#d08770;">DLL_THREAD_DETACH</span><span>,
+</span><span>    },
+</span><span>};
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">no_mangle</span><span>]
+</span><span style="color:#b48ead;">unsafe extern </span><span>&quot;</span><span style="color:#a3be8c;">system</span><span>&quot; </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">DllMain</span><span>(</span><span style="color:#bf616a;">_hinst</span><span>: HANDLE, </span><span style="color:#bf616a;">reason</span><span>: </span><span style="color:#b48ead;">u32</span><span>, </span><span style="color:#bf616a;">_reserved</span><span>: </span><span style="color:#b48ead;">*mut</span><span> c_void) -&gt; BOOL {
+</span><span>    </span><span style="color:#b48ead;">match</span><span> reason {
+</span><span>        </span><span style="color:#d08770;">DLL_PROCESS_ATTACH </span><span>=&gt; {
+</span><span>            println!(&quot;</span><span style="color:#a3be8c;">DLL_PROCESS_ATTACH</span><span>&quot;);
+</span><span>        },
+</span><span>        </span><span style="color:#d08770;">DLL_PROCESS_DETACH </span><span>=&gt; {
+</span><span>            println!(&quot;</span><span style="color:#a3be8c;">DLL_PROCESS_DETACH</span><span>&quot;);
+</span><span>        }
+</span><span>        </span><span style="color:#d08770;">DLL_THREAD_ATTACH </span><span>=&gt; {}
+</span><span>        </span><span style="color:#d08770;">DLL_THREAD_DETACH </span><span>=&gt; {}
+</span><span>        _ =&gt; {}
+</span><span>    };
+</span><span>    </span><span style="color:#d08770;">BOOL</span><span>::from(</span><span style="color:#d08770;">true</span><span>)
+</span><span>}
+</span></code></pre>
+<blockquote>
+<p>对于<a href="https://doc.rust-lang.org/reference/linkage.html"><strong>库</strong>类型的项目</a>，入口为 <code>src/lib.rs</code> 而非 <code>src/main.rs</code>，注意区分。以 <code>cargo new</code> 新建项目时默认会创建一个 <code>main.rs</code>，这个文件可以删除掉，不会影响项目的编译。<a href="https://rustmagazine.github.io/rust_magazine_2022/Q1/contribute/rust-dyn-link.html">这里</a>有更详细的有关 Rust 的各种链接库目标的介绍。</p>
+</blockquote>
+<p>这算是一个最简单的 DLL 了。它会在被加载时输出 <code>DLL_PROCESS_ATTACH</code>，卸载时输出 <code>DLL_PROCESS_DETACH</code>。</p>
+<p>下面我会准备两个部分，一个用于实验 EAT Hook，另一个用于实验 inline Hook。</p>
+<p>稍微科普一下，EAT Hook 是指修改导入表中的函数地址，使得目标程序在调用某个函数时，实际上调用的是我们的函数。这种 Hook 是最简单的，但是也最容易被杀软检测到。inline Hook 则是直接修改目标函数的代码，使得目标函数在执行时跳转到我们的函数。这种 Hook 的优点是不容易被检测到，但是实现起来比较复杂。</p>
+<h2 id="2-hua-yi-ge-yong-yu-zhu-ru-eat-hook-de-ba-zi">2. 画一个用于注入 EAT Hook 的靶子</h2>
+<p>按理说以 C 语言编写的程序是最容易被注入的，但是我这里还是用 Rust 来写~~，不然怎么上强度呢~~。</p>
+<p>以 <code>cargo new</code> 新建一个项目 <code>rust-winhook-demo-core</code>，然后照常加入<code>windows</code> 依赖：</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[package]
+</span><span style="color:#bf616a;">name </span><span>= &quot;</span><span style="color:#a3be8c;">rust-winhook-demo-core</span><span>&quot;
+</span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">0.1.0</span><span>&quot;
+</span><span style="color:#bf616a;">edition </span><span>= &quot;</span><span style="color:#a3be8c;">2021</span><span>&quot;
+</span><span>
+</span><span>[dependencies]
+</span><span style="color:#bf616a;">windows </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">^0.54</span><span>&quot;, </span><span style="color:#bf616a;">features </span><span>= [
+</span><span>    &quot;</span><span style="color:#a3be8c;">Win32_Foundation</span><span>&quot;,
+</span><span>    &quot;</span><span style="color:#a3be8c;">Win32_System_LibraryLoader</span><span>&quot;,
+</span><span>] }
+</span></code></pre>
+<blockquote>
+<p>为什么名字这么长？后续运行注入程序时，我需要根据这个名字来找到这个程序的对应进程。如果名字太短，可能会跟系统中的其它已有进程名字冲突，找错程序就尴尬了。</p>
+</blockquote>
+<p>然后在 <code>src/main.rs</code> 中写入以下代码：</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>windows::{core::*, Win32::System::LibraryLoader::LoadLibraryA};
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">等一秒时间让钩子挂上去</span><span>&quot;);
+</span><span>    std::thread::sleep(std::time::Duration::from_millis(</span><span style="color:#d08770;">1000</span><span>));
+</span><span>
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">尝试加载 kernel32.dll</span><span>&quot;);
+</span><span>    </span><span style="color:#b48ead;">unsafe </span><span>{
+</span><span>        </span><span style="color:#b48ead;">let </span><span>_ = LoadLibraryA(</span><span style="color:#d08770;">PCSTR</span><span>(</span><span style="color:#b48ead;">b</span><span>&quot;</span><span style="color:#a3be8c;">kernel32.dll</span><span style="color:#96b5b4;">\0</span><span>&quot;.</span><span style="color:#96b5b4;">as_ptr</span><span>() as _));
+</span><span>    }
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">加载完成</span><span>&quot;);
+</span><span>}
+</span></code></pre>
+<h2 id="3-bian-xie-eat-hook-de-luo-ji">3. 编写 EAT Hook 的逻辑</h2>
+<p>接下来我们回到 DLL 项目，先加一个极为重要的依赖 <code>retour</code>。这个库类似 C++ 中的 <code>easyhook</code>，可以帮助我们实现注入和 Hook。</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span style="color:#bf616a;">retour </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">^0.3</span><span>&quot;, </span><span style="color:#bf616a;">features </span><span>= [&quot;</span><span style="color:#a3be8c;">static-detour</span><span>&quot;] }
+</span><span style="color:#bf616a;">once_cell </span><span>= &quot;</span><span style="color:#a3be8c;">^1</span><span>&quot; </span><span style="color:#65737e;"># 顺便加一个这个库，用于懒加载
+</span></code></pre>
+<blockquote>
+<p><code>retour</code> 这个库实际上是 <code>detour</code> 库的一个分支，因为原作者常年走丢，所以有个新作者接手了这个项目，并以另一个名字上传到了 <a href="https://crates.io/crates/retour">crates.io</a>。</p>
+</blockquote>
+<p>我们先准备 EAT Hook 的实验：</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>once_cell::sync::Lazy;
+</span><span style="color:#b48ead;">use </span><span>std::ffi::CStr;
+</span><span>
+</span><span style="color:#b48ead;">use </span><span>retour::GenericDetour;
+</span><span style="color:#b48ead;">use </span><span>windows::{
+</span><span>    core::</span><span style="color:#d08770;">PCSTR</span><span>,
+</span><span>    Win32::{
+</span><span>        Foundation::</span><span style="color:#d08770;">HMODULE</span><span>,
+</span><span>        System::LibraryLoader::{GetProcAddress, LoadLibraryA},
+</span><span>    },
+</span><span>};
+</span><span>
+</span><span style="color:#b48ead;">type </span><span>HookFnType = </span><span style="color:#b48ead;">extern </span><span>&quot;</span><span style="color:#a3be8c;">system</span><span>&quot; </span><span style="color:#b48ead;">fn</span><span>(</span><span style="color:#d08770;">PCSTR</span><span>) -&gt; HMODULE;
+</span><span>
+</span><span style="color:#b48ead;">pub static</span><span> hooker: Lazy&lt;GenericDetour&lt;HookFnType&gt;&gt; = Lazy::new(|| {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> library_handle = </span><span style="color:#b48ead;">unsafe </span><span>{ LoadLibraryA(</span><span style="color:#d08770;">PCSTR</span><span>(</span><span style="color:#b48ead;">b</span><span>&quot;</span><span style="color:#a3be8c;">kernel32.dll</span><span style="color:#96b5b4;">\0</span><span>&quot;.</span><span style="color:#96b5b4;">as_ptr</span><span>() as _)) }.</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>    </span><span style="color:#b48ead;">let</span><span> address = </span><span style="color:#b48ead;">unsafe </span><span>{ GetProcAddress(library_handle, </span><span style="color:#d08770;">PCSTR</span><span>(</span><span style="color:#b48ead;">b</span><span>&quot;</span><span style="color:#a3be8c;">LoadLibraryA</span><span style="color:#96b5b4;">\0</span><span>&quot;.</span><span style="color:#96b5b4;">as_ptr</span><span>() as _)) };
+</span><span>    </span><span style="color:#b48ead;">let</span><span> ori: HookFnType = </span><span style="color:#b48ead;">unsafe </span><span>{ std::mem::transmute(address) };
+</span><span>    </span><span style="color:#b48ead;">unsafe </span><span>{ GenericDetour::new(ori, our_LoadLibraryA).</span><span style="color:#96b5b4;">unwrap</span><span>() }
+</span><span>});
+</span><span>
+</span><span style="color:#b48ead;">extern </span><span>&quot;</span><span style="color:#a3be8c;">system</span><span>&quot; </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">our_LoadLibraryA</span><span>(</span><span style="color:#bf616a;">lpFileName</span><span>: PCSTR) -&gt; HMODULE {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> file_name = </span><span style="color:#b48ead;">unsafe </span><span>{ CStr::from_ptr(lpFileName.</span><span style="color:#96b5b4;">as_ptr</span><span>() as _) }; </span><span style="color:#65737e;">// 从 C 字符串指针读取并转换为 Rust 字符串
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">要加载的库名称： </span><span style="color:#d08770;">{:?}</span><span>&quot;, file_name);
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">unsafe </span><span>{ hooker.</span><span style="color:#96b5b4;">disable</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>() }; </span><span style="color:#65737e;">// 先临时解除钩子，以便我们能调用原版的 LoadLibraryA
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> ret_val = hooker.</span><span style="color:#96b5b4;">call</span><span>(lpFileName);
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">调用原版 LoadLibraryA 返回的地址： </span><span style="color:#d08770;">{:#X}</span><span>&quot;, ret_val.</span><span style="color:#d08770;">0</span><span>);
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">unsafe </span><span>{ hooker.</span><span style="color:#96b5b4;">enable</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>() }; </span><span style="color:#65737e;">// 重新再把钩子上回去
+</span><span>    ret_val
+</span><span>}
+</span></code></pre>
+<p>加载 <code>kernel32.dll</code> 这个过程对应的是 EAT hook 的实验，如果注入成功，我们可以临时偷偷更换掉 <code>LoadLibraryA</code> 的地址，使得目标程序在调用 <code>LoadLibraryA</code> 时实际上调用的是我们的函数。侦测到加载后就原样调用原版的 <code>LoadLibraryA</code>，参数和返回值都先不篡改，这样就不会影响目标程序的正常运行。</p>
+<p>然后我们需要在 DLL 入口处初始化这个钩子，就加在 <code>DllMain</code> 函数里面的 <code>DLL_PROCESS_ATTACH</code> 分支里，也就是一加载好 DLL 就立即挂上钩子：</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>#[</span><span style="color:#bf616a;">no_mangle</span><span>]
+</span><span style="color:#b48ead;">unsafe extern </span><span>&quot;</span><span style="color:#a3be8c;">system</span><span>&quot; </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">DllMain</span><span>(</span><span style="color:#bf616a;">_hinst</span><span>: HANDLE, </span><span style="color:#bf616a;">reason</span><span>: </span><span style="color:#b48ead;">u32</span><span>, </span><span style="color:#bf616a;">_reserved</span><span>: </span><span style="color:#b48ead;">*mut</span><span> c_void) -&gt; BOOL {
+</span><span>    </span><span style="color:#b48ead;">match</span><span> reason {
+</span><span>        </span><span style="color:#d08770;">DLL_PROCESS_ATTACH </span><span>=&gt; </span><span style="color:#b48ead;">unsafe </span><span>{
+</span><span>            hooker.</span><span style="color:#96b5b4;">enable</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>();   </span><span style="color:#65737e;">// 启动时挂上钩子
+</span><span>        },
+</span><span>        </span><span style="color:#d08770;">DLL_PROCESS_DETACH </span><span>=&gt; {
+</span><span>            hooker.</span><span style="color:#96b5b4;">disable</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>();  </span><span style="color:#65737e;">// 卸载时解除钩子
+</span><span>        }
+</span><span>        </span><span style="color:#d08770;">DLL_THREAD_ATTACH </span><span>=&gt; {}
+</span><span>        </span><span style="color:#d08770;">DLL_THREAD_DETACH </span><span>=&gt; {}
+</span><span>        _ =&gt; {}
+</span><span>    };
+</span><span>    </span><span style="color:#d08770;">BOOL</span><span>::from(</span><span style="color:#d08770;">true</span><span>)
+</span><span>}
+</span></code></pre>
+<h2 id="4-bian-xie-xie-zhu-gua-zai-dll-de-cheng-xu">4. 编写协助挂载 DLL 的程序</h2>
+<p>最后我们需要一个程序来帮助我们将 DLL 注入到目标程序中。这个程序需要有足够的权限，以及能够打开目标进程并将 DLL 注入到目标进程中。</p>
+<p>首先再建一个 Rust 项目，然后在 <code>Cargo.toml</code> 中添加 <code>dll-syringe</code> 依赖：</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[package]
+</span><span style="color:#bf616a;">name </span><span>= &quot;</span><span style="color:#a3be8c;">_injector</span><span>&quot;
+</span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">0.1.0</span><span>&quot;
+</span><span style="color:#bf616a;">edition </span><span>= &quot;</span><span style="color:#a3be8c;">2021</span><span>&quot;
+</span><span>
+</span><span>[dependencies]
+</span><span style="color:#bf616a;">dll-syringe </span><span>= &quot;</span><span style="color:#a3be8c;">^0.15</span><span>&quot;
+</span></code></pre>
+<p>然后在 <code>src/main.rs</code> 中写入以下代码：</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>dll_syringe::{
+</span><span>    process::{OwnedProcess, Process},
+</span><span>    Syringe,
+</span><span>};
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    std::process::Command::new({
+</span><span>        </span><span style="color:#65737e;">// 根据编译时选择的指令集架构，选择不同的目标程序
+</span><span>        </span><span style="color:#b48ead;">if </span><span>cfg!(target_arch = &quot;</span><span style="color:#a3be8c;">x86</span><span>&quot;) {
+</span><span>            &quot;</span><span style="color:#a3be8c;">target/i686-pc-windows-msvc/release/rust-winhook-demo-core.exe</span><span>&quot;
+</span><span>        } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>            &quot;</span><span style="color:#a3be8c;">target/release/rust-winhook-demo-core.exe</span><span>&quot;
+</span><span>        }
+</span><span>    })
+</span><span>    .</span><span style="color:#96b5b4;">spawn</span><span>()
+</span><span>    .</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#65737e;">// 先找到目标进程的 PID
+</span><span>    </span><span style="color:#b48ead;">let</span><span> target_process = OwnedProcess::find_first_by_name(&quot;</span><span style="color:#a3be8c;">rust-winhook-demo-core</span><span>&quot;).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>    println!(
+</span><span>        &quot;</span><span style="color:#a3be8c;">目标进程 ID： </span><span style="color:#d08770;">{}</span><span>&quot;,
+</span><span>        target_process.</span><span style="color:#96b5b4;">pid</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>()
+</span><span>    );
+</span><span>
+</span><span>    </span><span style="color:#65737e;">// 初始化注入器
+</span><span>    </span><span style="color:#b48ead;">let</span><span> syringe = Syringe::for_process(target_process);
+</span><span>
+</span><span>    </span><span style="color:#65737e;">// 注入 DLL
+</span><span>    </span><span style="color:#b48ead;">let</span><span> injected_payload = syringe
+</span><span>        .</span><span style="color:#96b5b4;">inject</span><span>({
+</span><span>            </span><span style="color:#65737e;">// 这里也是根据编译时选择的指令集架构，选择不同的 DLL
+</span><span>            </span><span style="color:#b48ead;">if </span><span>cfg!(target_arch = &quot;</span><span style="color:#a3be8c;">x86</span><span>&quot;) {
+</span><span>                &quot;</span><span style="color:#a3be8c;">target/i686-pc-windows-msvc/release/_dll.dll</span><span>&quot;
+</span><span>            } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>                &quot;</span><span style="color:#a3be8c;">target/release/_dll.dll</span><span>&quot;
+</span><span>            }
+</span><span>        })
+</span><span>        .</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>    </span><span style="color:#b48ead;">if</span><span> injected_payload.</span><span style="color:#96b5b4;">guess_is_loaded</span><span>() {
+</span><span>        println!(&quot;</span><span style="color:#a3be8c;">注入成功</span><span>&quot;);
+</span><span>    } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>        println!(&quot;</span><span style="color:#a3be8c;">注入失败</span><span>&quot;);
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>在正式运行注入程序之前，我们需要先编译 DLL 和被注入的程序。</p>
+<blockquote>
+<p>注意这里我们需要使用 nightly 版本的 Rust，因为这些库都用了一些不稳定特性。如果你没有安装 nightly 版本的 Rust，可以使用 <code>rustup toolchain install nightly</code> 安装。</p>
+<p>如果你想编译与运行 32 位版本的程序，可以使用 <code>rustup target add i686-pc-windows-msvc</code> 安装 32 位的编译目标。</p>
+</blockquote>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">cargo</span><span> +nightly build</span><span style="color:#bf616a;"> -p</span><span> _dll</span><span style="color:#bf616a;"> --release
+</span><span style="color:#bf616a;">cargo</span><span> +nightly build</span><span style="color:#bf616a;"> -p</span><span> rust-winhook-demo-core</span><span style="color:#bf616a;"> --release
+</span></code></pre>
+<p>然后我们就可以运行注入程序了：</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">cargo</span><span> +nightly run</span><span style="color:#bf616a;"> -p</span><span> _injector</span><span style="color:#bf616a;"> --release
+</span></code></pre>
+<h2 id="5-hua-yi-ge-yong-yu-inline-hook-de-ba-zi">5. 画一个用于 inline Hook 的靶子</h2>
+<p>接下来我们准备 inline Hook 的实验。修改一下 <code>rust-winhook-demo-core</code> 项目的 <code>src/main.rs</code>：</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>#[</span><span style="color:#bf616a;">no_mangle</span><span>]
+</span><span>#[</span><span style="color:#bf616a;">inline</span><span>(never)]
+</span><span style="color:#b48ead;">pub extern </span><span>&quot;</span><span style="color:#a3be8c;">C</span><span>&quot; </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">add_42</span><span>(</span><span style="color:#bf616a;">x</span><span>: </span><span style="color:#b48ead;">i32</span><span>) -&gt; </span><span style="color:#b48ead;">i32 </span><span>{
+</span><span>    x + </span><span style="color:#d08770;">42
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">add_42 的内存地址是： 0x</span><span style="color:#d08770;">{:x}</span><span>&quot;, add_42 as </span><span style="color:#b48ead;">usize</span><span>);
+</span><span>
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">等一秒时间让钩子挂上去</span><span>&quot;);
+</span><span>    std::thread::sleep(std::time::Duration::from_millis(</span><span style="color:#d08770;">1000</span><span>));
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> result = </span><span style="color:#96b5b4;">add_42</span><span>(</span><span style="color:#d08770;">100</span><span>);
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">add_42(100) = </span><span style="color:#d08770;">{}</span><span>&quot;, result);
+</span><span>
+</span><span>    println!(&quot;</span><span style="color:#a3be8c;">调用完成</span><span>&quot;);
+</span><span>}
+</span></code></pre>
+<p>按正常的逻辑，<code>add_42</code> 函数执行后会返回传入的数字加上 42 后的结果。我们接下来的目标是把它的返回值改为固定的数字 233333。</p>
+<h2 id="6-bian-xie-inline-hook-de-luo-ji">6. 编写 inline Hook 的逻辑</h2>
+<p>我们先回到 DLL 项目，把原来的 EAT Hook 改掉：</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>std::sync::{Arc, Mutex};
+</span><span style="color:#b48ead;">use </span><span>once_cell::sync::Lazy;
+</span><span style="color:#b48ead;">use </span><span>retour::GenericDetour;
+</span><span>
+</span><span style="color:#b48ead;">type </span><span>HookFnType = </span><span style="color:#b48ead;">extern </span><span>&quot;</span><span style="color:#a3be8c;">C</span><span>&quot; </span><span style="color:#b48ead;">fn</span><span>(</span><span style="color:#b48ead;">i32</span><span>) -&gt; </span><span style="color:#b48ead;">i32</span><span>;
+</span><span>
+</span><span style="color:#b48ead;">static</span><span> hooker: Lazy&lt;Arc&lt;Mutex&lt;Option&lt;GenericDetour&lt;HookFnType&gt;&gt;&gt;&gt;&gt; =
+</span><span>    Lazy::new(|| Arc::new(Mutex::new(None)));
+</span><span>
+</span><span style="color:#b48ead;">extern </span><span>&quot;</span><span style="color:#a3be8c;">C</span><span>&quot; </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">our_add_42</span><span>(</span><span style="color:#bf616a;">_input</span><span>: </span><span style="color:#b48ead;">i32</span><span>) -&gt; </span><span style="color:#b48ead;">i32 </span><span>{
+</span><span>    </span><span style="color:#b48ead;">let</span><span> hooker_inside = hooker.</span><span style="color:#96b5b4;">clone</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">unsafe </span><span>{
+</span><span>        hooker_inside
+</span><span>            .</span><span style="color:#96b5b4;">lock</span><span>()
+</span><span>            .</span><span style="color:#96b5b4;">unwrap</span><span>()
+</span><span>            .</span><span style="color:#96b5b4;">as_ref</span><span>()
+</span><span>            .</span><span style="color:#96b5b4;">unwrap</span><span>()
+</span><span>            .</span><span style="color:#96b5b4;">disable</span><span>()
+</span><span>            .</span><span style="color:#96b5b4;">unwrap</span><span>()
+</span><span>    };
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> ret_val = </span><span style="color:#d08770;">233333</span><span>;
+</span><span>    </span><span style="color:#96b5b4;">println</span><span>(&quot;</span><span style="color:#a3be8c;">已注入</span><span>&quot;);
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">unsafe </span><span>{
+</span><span>        hooker_inside
+</span><span>            .</span><span style="color:#96b5b4;">lock</span><span>()
+</span><span>            .</span><span style="color:#96b5b4;">unwrap</span><span>()
+</span><span>            .</span><span style="color:#96b5b4;">as_ref</span><span>()
+</span><span>            .</span><span style="color:#96b5b4;">unwrap</span><span>()
+</span><span>            .</span><span style="color:#96b5b4;">enable</span><span>()
+</span><span>            .</span><span style="color:#96b5b4;">unwrap</span><span>()
+</span><span>    };
+</span><span>
+</span><span>    ret_val
+</span><span>}
+</span></code></pre>
+<p>然后在 <code>DllMain</code> 函数里面的 <code>DLL_PROCESS_ATTACH</code> 分支里面初始化这个钩子：</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>#[</span><span style="color:#bf616a;">no_mangle</span><span>]
+</span><span style="color:#b48ead;">unsafe extern </span><span>&quot;</span><span style="color:#a3be8c;">system</span><span>&quot; </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">DllMain</span><span>(</span><span style="color:#bf616a;">_hinst</span><span>: HANDLE, </span><span style="color:#bf616a;">reason</span><span>: </span><span style="color:#b48ead;">u32</span><span>, </span><span style="color:#bf616a;">_reserved</span><span>: </span><span style="color:#b48ead;">*mut</span><span> c_void) -&gt; BOOL {
+</span><span>    </span><span style="color:#b48ead;">match</span><span> reason {
+</span><span>        </span><span style="color:#d08770;">DLL_PROCESS_ATTACH </span><span>=&gt; </span><span style="color:#b48ead;">unsafe </span><span>{
+</span><span>            </span><span style="color:#b48ead;">let</span><span> address = </span><span style="color:#d08770;">0x000000</span><span>; </span><span style="color:#65737e;">// 通过直接运行程序，看终端输出的日志来获取一个未混淆的地址，仅适用于 32 位程序
+</span><span>
+</span><span>            println!(&quot;</span><span style="color:#a3be8c;">即将挂钩的地址： </span><span style="color:#d08770;">{:#X}</span><span>&quot;, address);
+</span><span>            </span><span style="color:#b48ead;">let</span><span> ori: HookFnType = </span><span style="color:#b48ead;">unsafe </span><span>{ std::mem::transmute(address) };
+</span><span>            hooker.</span><span style="color:#96b5b4;">clone</span><span>().</span><span style="color:#96b5b4;">lock</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>().</span><span style="color:#96b5b4;">replace</span><span>(</span><span style="color:#b48ead;">unsafe </span><span>{
+</span><span>                </span><span style="color:#b48ead;">let</span><span> ret = GenericDetour::new(ori, our_add_42).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>                ret.</span><span style="color:#96b5b4;">enable</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>                ret
+</span><span>            });
+</span><span>        },
+</span><span>        </span><span style="color:#d08770;">DLL_PROCESS_DETACH </span><span>=&gt; {
+</span><span>            hooker.</span><span style="color:#96b5b4;">clone</span><span>().</span><span style="color:#96b5b4;">lock</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>().</span><span style="color:#96b5b4;">as_ref</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>().</span><span style="color:#96b5b4;">disable</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>        }
+</span><span>        </span><span style="color:#d08770;">DLL_THREAD_ATTACH </span><span>=&gt; {}
+</span><span>        </span><span style="color:#d08770;">DLL_THREAD_DETACH </span><span>=&gt; {}
+</span><span>        _ =&gt; {}
+</span><span>    };
+</span><span>    </span><span style="color:#d08770;">BOOL</span><span>::from(</span><span style="color:#d08770;">true</span><span>)
+</span><span>}
+</span></code></pre>
+<p>剩下的流程和 EAT Hook 差不多，<code>_injector</code> 不需要改动，直接运行即可。</p>
+<h2 id="7-yu-dll-jian-li-ipc-tong-xin">7. 与 DLL 建立 IPC 通信</h2>
+<p>在实际的应用中，我们可能需要与 DLL 建立 IPC 通信，以便动态指挥 DLL 做一些事情。</p>
+<p>由于这部分内容其实和 Hook 技术关系不是很大，所以我就不在这里展开讲了。不过我还是会简单分享一下我用的方案。</p>
+<p>这里我用的是 <code>interprocess</code> 这个库，具体如何使用可以参考<a href="https://docs.rs/interprocess/latest/interprocess/">官方文档</a>和<a href="https://github.com/langyo/rust-ipc-demo">我写的一些 Demo</a>。</p>
+<p>我还写了一个比较方便的脚手架代码，暂时还没做成单独发布。我在 Github 上有关这个文章的 Demo <a href="https://github.com/langyo/rust-winhook-demo/blob/8657aef2ba737c0f317eaac73db7492ebbb13008/packages/utils/src/pipe.rs">也有用上</a>：</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>anyhow::{anyhow, Result};
+</span><span style="color:#b48ead;">use </span><span>serde::{Deserialize, Serialize};
+</span><span style="color:#b48ead;">use </span><span>std::io::{prelude::*, BufReader, ErrorKind};
+</span><span>
+</span><span style="color:#b48ead;">use </span><span>interprocess::local_socket::{LocalSocketListener, LocalSocketStream, NameTypeSupport};
+</span><span>
+</span><span style="color:#b48ead;">pub struct </span><span>Pipe {
+</span><span>    </span><span style="color:#bf616a;">conn</span><span>: BufReader&lt;LocalSocketStream&gt;,
+</span><span>    </span><span style="color:#bf616a;">buffer</span><span>: [</span><span style="color:#b48ead;">u8</span><span>; 1024],
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">impl </span><span>Pipe {
+</span><span>    </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">new</span><span>(</span><span style="color:#bf616a;">conn</span><span>: LocalSocketStream) -&gt; </span><span style="color:#b48ead;">Self </span><span>{
+</span><span>        </span><span style="color:#b48ead;">let</span><span> conn = BufReader::new(conn);
+</span><span>        </span><span style="color:#b48ead;">let</span><span> buffer = [</span><span style="color:#d08770;">0</span><span>; </span><span style="color:#d08770;">1024</span><span>];
+</span><span>        Pipe { conn, buffer }
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">do_write</span><span>&lt;T: Serialize&gt;(&amp;</span><span style="color:#b48ead;">mut </span><span style="color:#bf616a;">self</span><span>, </span><span style="color:#bf616a;">data</span><span>: &amp;T) -&gt; Result&lt;()&gt; {
+</span><span>        </span><span style="color:#b48ead;">let</span><span> data = postcard::to_allocvec(data)?;
+</span><span>
+</span><span>        </span><span style="color:#b48ead;">let</span><span> len = data.</span><span style="color:#96b5b4;">len</span><span>();
+</span><span>        </span><span style="color:#b48ead;">let </span><span>(len, chunks_len) = (len, len / </span><span style="color:#d08770;">1024 </span><span>+ </span><span style="color:#b48ead;">if</span><span> len % </span><span style="color:#d08770;">1024 </span><span>== </span><span style="color:#d08770;">0 </span><span>{ </span><span style="color:#d08770;">0 </span><span>} </span><span style="color:#b48ead;">else </span><span>{ </span><span style="color:#d08770;">1 </span><span>});
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.conn
+</span><span>            .</span><span style="color:#96b5b4;">get_mut</span><span>()
+</span><span>            .</span><span style="color:#96b5b4;">write_all</span><span>(&amp;postcard::to_allocvec(&amp;(len, chunks_len))?)?;
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.conn.</span><span style="color:#96b5b4;">get_mut</span><span>().</span><span style="color:#96b5b4;">flush</span><span>()?;
+</span><span>
+</span><span>        </span><span style="color:#b48ead;">for</span><span> chunk in data.</span><span style="color:#96b5b4;">chunks</span><span>(</span><span style="color:#d08770;">1024</span><span>) {
+</span><span>            </span><span style="color:#bf616a;">self</span><span>.conn.</span><span style="color:#96b5b4;">get_mut</span><span>().</span><span style="color:#96b5b4;">write_all</span><span>(chunk)?;
+</span><span>            </span><span style="color:#bf616a;">self</span><span>.conn.</span><span style="color:#96b5b4;">get_mut</span><span>().</span><span style="color:#96b5b4;">flush</span><span>()?;
+</span><span>        }
+</span><span>
+</span><span>        </span><span style="color:#b48ead;">let</span><span> ack = &quot;</span><span style="color:#a3be8c;">ACK</span><span>&quot;.</span><span style="color:#96b5b4;">as_bytes</span><span>();
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.conn.</span><span style="color:#96b5b4;">get_mut</span><span>().</span><span style="color:#96b5b4;">write_all</span><span>(&amp;ack)?;
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.conn.</span><span style="color:#96b5b4;">get_mut</span><span>().</span><span style="color:#96b5b4;">flush</span><span>()?;
+</span><span>
+</span><span>        Ok(())
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">do_read</span><span>&lt;T: for&lt;</span><span style="color:#b48ead;">&#39;de</span><span>&gt; Deserialize&lt;</span><span style="color:#b48ead;">&#39;de</span><span>&gt;&gt;(&amp;</span><span style="color:#b48ead;">mut </span><span style="color:#bf616a;">self</span><span>) -&gt; Result&lt;T&gt; {
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.conn.</span><span style="color:#96b5b4;">read</span><span>(&amp;</span><span style="color:#b48ead;">mut </span><span style="color:#bf616a;">self</span><span>.buffer)?;
+</span><span>        </span><span style="color:#b48ead;">let </span><span>(len, chunks_len): (</span><span style="color:#b48ead;">usize</span><span>, </span><span style="color:#b48ead;">usize</span><span>) = postcard::from_bytes(&amp;</span><span style="color:#bf616a;">self</span><span>.buffer)?;
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.buffer = [</span><span style="color:#d08770;">0</span><span>; </span><span style="color:#d08770;">1024</span><span>];
+</span><span>
+</span><span>        </span><span style="color:#b48ead;">let mut</span><span> data = Vec::with_capacity(len);
+</span><span>
+</span><span>        </span><span style="color:#b48ead;">for </span><span>_ in </span><span style="color:#d08770;">0</span><span>..chunks_len {
+</span><span>            </span><span style="color:#bf616a;">self</span><span>.conn.</span><span style="color:#96b5b4;">read</span><span>(&amp;</span><span style="color:#b48ead;">mut </span><span style="color:#bf616a;">self</span><span>.buffer)?;
+</span><span>            data.</span><span style="color:#96b5b4;">extend_from_slice</span><span>(&amp;</span><span style="color:#bf616a;">self</span><span>.buffer);
+</span><span>
+</span><span>            </span><span style="color:#bf616a;">self</span><span>.buffer = [</span><span style="color:#d08770;">0</span><span>; </span><span style="color:#d08770;">1024</span><span>];
+</span><span>        }
+</span><span>
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.conn.</span><span style="color:#96b5b4;">read</span><span>(&amp;</span><span style="color:#b48ead;">mut </span><span style="color:#bf616a;">self</span><span>.buffer)?;
+</span><span>        </span><span style="color:#b48ead;">if </span><span>&amp;</span><span style="color:#bf616a;">self</span><span>.buffer[</span><span style="color:#d08770;">0</span><span>..</span><span style="color:#d08770;">3</span><span>] != &quot;</span><span style="color:#a3be8c;">ACK</span><span>&quot;.</span><span style="color:#96b5b4;">as_bytes</span><span>() {
+</span><span>            </span><span style="color:#b48ead;">return </span><span>Err(anyhow!(&quot;</span><span style="color:#a3be8c;">No ACK</span><span>&quot;));
+</span><span>        }
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.buffer = [</span><span style="color:#d08770;">0</span><span>; </span><span style="color:#d08770;">1024</span><span>];
+</span><span>
+</span><span>        Ok(postcard::from_bytes(&amp;data[</span><span style="color:#d08770;">0</span><span>..len])?)
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">write</span><span>&lt;T: Serialize&gt;(&amp;</span><span style="color:#b48ead;">mut </span><span style="color:#bf616a;">self</span><span>, </span><span style="color:#bf616a;">data</span><span>: &amp;T) -&gt; Result&lt;()&gt; {
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.</span><span style="color:#96b5b4;">do_write</span><span>(data).</span><span style="color:#96b5b4;">map_err</span><span>(|</span><span style="color:#bf616a;">err</span><span>| {
+</span><span>            log::error!(&quot;</span><span style="color:#a3be8c;">Pipe failed to write: {:?}</span><span>&quot;, err);
+</span><span>            err
+</span><span>        })
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">read</span><span>&lt;T: for&lt;</span><span style="color:#b48ead;">&#39;de</span><span>&gt; Deserialize&lt;</span><span style="color:#b48ead;">&#39;de</span><span>&gt;&gt;(&amp;</span><span style="color:#b48ead;">mut </span><span style="color:#bf616a;">self</span><span>) -&gt; Result&lt;T&gt; {
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.</span><span style="color:#96b5b4;">do_read</span><span>().</span><span style="color:#96b5b4;">map_err</span><span>(|</span><span style="color:#bf616a;">err</span><span>| {
+</span><span>            log::error!(&quot;</span><span style="color:#a3be8c;">Pipe failed to read: {:?}</span><span>&quot;, err);
+</span><span>            err
+</span><span>        })
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">create_client</span><span>(</span><span style="color:#bf616a;">name</span><span>: String) -&gt; Result&lt;Pipe&gt; {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> name = {
+</span><span>        </span><span style="color:#b48ead;">use </span><span>NameTypeSupport::*;
+</span><span>        </span><span style="color:#b48ead;">match </span><span>NameTypeSupport::query() {
+</span><span>            OnlyPaths =&gt; format!(&quot;</span><span style="color:#a3be8c;">/tmp/</span><span style="color:#d08770;">{name}</span><span style="color:#a3be8c;">.sock</span><span>&quot;),
+</span><span>            OnlyNamespaced | Both =&gt; format!(&quot;</span><span style="color:#a3be8c;">@</span><span style="color:#d08770;">{name}</span><span style="color:#a3be8c;">.sock</span><span>&quot;),
+</span><span>        }
+</span><span>    };
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> conn = LocalSocketStream::connect(name.</span><span style="color:#96b5b4;">clone</span><span>())?;
+</span><span>
+</span><span>    log::info!(&quot;</span><span style="color:#a3be8c;">Connected to {}</span><span>&quot;, name);
+</span><span>
+</span><span>    Ok(Pipe::new(conn))
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">create_server</span><span>(</span><span style="color:#bf616a;">name</span><span>: String) -&gt; Result&lt;Pipe&gt; {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> name = {
+</span><span>        </span><span style="color:#b48ead;">use </span><span>NameTypeSupport::*;
+</span><span>        </span><span style="color:#b48ead;">match </span><span>NameTypeSupport::query() {
+</span><span>            OnlyPaths =&gt; format!(&quot;</span><span style="color:#a3be8c;">/tmp/</span><span style="color:#d08770;">{name}</span><span style="color:#a3be8c;">.sock</span><span>&quot;),
+</span><span>            OnlyNamespaced | Both =&gt; format!(&quot;</span><span style="color:#a3be8c;">@</span><span style="color:#d08770;">{name}</span><span style="color:#a3be8c;">.sock</span><span>&quot;),
+</span><span>        }
+</span><span>    };
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">let</span><span> listener = </span><span style="color:#b48ead;">match </span><span>LocalSocketListener::bind(name.</span><span style="color:#96b5b4;">clone</span><span>()) {
+</span><span>        Ok(ret) =&gt; ret,
+</span><span>        Err(e) </span><span style="color:#b48ead;">if</span><span> e.</span><span style="color:#96b5b4;">kind</span><span>() == ErrorKind::AddrInUse =&gt; {
+</span><span>            </span><span style="color:#b48ead;">return </span><span>Err(anyhow!(&quot;</span><span style="color:#a3be8c;">Address already in use</span><span>&quot;));
+</span><span>        }
+</span><span>        Err(e) =&gt; </span><span style="color:#b48ead;">return </span><span>Err(e.</span><span style="color:#96b5b4;">into</span><span>()),
+</span><span>    };
+</span><span>
+</span><span>    log::info!(&quot;</span><span style="color:#a3be8c;">Server running at {}</span><span>&quot;, name);
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">if let </span><span>Some(Ok(conn)) = listener.</span><span style="color:#96b5b4;">incoming</span><span>().</span><span style="color:#96b5b4;">next</span><span>() {
+</span><span>        log::info!(&quot;</span><span style="color:#a3be8c;">Incoming connection at {}</span><span>&quot;, name);
+</span><span>
+</span><span>        Ok(Pipe::new(conn))
+</span><span>    } </span><span style="color:#b48ead;">else </span><span>{
+</span><span>        Err(anyhow!(&quot;</span><span style="color:#a3be8c;">No incoming connection</span><span>&quot;))
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>简而言之，IPC 的缓冲区没办法开的太大，所以我就把数据分块传输了。这个库的使用方法也很简单，就是创建一个 <code>Pipe</code> 对象，然后调用 <code>write</code> 和 <code>read</code> 方法即可：</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#65737e;">// 在客户端
+</span><span style="color:#b48ead;">let</span><span> conn = </span><span style="color:#96b5b4;">create_client</span><span>(&quot;</span><span style="color:#a3be8c;">&lt;xxx&gt;</span><span>&quot;.</span><span style="color:#96b5b4;">to_string</span><span>()).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>conn.</span><span style="color:#96b5b4;">write</span><span>(&amp;xxx).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span style="color:#b48ead;">let</span><span> ret: </span><span style="color:#d08770;">XXX </span><span>= conn.</span><span style="color:#96b5b4;">read</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>
+</span><span style="color:#65737e;">// 在服务端
+</span><span style="color:#b48ead;">let mut</span><span> conn = </span><span style="color:#96b5b4;">create_server</span><span>(&quot;</span><span style="color:#a3be8c;">&lt;xxx&gt;</span><span>&quot;.</span><span style="color:#96b5b4;">to_string</span><span>()).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span style="color:#b48ead;">let</span><span> ret: </span><span style="color:#d08770;">XXX </span><span>= conn.</span><span style="color:#96b5b4;">read</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>conn.</span><span style="color:#96b5b4;">write</span><span>(&amp;xxx).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span></code></pre>
+<h2 id="8-jie-yu">8. 结语</h2>
+<p>写博客挺麻烦的，平时很忙，不过我还是尽量写了下。希望这些心得能帮到你吧，感谢阅读。</p>
 
     </div>
     <hr class="post-end">
@@ -147,7 +594,7 @@
           <line x1="16" y1="13" x2="8" y2="13"></line>
           <line x1="16" y1="17" x2="8" y2="17"></line>
           <polyline points="10 9 9 9 8 9"></polyline>
-        </svg>3 Words</p>
+        </svg>3087 Words</p>
       
       <p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -156,7 +603,7 @@
           <line x1="16" y1="2" x2="16" y2="6"></line>
           <line x1="8" y1="2" x2="8" y2="6"></line>
           <line x1="3" y1="10" x2="21" y2="10"></line>
-        </svg>2024-03-15</p>
+        </svg>2024-03-22</p>
       
     </footer>
   </article>
