@@ -182,7 +182,7 @@ unsafe extern "system" fn DllMain(_hinst: HANDLE, reason: u32, _reserved: *mut c
         DLL_PROCESS_ATTACH => unsafe {
             hooker.enable().unwrap();   // 启动时挂上钩子
         },
-        DLL_PROCESS_DETACH => {
+        DLL_PROCESS_DETACH => unsafe {
             hooker.disable().unwrap();  // 卸载时解除钩子
         }
         DLL_THREAD_ATTACH => {}
@@ -319,26 +319,14 @@ extern "C" fn our_add_42(_input: i32) -> i32 {
     let hooker_inside = hooker.clone();
 
     unsafe {
-        hooker_inside
-            .lock()
-            .unwrap()
-            .as_ref()
-            .unwrap()
-            .disable()
-            .unwrap()
+        hooker_inside.lock().unwrap().as_ref().unwrap().disable().unwrap()
     };
 
     let ret_val = 233333;
     println("已注入");
 
     unsafe {
-        hooker_inside
-            .lock()
-            .unwrap()
-            .as_ref()
-            .unwrap()
-            .enable()
-            .unwrap()
+        hooker_inside.lock().unwrap().as_ref().unwrap().enable().unwrap()
     };
 
     ret_val
@@ -373,7 +361,11 @@ unsafe extern "system" fn DllMain(_hinst: HANDLE, reason: u32, _reserved: *mut c
 }
 ```
 
+> 由于 64 位程序默认启用了 ASLR，程序每次重新执行时所有地址都会变化，所以我们无法在 64 位程序中直接使用硬编码的地址。限于篇幅，这里不具体展开如何定位程序基址和寻找正确函数地址的过程。
+
 剩下的流程和 EAT Hook 差不多，`_injector` 不需要改动，直接运行即可。
+
+> ASM Hook 的过程和 inline Hook 类似，只是需要在 DLL 中写入一些汇编代码，这里就不展开讲了。不过，Rust 可以直接内嵌 ASM 代码，具体可以参考 [`asm!` 宏的使用方法](https://doc.rust-lang.org/reference/inline-assembly.html)。
 
 ## 7. 与 DLL 建立 IPC 通信
 
@@ -524,5 +516,7 @@ conn.write(&xxx).unwrap();
 ```
 
 ## 8. 结语
+
+Rust 是一门“安全”的语言，但这个“安全”是建立在使用者对自己行为有清晰认知的基础上的。使用 `unsafe` 标记，不仅有告知编译器关闭大部分安全检查的用途，它更多是在警告我们这些开发者“这块儿代码的安全编译器无法保证”。实际上，以上代码除了直接读写函数地址的部分，其他部分都没有使用 `unsafe` 标记，总体来看还是可控的。
 
 写博客挺麻烦的，平时很忙，不过我还是尽量写了下。希望这些心得能帮到你吧，感谢阅读。

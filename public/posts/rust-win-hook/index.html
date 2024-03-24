@@ -123,7 +123,7 @@
         <span>Mar 22, 2024</span>
         <small> - 
 <span class="reading-time" title="Estimated read time">
-   12 min read  </span>
+   13 min read  </span>
     </small>
         
         
@@ -276,7 +276,7 @@
 </span><span>        </span><span style="color:#d08770;">DLL_PROCESS_ATTACH </span><span>=&gt; </span><span style="color:#b48ead;">unsafe </span><span>{
 </span><span>            hooker.</span><span style="color:#96b5b4;">enable</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>();   </span><span style="color:#65737e;">// 启动时挂上钩子
 </span><span>        },
-</span><span>        </span><span style="color:#d08770;">DLL_PROCESS_DETACH </span><span>=&gt; {
+</span><span>        </span><span style="color:#d08770;">DLL_PROCESS_DETACH </span><span>=&gt; </span><span style="color:#b48ead;">unsafe </span><span>{
 </span><span>            hooker.</span><span style="color:#96b5b4;">disable</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>();  </span><span style="color:#65737e;">// 卸载时解除钩子
 </span><span>        }
 </span><span>        </span><span style="color:#d08770;">DLL_THREAD_ATTACH </span><span>=&gt; {}
@@ -390,26 +390,14 @@
 </span><span>    </span><span style="color:#b48ead;">let</span><span> hooker_inside = hooker.</span><span style="color:#96b5b4;">clone</span><span>();
 </span><span>
 </span><span>    </span><span style="color:#b48ead;">unsafe </span><span>{
-</span><span>        hooker_inside
-</span><span>            .</span><span style="color:#96b5b4;">lock</span><span>()
-</span><span>            .</span><span style="color:#96b5b4;">unwrap</span><span>()
-</span><span>            .</span><span style="color:#96b5b4;">as_ref</span><span>()
-</span><span>            .</span><span style="color:#96b5b4;">unwrap</span><span>()
-</span><span>            .</span><span style="color:#96b5b4;">disable</span><span>()
-</span><span>            .</span><span style="color:#96b5b4;">unwrap</span><span>()
+</span><span>        hooker_inside.</span><span style="color:#96b5b4;">lock</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>().</span><span style="color:#96b5b4;">as_ref</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>().</span><span style="color:#96b5b4;">disable</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>()
 </span><span>    };
 </span><span>
 </span><span>    </span><span style="color:#b48ead;">let</span><span> ret_val = </span><span style="color:#d08770;">233333</span><span>;
 </span><span>    </span><span style="color:#96b5b4;">println</span><span>(&quot;</span><span style="color:#a3be8c;">已注入</span><span>&quot;);
 </span><span>
 </span><span>    </span><span style="color:#b48ead;">unsafe </span><span>{
-</span><span>        hooker_inside
-</span><span>            .</span><span style="color:#96b5b4;">lock</span><span>()
-</span><span>            .</span><span style="color:#96b5b4;">unwrap</span><span>()
-</span><span>            .</span><span style="color:#96b5b4;">as_ref</span><span>()
-</span><span>            .</span><span style="color:#96b5b4;">unwrap</span><span>()
-</span><span>            .</span><span style="color:#96b5b4;">enable</span><span>()
-</span><span>            .</span><span style="color:#96b5b4;">unwrap</span><span>()
+</span><span>        hooker_inside.</span><span style="color:#96b5b4;">lock</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>().</span><span style="color:#96b5b4;">as_ref</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>().</span><span style="color:#96b5b4;">enable</span><span>().</span><span style="color:#96b5b4;">unwrap</span><span>()
 </span><span>    };
 </span><span>
 </span><span>    ret_val
@@ -440,7 +428,13 @@
 </span><span>    </span><span style="color:#d08770;">BOOL</span><span>::from(</span><span style="color:#d08770;">true</span><span>)
 </span><span>}
 </span></code></pre>
+<blockquote>
+<p>由于 64 位程序默认启用了 ASLR，程序每次重新执行时所有地址都会变化，所以我们无法在 64 位程序中直接使用硬编码的地址。限于篇幅，这里不具体展开如何定位程序基址和寻找正确函数地址的过程。</p>
+</blockquote>
 <p>剩下的流程和 EAT Hook 差不多，<code>_injector</code> 不需要改动，直接运行即可。</p>
+<blockquote>
+<p>ASM Hook 的过程和 inline Hook 类似，只是需要在 DLL 中写入一些汇编代码，这里就不展开讲了。不过，Rust 可以直接内嵌 ASM 代码，具体可以参考 <a href="https://doc.rust-lang.org/reference/inline-assembly.html"><code>asm!</code> 宏的使用方法</a>。</p>
+</blockquote>
 <h2 id="7-yu-dll-jian-li-ipc-tong-xin">7. 与 DLL 建立 IPC 通信</h2>
 <p>在实际的应用中，我们可能需要与 DLL 建立 IPC 通信，以便动态指挥 DLL 做一些事情。</p>
 <p>由于这部分内容其实和 Hook 技术关系不是很大，所以我就不在这里展开讲了。不过我还是会简单分享一下我用的方案。</p>
@@ -580,6 +574,7 @@
 </span><span>conn.</span><span style="color:#96b5b4;">write</span><span>(&amp;xxx).</span><span style="color:#96b5b4;">unwrap</span><span>();
 </span></code></pre>
 <h2 id="8-jie-yu">8. 结语</h2>
+<p>Rust 是一门“安全”的语言，但这个“安全”是建立在使用者对自己行为有清晰认知的基础上的。使用 <code>unsafe</code> 标记，不仅有告知编译器关闭大部分安全检查的用途，它更多是在警告我们这些开发者“这块儿代码的安全编译器无法保证”。实际上，以上代码除了直接读写函数地址的部分，其他部分都没有使用 <code>unsafe</code> 标记，总体来看还是可控的。</p>
 <p>写博客挺麻烦的，平时很忙，不过我还是尽量写了下。希望这些心得能帮到你吧，感谢阅读。</p>
 
     </div>
@@ -594,7 +589,7 @@
           <line x1="16" y1="13" x2="8" y2="13"></line>
           <line x1="16" y1="17" x2="8" y2="17"></line>
           <polyline points="10 9 9 9 8 9"></polyline>
-        </svg>3087 Words</p>
+        </svg>3363 Words</p>
       
       <p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
