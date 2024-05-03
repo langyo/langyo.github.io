@@ -47,7 +47,7 @@ server {
     }
 
     location / {
-        return https://xxx.com/;
+        return https://xxx.com$uri;
     }
 }
 ```
