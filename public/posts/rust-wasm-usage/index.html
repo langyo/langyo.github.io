@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="X-UA-Compatible" content="ie=edge" />
+<meta itemprop="name" content="LANGYO" />
+<meta itemprop="description" content="伊欧的个人空间站点" />
+
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/style.css" />
+
+<title>基于 Rust 的 WebAssembly 使用指南</title>
+
+
+
+
+<body id="page">
+
+	
+<header id="site-header" class="animated slideInUp faster">
+  <div class="hdr-wrapper section-inner">
+    <div class="hdr-left">
+      <div class="site-branding">
+        <a href="https:&#x2F;&#x2F;langyo.xyz">LANGYO</a>
+      </div>
+      <nav class="site-nav hide-in-mobile">
+
+        
+        <a href="https://langyo.xyz/posts">记录</a>
+        
+        <a href="https://langyo.xyz/about">关于</a>
+        
+      </nav>
+    </div>
+    <div class="hdr-right hdr-icons">
+      <span class="hdr-social hide-in-mobile">
+        
+    
+    <a href="https:&#x2F;&#x2F;github.com&#x2F;langyo" target="_blank" rel="noopener me" title="github">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 1024 1024"
+        fill="currentColor">
+        <path
+          d="M950.857143 512q0 143.428571-83.714286 258T650.857143 928.571429q-15.428571 2.857143-22.571429-4t-7.142857-17.142858v-120.571428q0-55.428571-29.714286-81.142857 32.571429-3.428571 58.571429-10.285715t53.714286-22.285714 46.285714-38 30.285714-60T792 489.142857q0-69.142857-45.142857-117.714286 21.142857-52-4.571429-116.571428-16-5.142857-46.285714 6.285714t-52.571429 25.142857l-21.714285 13.714286q-53.142857-14.857143-109.714286-14.857143t-109.714286 14.857143q-9.142857-6.285714-24.285714-15.428571T330.285714 262.571429 281.142857 254.857143q-25.142857 64.571429-4 116.571428-45.142857 48.571429-45.142857 117.714286 0 48.571429 11.714286 85.714286t30 60 46 38.285714 53.714285 22.285714 58.571429 10.285715q-22.857143 20.571429-28 58.857143-12 5.714286-25.714286 8.571428t-32.571428 2.857143-37.428572-12.285714T276.571429 728q-10.857143-18.285714-27.714286-29.714286t-28.285714-13.714285l-11.428572-1.714286q-12 0-16.571428 2.571428t-2.857143 6.571429 5.142857 8 7.428571 6.857143l4 2.857143q12.571429 5.714286 24.857143 21.714285t18 29.142858l5.714286 13.142857q7.428571 21.714286 25.142857 35.142857t38.285714 17.142857 39.714286 4 31.714286-2l13.142857-2.285714q0 21.714286 0.285714 50.857143t0.285714 30.857142q0 10.285714-7.428571 17.142858t-22.857143 4q-132.571429-44-216.285714-158.571429T73.142857 512q0-119.428571 58.857143-220.285714T291.714286 132 512 73.142857t220.285714 58.857143T892 291.714286 950.857143 512z"
+          p-id="3233"></path>
+      </svg>
+      
+    </a>
+    
+    <a href="mailto:langyo.china@gmail.com" target="_blank" rel="noopener me" title="email">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 1024 1024"
+        fill="currentColor">
+        <path
+          d="M170.666667 128l682.666667 0q52.992 0 90.496 37.504t37.504 90.496l0 512q0 52.992-37.504 90.496t-90.496 37.504l-682.666667 0q-52.992 0-90.496-37.504t-37.504-90.496l0-512q0-52.992 37.504-90.496t90.496-37.504zM896 768l0-466.005333-357.333333 285.994667q-11.349333 9.344-26.666667 9.344t-26.666667-9.344l-357.333333-285.994667 0 466.005333q0 17.664 12.501333 30.165333t30.165333 12.501333l682.666667 0q17.664 0 30.165333-12.501333t12.501333-30.165333zM853.333333 213.333333l-682.666667 0q-6.314667 0-13.994667 2.346667l355.328 284.330667 355.328-284.330667q-7.68-2.346667-13.994667-2.346667z"
+          p-id="2277"></path>
+      </svg>
+      
+    </a>
+    
+    <a href="https:&#x2F;&#x2F;space.bilibili.com&#x2F;5741197" target="_blank" rel="noopener me" title="bilibili">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 1024 1024"
+        fill="currentColor">
+        <path
+          d="M777.514667 131.669333a53.333333 53.333333 0 0 1 0 75.434667L728.746667 255.829333h49.92A160 160 0 0 1 938.666667 415.872v320a160 160 0 0 1-160 160H245.333333A160 160 0 0 1 85.333333 735.872v-320a160 160 0 0 1 160-160h49.749334L246.4 207.146667a53.333333 53.333333 0 1 1 75.392-75.434667l113.152 113.152c3.370667 3.370667 6.186667 7.04 8.448 10.965333h137.088c2.261333-3.925333 5.12-7.68 8.490667-11.008l113.109333-113.152a53.333333 53.333333 0 0 1 75.434667 0z m1.152 231.253334H245.333333a53.333333 53.333333 0 0 0-53.205333 49.365333l-0.128 4.010667v320c0 28.117333 21.76 51.157333 49.365333 53.162666l3.968 0.170667h533.333334a53.333333 53.333333 0 0 0 53.205333-49.365333l0.128-3.968v-320c0-29.44-23.893333-53.333333-53.333333-53.333334z m-426.666667 106.666666c29.44 0 53.333333 23.893333 53.333333 53.333334v53.333333a53.333333 53.333333 0 1 1-106.666666 0v-53.333333c0-29.44 23.893333-53.333333 53.333333-53.333334z m320 0c29.44 0 53.333333 23.893333 53.333333 53.333334v53.333333a53.333333 53.333333 0 1 1-106.666666 0v-53.333333c0-29.44 23.893333-53.333333 53.333333-53.333334z"
+          p-id="2438"></path>
+      </svg>
+      
+    </a>
+    
+    <a href="https:&#x2F;&#x2F;steamcommunity.com&#x2F;id&#x2F;langyo_china" target="_blank" rel="noopener me" title="steam">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 1024 1024"
+        fill="currentColor">
+        <path
+          d="M895.51 350.26a415.67 415.67 0 0 0-782.86 49l59.73 24.59c39.23-151.32 176.93-263.35 340.3-263.35 193.82 0 351.5 157.68 351.5 351.5S706.5 863.5 512.68 863.5c-119.33 0-225-59.78-288.53-151l-96.22-43.43c0.63 1.55 1.27 3.08 1.91 4.62a415.6 415.6 0 0 0 765.67-323.43z"
+          p-id="7864"></path>
+        <path
+          d="M627.655345 424.39011m-61.539174 14.524565a63.23 63.23 0 1 0 123.078348-29.049129 63.23 63.23 0 1 0-123.078348 29.049129Z"
+          p-id="7865"></path>
+        <path
+          d="M395.55 755.79a99.31 99.31 0 0 0 99.31-99.31v-1.92l120-93.8c4.24 0.39 8.53 0.6 12.87 0.6a137 137 0 1 0-137-137q0 6.17 0.55 12.18L396.87 557.2h-1.32a98.87 98.87 0 0 0-50.1 13.55L100.34 460.39a421.9 421.9 0 0 0 3.85 128.13l193.94 87.31a99.34 99.34 0 0 0 97.42 79.96zM627.67 335a89.42 89.42 0 1 1-89.41 89.41A89.41 89.41 0 0 1 627.67 335zM375.4 710.61a57.63 57.63 0 0 0 76.21-28.89 57.63 57.63 0 0 0-28.89-76.2L371 582.24a78.2 78.2 0 1 1-47.33 105.08z"
+          p-id="7866"></path>
+      </svg>
+      
+    </a>
+    
+    
+      </span>
+      <button id="menu-btn" class="hdr-btn" title="Menu">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class="feather feather-menu">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+<div id="mobile-menu" class="animated fast">
+  <ul>
+    
+    <li><a href="https://langyo.xyz/posts">记录</a></li>
+    
+    <li><a href="https://langyo.xyz/about">关于</a></li>
+    
+  </ul>
+</div>
+
+
+	
+
+			
+<main class="site-main section-inner animated fadeIn faster">
+  <article class="thin">
+    <header class="post-header">
+      <div class="post-meta">
+        
+        <span>May 27, 2024</span>
+        <small> - 
+<span class="reading-time" title="Estimated read time">
+   8 min read  </span>
+    </small>
+        
+        
+      </div>
+      <h1>基于 Rust 的 WebAssembly 使用指南</h1>
+    </header>
+
+    <div class="content">
+
+      <p>时隔许久，尽管我已经在此期间成功上线了好几个纯 Rust 编写的 Web 服务，但一直没能抽空整理与此相关的基础设施的入门指南。不同于隔壁 JavaScript 娱乐圈每天都能有人整活，Rust 这边不论是要做浏览器还是 WebAssembly 的基础设施都还是非常缺人的，自然也就没有卖课的去关注这方面内容。索性，我决定就如何以 Rust 在浏览器中实现异步操作做个简单的知识梳理。</p>
+<p>老实说，<a href="https://developer.mozilla.org/en-US/docs/WebAssembly">MDN 上的那篇教程</a>其实已经有点过时了，但这是 Rust 这里的基础设施更新太快太激进导致的。我这次写这篇博客就是为了应对这种情况，不要纠结于过时的教程。</p>
+<h2 id="0-asm-js-jie-jue-xing-neng-ping-jing-de-yi-ci-chang-shi">0. <code>ASM.js</code>，解决性能瓶颈的一次尝试</h2>
+<p>众所周知，JavaScript 作为一门解释型语言，碰到诸如游戏、神经网络推导等对性能需求很高的场景时会变得萎靡不振，哪怕是拿 C# 或者 Java 这类依托虚拟机的语言写的同样应用都比这玩意跑得快。</p>
+<p>到了 2024 年，我们自然知道有 <code>WebAssembly</code> 的存在，但这其实不是一蹴而就的。</p>
+<p>2012 年，Mozilla 的 <a href="https://github.com/kripken">Alon Zakai</a> 在研究 LLVM 时，发觉其实 LLVM 生成的 LLVM IR 是可以编译为 JavaScript 的。由于 LLVM 产生的代码是经过严格类型检查和优化的，所以理论上基于此得到的 JavaScript 可以直接 AOT 编译为本地平台的可执行程序，这样就可以在浏览器中以更高的效率运行 JavaScript 了。</p>
+<p>这么说可能不太直观，我们来看一个例子：</p>
+<pre data-lang="cpp" style="background-color:#2b303b;color:#c0c5ce;" class="language-cpp "><code class="language-cpp" data-lang="cpp"><span style="color:#b48ead;">int </span><span style="color:#8fa1b3;">add</span><span>(</span><span style="color:#b48ead;">int </span><span style="color:#bf616a;">a</span><span>, </span><span style="color:#b48ead;">int </span><span style="color:#bf616a;">b</span><span>) {
+</span><span>  </span><span style="color:#b48ead;">return</span><span> a + b + </span><span style="color:#d08770;">42</span><span>;
+</span><span>}
+</span></code></pre>
+<p>把它编译为这种特殊的 JavaScript 代码之后是这样的：</p>
+<pre data-lang="javascript" style="background-color:#2b303b;color:#c0c5ce;" class="language-javascript "><code class="language-javascript" data-lang="javascript"><span style="color:#b48ead;">function </span><span style="color:#8fa1b3;">add</span><span>(</span><span style="color:#bf616a;">a</span><span>, </span><span style="color:#bf616a;">b</span><span>) {
+</span><span>  </span><span style="color:#bf616a;">a </span><span>= </span><span style="color:#bf616a;">a </span><span>| </span><span style="color:#d08770;">0</span><span>;
+</span><span>  </span><span style="color:#bf616a;">b </span><span>= </span><span style="color:#bf616a;">b </span><span>| </span><span style="color:#d08770;">0</span><span>;
+</span><span>  </span><span style="color:#b48ead;">return </span><span>(</span><span style="color:#bf616a;">a </span><span>+ </span><span style="color:#bf616a;">b </span><span>+ </span><span style="color:#d08770;">42</span><span>) | </span><span style="color:#d08770;">0</span><span>;
+</span><span>}
+</span></code></pre>
+<p>其中这个 <code>| 0</code> 是为了告诉 JavaScript 引擎这是一个整数，不要做类型转换。这种标识可以明确地告诉 JavaScript 的 AOT 编译器，这个变量是一个整数，可以放心优化。</p>
+<p>这种特殊的 JavaScript 代码就是 <code>ASM.js</code>，它是一种 JavaScript 的严格子集，可以被浏览器的 AOT 编译器优化。这种代码可以用 C/C++ 编写，然后通过 Emscripten  等工具编译为 <code>ASM.js</code>。</p>
+<p>可能有的同学要问了，如果浏览器不支持 <code>ASM.js</code> 怎么办？因为 <code>ASM.js</code> 是 JavaScript 的严格子集，所以它可以在任何支持 JavaScript 的浏览器上运行，只不过在支持 <code>ASM.js</code> 的浏览器上会有更好的性能。换句话讲，这种特殊版本的 JavaScript 更像是一种妥协过渡方案，而不是一种全新的技术。</p>
+<p>可惜的是，<code>ASM.js</code> 并没有得到广泛的支持，至今仍然只有 Firefox 对其有完整的支持。尽管 <code>ASM.js</code> 没能大规模推广，但人民群众对高性能的需求与各大浏览器厂商的利益冲突之间的矛盾，还是推动了 <code>WebAssembly</code> 的诞生。</p>
+<blockquote>
+<p>如果你仍然对 <code>ASM.js</code> 有兴趣，可以阅读阮一峰的这篇博客：<a href="https://ruanyifeng.com/blog/2017/09/asmjs_emscripten.html">https://ruanyifeng.com/blog/2017/09/asmjs_emscripten.html</a></p>
+</blockquote>
+<h2 id="1-webassembly-de-dan-sheng">1. <code>WebAssembly</code> 的诞生</h2>
+<blockquote>
+<p>这里有一篇来自 MDN 的总体介绍： <a href="https://developer.mozilla.org/zh-CN/docs/WebAssembly">https://developer.mozilla.org/zh-CN/docs/WebAssembly</a></p>
+</blockquote>
+<p><code>WebAssembly</code> 就像是 <code>ASM.js</code> 的继任者，它是各大浏览器厂商在 W3C 中拌嘴皮子很久才捣鼓出来的新标准。尽管它的名字里带个 Web，但它生来就带有更高的起点。它不再基于 JavaScript，而是作为类似 JVM 的字节码虚拟机存在。</p>
+<p>与 JVM、.NET CLR 等一众虚拟机不同的是，WebAssembly 的虚拟机没有（至少目前没加入）自己的 GC（垃圾内存回收器），垃圾内存的回收任务应当由其来源语言自行处理。例如，C++、Rust、Swift 等语言都可以做到全自动回收内存。</p>
+<p>目前，WebAssembly 的主流编译方式是基于 LLVM 提供支持。这意味着，只要你的编程语言有 LLVM 的后端，那么你就可以编译为 WebAssembly。这也是为什么 Rust 作为一门以 LLVM 作为编译器后端的语言，能够如此快速地在 WebAssembly 领域崭露头角。</p>
+<h2 id="2-shi-yao-shi-wasm-bindgen">2. 什么是 <code>wasm_bindgen</code>？</h2>
+<p>作为 Rust 语言开启 WebAssembly 之旅的第一步，<code>wasm_bindgen</code> 是一个很好的起点。它的作用是将 Rust 代码与 JavaScript 代码进行绑定，使得 Rust 代码可以在 JavaScript 中被调用。</p>
+<p>除了 <code>wasm_bindgen</code> 本体可用作依赖库外，其开发团队还准备了一个 CLI 工具 <code>wasm-bindgen-cli</code>，用于将 Rust 编译出来的成品进一步处理，将其中打好的标记解析出来并生成对应的 JavaScript 代码，这样就可以直接丢浏览器里跑了。</p>
+<p>首先我们可以通过 <code>cargo</code> 安装其 CLI 工具：</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">cargo</span><span> install wasm-bindgen-cli@0.2.92</span><span style="color:#bf616a;"> --force
+</span></code></pre>
+<p>然后新建一个项目，在其中加入 <code>wasm_bindgen</code> 依赖：</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[dependencies]
+</span><span style="color:#bf616a;">wasm-bindgen </span><span>= &quot;</span><span style="color:#a3be8c;">0.2.92</span><span>&quot;
+</span></code></pre>
+<blockquote>
+<p>这里的版本号是截至我撰写该文章时的最新版本。你可以通过 <code>cargo search wasm-bindgen --registry crates-io</code> 来确认最新版本。</p>
+<p>如果在运行 <code>wasm-bindgen</code> 时发现版本报错，请通过执行 <code>wasm-bindgen --version</code> 来查看当前安装的版本，必须和你当前项目设置的 <code>wasm-bindgen</code> 版本完全对应。</p>
+<p>我个人建议不论是依赖库还是 CLI 工具，均使用固定版本号。如果使用形如 <code>^0.2</code> 这样的浮动版本号，可能会导致不同版本之间的不兼容。也正因如此，当你更新了 <code>wasm-bindgen</code> 依赖库的版本时，也需要检查诸如本地环境或者用于生产构建的 Docker 镜像等所使用的 CLI 版本是否与之匹配。</p>
+</blockquote>
+<p>尽管任何准备基于 WebAssembly 编译成 Web 页面的 Rust 项目都一定需要 <code>wasm_bindgen</code> 作为依赖，但实际我们不是很常用到它，因为在它之上有 <code>web-sys</code> 与 <code>js-sys</code> 两个更高级的封装库，可以让我们更方便地与浏览器交互。</p>
+<blockquote>
+<p>如果你需要通过 <code>wasm-bindgen</code> 手动与 JavaScript 接口作双向绑定，可以<a href="https://rustwasm.github.io/docs/wasm-bindgen/examples/hello-world.html">查阅官方文档</a>。</p>
+</blockquote>
+<p>顺带一提，<code>wasm-bindgen</code> 并非仅局限于在浏览器环境中运行，它也可以用于 Node.js、Deno 等其它支持 WebAssembly 的 JavaScript 运行时。对于诸如 Node.js 这样的环境，通常用于服务端和 Serverless 等场景，<a href="https://github.com/cloudflare/workers-rs">例如 Cloudflare 的 Workers 服务</a>。</p>
+<h2 id="3-yu-liu-lan-qi-zhi-jie-jiao-hu-de-bao-zhuang-jie-kou-web-sys-yu-js-sys">3. 与浏览器直接交互的包装接口 <code>web_sys</code> 与 <code>js_sys</code></h2>
+<p><code>web_sys</code> 与 <code>js_sys</code> 是两个用于与浏览器直接交互的 Rust 包装库。<code>web_sys</code> 是对 Web API 的封装，而 <code>js_sys</code> 是对 JavaScript 内置对象的封装。</p>
+<p>我们随便举个例子，比如我们想要在浏览器中弹出一个对话框，我们可以这样写：</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#65737e;">// TODO: 代码示例
+</span></code></pre>
+<h2 id="4-yi-bu-zhi-chi-wasm-bindgen-futures">4. 异步支持 <code>wasm_bindgen_futures</code></h2>
+<h2 id="5-guo-qu-de-wasm-pack-yu-xian-zai-de-trunk">5. 过去的 <code>wasm-pack</code> 与现在的 <code>trunk</code></h2>
+<h2 id="6-shou-dong-bian-yi-da-bao-shou-duan-wasm-bindgen-cli">6. 手动编译打包手段 <code>wasm-bindgen-cli</code></h2>
+<h2 id="7-yi-lei-si-react-de-xuan-ran-ku-yew-gou-jian-jie-mian">7. 以类似 <code>React</code> 的渲染库 <code>yew</code> 构建界面</h2>
+<h2 id="8-yi-lei-si-imgui-de-ku-egui-gou-jian-jie-mian">8. 以类似 <code>imgui</code> 的库 <code>egui</code> 构建界面</h2>
+<h2 id="9-lai-zi-wei-lai-de-wasi">9. 来自“未来”的 <code>WASI</code></h2>
+<h2 id="10-wasmtime-wasmedge-wasmer-san-jia-fen-jin">10. <code>wasmtime</code>、<code>wasmedge</code>、<code>wasmer</code> 三家分晋</h2>
+<p>三家从其路线上可以分别看作 “学院派”、“实干派”、“实验派”。</p>
+<p><code>wasmtime</code> 更倾向于严格遵循标准，毕竟 <code>WASI</code> 标准也是主要由这个团队起草的，但也因此这位的产出是最慢的，一天到晚都在开会。不过他们手里同时也有至今最有发展潜力的纯 Rust 写的编译器后端之一 <code>cranelift</code>，另外两家想踢了他是想都别想的事情。</p>
+<p><code>wasmedge</code> 更倾向于快速投入商业使用，到处寻求合作，甚至已经和 Docker 官方达成战略合作，Docker 可以直接部署基于 <code>wasmedge</code> 的容器。不过它是 C++ 写的，并且有很多私货，在遵守 <code>WASI</code> 基本规范的同时自行加了很多东西。</p>
+<p><code>wasmer</code> 更倾向于将其做得更有利于工程化，保证上游链路可以按原样直接用，为此甚至不惜代价重写了一直蔓延到 <code>rustc</code> 编译器本身的代码。但也因此魔改的过于剧烈，直接导致其维护的大量上游分支产能跟不上社区，有点割裂。但是 <code>wasmer</code> 率先做了 WASI 中心库的设施，所以一时间大家对此也很看好。</p>
+
+    </div>
+    <hr class="post-end">
+    <footer class="post-info">
+      
+      <p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class="feather feather-file-text">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>2141 Words</p>
+      
+      <p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class="feather feather-calendar">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>2024-05-27</p>
+      
+    </footer>
+  </article>
+  
+
+  <div class="post-nav thin">
+    
+    
+  </div>
+
+  
+</main>
+
+		</div>
+
+		
+
+
+    <footer id="site-footer" class="section-inner thin animated fadeIn faster">
+      <p>&copy; 2024 <a href="https:&#x2F;&#x2F;langyo.xyz">langyo</a> &#183; <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a></p>
+      <p>
+        Made with
+        <a href="https://www.getzola.org" target="_blank" rel="noopener">Zola</a>
+        &#183; Theme based on
+        <a href="https://github.com/VersBinarii/hermit_zola" target="_blank" rel="noopener">Hermit Zola</a>
+        
+      </p>
+    </footer>
+
+    
+
+	</div>
+
+	<script src="/js/main.js"></script>
+
+	<!-- Math rendering -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"
+		integrity="sha384-zB1R0rpPzHqg7Kpt0Aljp8JPLqbXI3bhnPWROx27a9N0Ll6ZP/+DiW/UqRcLbRjq" crossorigin="anonymous">
+	<script defer src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"
+		integrity="sha384-y23I5Q6l+B6vatafAwxRu/0oK/79VlbSz7Q9aiSZUvyWYIYsd+qj+o24G5ZU2zJz"
+		crossorigin="anonymous"></script>
+	<script defer src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"
+		integrity="sha384-kWPLUVMOks5AQFrykwIup5lo0m3iMkkHrD0uJ4H5cjeGihAutqP0yW0J6dpFiVkI" crossorigin="anonymous"
+		onload="renderMathInElement(document.body, { delimiters: [ {left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}, {left: '\\[', right: '\\]', display: true}, {left: '\\(', right: '\\)', display: false}]});"></script>
+
+	
+	<link href="https://unpkg.com/highlightjs-badge/highlightjs/styles/obsidian.css"
+		rel="stylesheet">
+	<script src="https://unpkg.com/highlightjs-badge/highlightjs/highlight.pack.js"></script>
+	<script src="https://unpkg.com/highlightjs-badge/highlightjs-badge.min.js"></script>
+	<script>
+		var pres = document.querySelectorAll("pre>code");
+		for (var i = 0; i < pres.length; i++) {
+			hljs.highlightBlock(pres[i]);
+		}
+	</script>
+	
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js"></script>
+	<script>
+		var options = {
+			copyIconClass: "gg-clipboard",
+			checkIconClass: "gg-check"
+		};
+		window.highlightJsBadge(options);
+	</script>
+	
+
+	
+
+	
+
+	
+	
+
+	
+	<!-- Global Site Tag (gtag.js) - Google Analytics -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-QHZB20Q6RQ"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag() { dataLayer.push(arguments); }
+		gtag('js', new Date());
+		gtag('config', 'G-QHZB20Q6RQ');
+	</script>
+	
+</body>
+
+</html>
