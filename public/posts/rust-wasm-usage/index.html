@@ -10,7 +10,7 @@
 <link rel="shortcut icon" href="/favicon.ico" />
 <link rel="stylesheet" href="/style.css" />
 
-<title>基于 Rust 的 WebAssembly 使用指南</title>
+<title>基于 Rust 的 WebAssembly 漫游指南</title>
 
 
 
@@ -123,38 +123,38 @@
         <span>May 27, 2024</span>
         <small> - 
 <span class="reading-time" title="Estimated read time">
-   8 min read  </span>
+   24 min read  </span>
     </small>
         
         
       </div>
-      <h1>基于 Rust 的 WebAssembly 使用指南</h1>
+      <h1>基于 Rust 的 WebAssembly 漫游指南</h1>
     </header>
 
     <div class="content">
 
       <p>时隔许久，尽管我已经在此期间成功上线了好几个纯 Rust 编写的 Web 服务，但一直没能抽空整理与此相关的基础设施的入门指南。不同于隔壁 JavaScript 娱乐圈每天都能有人整活，Rust 这边不论是要做浏览器还是 WebAssembly 的基础设施都还是非常缺人的，自然也就没有卖课的去关注这方面内容。索性，我决定就如何以 Rust 在浏览器中实现异步操作做个简单的知识梳理。</p>
 <p>老实说，<a href="https://developer.mozilla.org/en-US/docs/WebAssembly">MDN 上的那篇教程</a>其实已经有点过时了，但这是 Rust 这里的基础设施更新太快太激进导致的。我这次写这篇博客就是为了应对这种情况，不要纠结于过时的教程。</p>
-<h2 id="0-asm-js-jie-jue-xing-neng-ping-jing-de-yi-ci-chang-shi">0. <code>ASM.js</code>，解决性能瓶颈的一次尝试</h2>
+<h2 id="xu-yan-asm-js-jie-jue-xing-neng-ping-jing-de-yi-ci-chang-shi">序言： <code>ASM.js</code>，解决性能瓶颈的一次尝试</h2>
 <p>众所周知，JavaScript 作为一门解释型语言，碰到诸如游戏、神经网络推导等对性能需求很高的场景时会变得萎靡不振，哪怕是拿 C# 或者 Java 这类依托虚拟机的语言写的同样应用都比这玩意跑得快。</p>
 <p>到了 2024 年，我们自然知道有 <code>WebAssembly</code> 的存在，但这其实不是一蹴而就的。</p>
-<p>2012 年，Mozilla 的 <a href="https://github.com/kripken">Alon Zakai</a> 在研究 LLVM 时，发觉其实 LLVM 生成的 LLVM IR 是可以编译为 JavaScript 的。由于 LLVM 产生的代码是经过严格类型检查和优化的，所以理论上基于此得到的 JavaScript 可以直接 AOT 编译为本地平台的可执行程序，这样就可以在浏览器中以更高的效率运行 JavaScript 了。</p>
+<p>2012 年，Mozilla 的 <a href="https://github.com/kripken">Alon Zakai</a> 在研究 LLVM 时，发觉 LLVM 生成的 LLVM IR 是可以编译为 JavaScript 的。LLVM 产生的代码是经过严格类型检查和优化的，因此理论上基于此得到的 JavaScript 可以直接 AOT 编译为本地平台的可执行程序，这样就可以在浏览器中以更高的效率运行 JavaScript 了。</p>
 <p>这么说可能不太直观，我们来看一个例子：</p>
 <pre data-lang="cpp" style="background-color:#2b303b;color:#c0c5ce;" class="language-cpp "><code class="language-cpp" data-lang="cpp"><span style="color:#b48ead;">int </span><span style="color:#8fa1b3;">add</span><span>(</span><span style="color:#b48ead;">int </span><span style="color:#bf616a;">a</span><span>, </span><span style="color:#b48ead;">int </span><span style="color:#bf616a;">b</span><span>) {
-</span><span>  </span><span style="color:#b48ead;">return</span><span> a + b + </span><span style="color:#d08770;">42</span><span>;
+</span><span>    </span><span style="color:#b48ead;">return</span><span> a + b + </span><span style="color:#d08770;">42</span><span>;
 </span><span>}
 </span></code></pre>
 <p>把它编译为这种特殊的 JavaScript 代码之后是这样的：</p>
 <pre data-lang="javascript" style="background-color:#2b303b;color:#c0c5ce;" class="language-javascript "><code class="language-javascript" data-lang="javascript"><span style="color:#b48ead;">function </span><span style="color:#8fa1b3;">add</span><span>(</span><span style="color:#bf616a;">a</span><span>, </span><span style="color:#bf616a;">b</span><span>) {
-</span><span>  </span><span style="color:#bf616a;">a </span><span>= </span><span style="color:#bf616a;">a </span><span>| </span><span style="color:#d08770;">0</span><span>;
-</span><span>  </span><span style="color:#bf616a;">b </span><span>= </span><span style="color:#bf616a;">b </span><span>| </span><span style="color:#d08770;">0</span><span>;
-</span><span>  </span><span style="color:#b48ead;">return </span><span>(</span><span style="color:#bf616a;">a </span><span>+ </span><span style="color:#bf616a;">b </span><span>+ </span><span style="color:#d08770;">42</span><span>) | </span><span style="color:#d08770;">0</span><span>;
+</span><span>    </span><span style="color:#bf616a;">a </span><span>= </span><span style="color:#bf616a;">a </span><span>| </span><span style="color:#d08770;">0</span><span>;
+</span><span>    </span><span style="color:#bf616a;">b </span><span>= </span><span style="color:#bf616a;">b </span><span>| </span><span style="color:#d08770;">0</span><span>;
+</span><span>    </span><span style="color:#b48ead;">return </span><span>(</span><span style="color:#bf616a;">a </span><span>+ </span><span style="color:#bf616a;">b </span><span>+ </span><span style="color:#d08770;">42</span><span>) | </span><span style="color:#d08770;">0</span><span>;
 </span><span>}
 </span></code></pre>
 <p>其中这个 <code>| 0</code> 是为了告诉 JavaScript 引擎这是一个整数，不要做类型转换。这种标识可以明确地告诉 JavaScript 的 AOT 编译器，这个变量是一个整数，可以放心优化。</p>
 <p>这种特殊的 JavaScript 代码就是 <code>ASM.js</code>，它是一种 JavaScript 的严格子集，可以被浏览器的 AOT 编译器优化。这种代码可以用 C/C++ 编写，然后通过 Emscripten  等工具编译为 <code>ASM.js</code>。</p>
 <p>可能有的同学要问了，如果浏览器不支持 <code>ASM.js</code> 怎么办？因为 <code>ASM.js</code> 是 JavaScript 的严格子集，所以它可以在任何支持 JavaScript 的浏览器上运行，只不过在支持 <code>ASM.js</code> 的浏览器上会有更好的性能。换句话讲，这种特殊版本的 JavaScript 更像是一种妥协过渡方案，而不是一种全新的技术。</p>
-<p>可惜的是，<code>ASM.js</code> 并没有得到广泛的支持，至今仍然只有 Firefox 对其有完整的支持。尽管 <code>ASM.js</code> 没能大规模推广，但人民群众对高性能的需求与各大浏览器厂商的利益冲突之间的矛盾，还是推动了 <code>WebAssembly</code> 的诞生。</p>
+<p>可惜的是，<code>ASM.js</code> 并没有得到广泛的支持，至今仍然只有 Firefox 对其有完整的支持。尽管 <code>ASM.js</code> 没能大规模推广，但大家对浏览器高性能计算的需求与各大浏览器厂商的利益冲突之间的矛盾，还是推动了 <code>WebAssembly</code> 的诞生。</p>
 <blockquote>
 <p>如果你仍然对 <code>ASM.js</code> 有兴趣，可以阅读阮一峰的这篇博客：<a href="https://ruanyifeng.com/blog/2017/09/asmjs_emscripten.html">https://ruanyifeng.com/blog/2017/09/asmjs_emscripten.html</a></p>
 </blockquote>
@@ -165,42 +165,316 @@
 <p><code>WebAssembly</code> 就像是 <code>ASM.js</code> 的继任者，它是各大浏览器厂商在 W3C 中拌嘴皮子很久才捣鼓出来的新标准。尽管它的名字里带个 Web，但它生来就带有更高的起点。它不再基于 JavaScript，而是作为类似 JVM 的字节码虚拟机存在。</p>
 <p>与 JVM、.NET CLR 等一众虚拟机不同的是，WebAssembly 的虚拟机没有（至少目前没加入）自己的 GC（垃圾内存回收器），垃圾内存的回收任务应当由其来源语言自行处理。例如，C++、Rust、Swift 等语言都可以做到全自动回收内存。</p>
 <p>目前，WebAssembly 的主流编译方式是基于 LLVM 提供支持。这意味着，只要你的编程语言有 LLVM 的后端，那么你就可以编译为 WebAssembly。这也是为什么 Rust 作为一门以 LLVM 作为编译器后端的语言，能够如此快速地在 WebAssembly 领域崭露头角。</p>
+<p>很显然，这种一出生就踩在巨人的肩膀上的优势，使得 WebAssembly 与 Rust 之间有许多共同话题。Rust 作为一门系统编程语言，与 WebAssembly 一样，都是为了解决性能与安全问题而生，可以说是天作之合。</p>
+<p>在正式开始前，我们需要先准备一下 Rust 的 WebAssembly 开发环境。如果你还没有安装 Rust，可以参考 <a href="https://www.rust-lang.org/learn/get-started">Rust 官方文档</a>，这里不再赘述。</p>
+<p>我们可以通过 <code>rustup</code> 安装 <code>wasm32-unknown-unknown</code> 目标平台：</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">rustup</span><span> target add wasm32-unknown-unknown
+</span></code></pre>
 <h2 id="2-shi-yao-shi-wasm-bindgen">2. 什么是 <code>wasm_bindgen</code>？</h2>
 <p>作为 Rust 语言开启 WebAssembly 之旅的第一步，<code>wasm_bindgen</code> 是一个很好的起点。它的作用是将 Rust 代码与 JavaScript 代码进行绑定，使得 Rust 代码可以在 JavaScript 中被调用。</p>
-<p>除了 <code>wasm_bindgen</code> 本体可用作依赖库外，其开发团队还准备了一个 CLI 工具 <code>wasm-bindgen-cli</code>，用于将 Rust 编译出来的成品进一步处理，将其中打好的标记解析出来并生成对应的 JavaScript 代码，这样就可以直接丢浏览器里跑了。</p>
-<p>首先我们可以通过 <code>cargo</code> 安装其 CLI 工具：</p>
-<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">cargo</span><span> install wasm-bindgen-cli@0.2.92</span><span style="color:#bf616a;"> --force
-</span></code></pre>
-<p>然后新建一个项目，在其中加入 <code>wasm_bindgen</code> 依赖：</p>
-<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[dependencies]
-</span><span style="color:#bf616a;">wasm-bindgen </span><span>= &quot;</span><span style="color:#a3be8c;">0.2.92</span><span>&quot;
+<p>新建一个项目，在其中加入 <code>wasm_bindgen</code> 依赖：</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[lib]
+</span><span style="color:#bf616a;">crate-type </span><span>= [&quot;</span><span style="color:#a3be8c;">cdylib</span><span>&quot;]
+</span><span>
+</span><span>[dependencies]
+</span><span style="color:#bf616a;">wasm-bindgen </span><span>= &quot;</span><span style="color:#a3be8c;">0.2.93</span><span>&quot; </span><span style="color:#65737e;"># 注意这里的版本不一定是最新的
 </span></code></pre>
 <blockquote>
-<p>这里的版本号是截至我撰写该文章时的最新版本。你可以通过 <code>cargo search wasm-bindgen --registry crates-io</code> 来确认最新版本。</p>
-<p>如果在运行 <code>wasm-bindgen</code> 时发现版本报错，请通过执行 <code>wasm-bindgen --version</code> 来查看当前安装的版本，必须和你当前项目设置的 <code>wasm-bindgen</code> 版本完全对应。</p>
-<p>我个人建议不论是依赖库还是 CLI 工具，均使用固定版本号。如果使用形如 <code>^0.2</code> 这样的浮动版本号，可能会导致不同版本之间的不兼容。也正因如此，当你更新了 <code>wasm-bindgen</code> 依赖库的版本时，也需要检查诸如本地环境或者用于生产构建的 Docker 镜像等所使用的 CLI 版本是否与之匹配。</p>
+<p>这里的版本号是截至我撰写该文章时的最新版本。你可以通过在终端运行 <code>cargo search wasm-bindgen --registry crates-io</code>，或是直接访问 <a href="https://docs.rs/wasm-bindgen/latest/wasm_bindgen">https://docs.rs/wasm-bindgen/latest/wasm_bindgen</a> 来确认最新版本。</p>
 </blockquote>
 <p>尽管任何准备基于 WebAssembly 编译成 Web 页面的 Rust 项目都一定需要 <code>wasm_bindgen</code> 作为依赖，但实际我们不是很常用到它，因为在它之上有 <code>web-sys</code> 与 <code>js-sys</code> 两个更高级的封装库，可以让我们更方便地与浏览器交互。</p>
 <blockquote>
 <p>如果你需要通过 <code>wasm-bindgen</code> 手动与 JavaScript 接口作双向绑定，可以<a href="https://rustwasm.github.io/docs/wasm-bindgen/examples/hello-world.html">查阅官方文档</a>。</p>
 </blockquote>
 <p>顺带一提，<code>wasm-bindgen</code> 并非仅局限于在浏览器环境中运行，它也可以用于 Node.js、Deno 等其它支持 WebAssembly 的 JavaScript 运行时。对于诸如 Node.js 这样的环境，通常用于服务端和 Serverless 等场景，<a href="https://github.com/cloudflare/workers-rs">例如 Cloudflare 的 Workers 服务</a>。</p>
+<p>这之后，重新编辑一下入口文件 <code>lib.rs</code>，加入适配 <code>wasm_bindgen</code> 的启动代码：</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>wasm_bindgen::prelude::*;
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">derive</span><span>(Clone)]
+</span><span>#[</span><span style="color:#bf616a;">wasm_bindgen</span><span>]
+</span><span style="color:#b48ead;">pub struct </span><span>WebHandle {}
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">wasm_bindgen</span><span>]
+</span><span style="color:#b48ead;">impl </span><span>WebHandle {
+</span><span>    #[</span><span style="color:#bf616a;">allow</span><span>(clippy::new_without_default)]
+</span><span>    #[</span><span style="color:#bf616a;">wasm_bindgen</span><span>(constructor)]
+</span><span>    </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">new</span><span>() -&gt; </span><span style="color:#b48ead;">Self </span><span>{
+</span><span>        </span><span style="color:#65737e;">// 初始化代码
+</span><span>
+</span><span>        </span><span style="color:#b48ead;">Self </span><span>{}
+</span><span>    }
+</span><span>
+</span><span>    #[</span><span style="color:#bf616a;">wasm_bindgen</span><span>]
+</span><span>    </span><span style="color:#b48ead;">pub</span><span> async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">start</span><span>(&amp;</span><span style="color:#bf616a;">self</span><span>) -&gt; Result&lt;(), wasm_bindgen::JsValue&gt; {
+</span><span>        </span><span style="color:#65737e;">// 启动代码，仅当外部浏览器环境调用时执行
+</span><span>
+</span><span>        Ok(())
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>接下来，我们将介绍一些基于 <code>wasm-bindgen</code> 的抽象层次更高的库，它们可以让我们更方便地与浏览器交互。</p>
 <h2 id="3-yu-liu-lan-qi-zhi-jie-jiao-hu-de-bao-zhuang-jie-kou-web-sys-yu-js-sys">3. 与浏览器直接交互的包装接口 <code>web_sys</code> 与 <code>js_sys</code></h2>
 <p><code>web_sys</code> 与 <code>js_sys</code> 是两个用于与浏览器直接交互的 Rust 包装库。<code>web_sys</code> 是对 Web API 的封装，而 <code>js_sys</code> 是对 JavaScript 内置对象的封装。</p>
 <p>我们随便举个例子，比如我们想要在浏览器中弹出一个对话框，我们可以这样写：</p>
-<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#65737e;">// TODO: 代码示例
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>wasm_bindgen::UnwrapThrowExt as _;
+</span><span>
+</span><span>web_sys::window().</span><span style="color:#96b5b4;">unwrap_throw</span><span>().</span><span style="color:#96b5b4;">alert_with_message</span><span>(&quot;</span><span style="color:#a3be8c;">Ciallo～(∠・ω&lt; )⌒☆</span><span>&quot;).</span><span style="color:#96b5b4;">unwrap_throw</span><span>();
+</span></code></pre>
+<p>要想操纵 DOM 元素也是相当轻松的，比如我们想要在页面中插入一个 <code>span</code> 元素，我们可以这样写：</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>wasm_bindgen::UnwrapThrowExt as _;
+</span><span>
+</span><span style="color:#b48ead;">let</span><span> document = web_sys::window().</span><span style="color:#96b5b4;">unwrap_throw</span><span>().</span><span style="color:#96b5b4;">document</span><span>().</span><span style="color:#96b5b4;">unwrap_throw</span><span>();
+</span><span style="color:#b48ead;">let</span><span> body = document.</span><span style="color:#96b5b4;">body</span><span>().</span><span style="color:#96b5b4;">unwrap_throw</span><span>();
+</span><span>
+</span><span style="color:#b48ead;">let</span><span> el = document.</span><span style="color:#96b5b4;">create_element</span><span>(&quot;</span><span style="color:#a3be8c;">span</span><span>&quot;).</span><span style="color:#96b5b4;">unwrap_throw</span><span>();
+</span><span>el.</span><span style="color:#96b5b4;">set_inner_html</span><span>(&quot;</span><span style="color:#a3be8c;">Ciallo～(∠・ω&lt; )⌒☆</span><span>&quot;);
+</span><span>body.</span><span style="color:#96b5b4;">append_child</span><span>(&amp;el).</span><span style="color:#96b5b4;">unwrap_throw</span><span>();
+</span></code></pre>
+<p>比较麻烦的是回调函数，因为 Rust 与 JavaScript 的回调函数是不同的，所以我们需要用 <code>Closure</code> 来包装一下：</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>wasm_bindgen::prelude::*;
+</span><span>
+</span><span style="color:#b48ead;">let</span><span> document = web_sys::window().</span><span style="color:#96b5b4;">unwrap_throw</span><span>().</span><span style="color:#96b5b4;">document</span><span>().</span><span style="color:#96b5b4;">unwrap_throw</span><span>();
+</span><span style="color:#b48ead;">let</span><span> body = document.</span><span style="color:#96b5b4;">body</span><span>().</span><span style="color:#96b5b4;">unwrap_throw</span><span>();
+</span><span>
+</span><span style="color:#b48ead;">let</span><span> el = document.</span><span style="color:#96b5b4;">create_element</span><span>(&quot;</span><span style="color:#a3be8c;">button</span><span>&quot;).</span><span style="color:#96b5b4;">unwrap_throw</span><span>();
+</span><span>el.</span><span style="color:#96b5b4;">set_inner_html</span><span>(&quot;</span><span style="color:#a3be8c;">Ciallo～(∠・ω&lt; )⌒☆</span><span>&quot;);
+</span><span>body.</span><span style="color:#96b5b4;">append_child</span><span>(&amp;el).</span><span style="color:#96b5b4;">unwrap_throw</span><span>();
+</span><span>
+</span><span>el.</span><span style="color:#96b5b4;">add_event_listener_with_callback</span><span>(&quot;</span><span style="color:#a3be8c;">click</span><span>&quot;, Closure::wrap(Box::new(
+</span><span>    </span><span style="color:#b48ead;">move </span><span>|_: web_sys::Event| {
+</span><span>        gloo::dialogs::alert(&quot;</span><span style="color:#a3be8c;">Ciallo～(∠・ω&lt; )⌒☆</span><span>&quot;);
+</span><span>    }) as Box&lt;dyn FnMut(_)&gt;).</span><span style="color:#96b5b4;">as_ref</span><span>().</span><span style="color:#96b5b4;">unchecked_ref</span><span>()
+</span><span>).</span><span style="color:#96b5b4;">unwrap_throw</span><span>();
 </span></code></pre>
 <h2 id="4-yi-bu-zhi-chi-wasm-bindgen-futures">4. 异步支持 <code>wasm_bindgen_futures</code></h2>
-<h2 id="5-guo-qu-de-wasm-pack-yu-xian-zai-de-trunk">5. 过去的 <code>wasm-pack</code> 与现在的 <code>trunk</code></h2>
-<h2 id="6-shou-dong-bian-yi-da-bao-shou-duan-wasm-bindgen-cli">6. 手动编译打包手段 <code>wasm-bindgen-cli</code></h2>
-<h2 id="7-yi-lei-si-react-de-xuan-ran-ku-yew-gou-jian-jie-mian">7. 以类似 <code>React</code> 的渲染库 <code>yew</code> 构建界面</h2>
-<h2 id="8-yi-lei-si-imgui-de-ku-egui-gou-jian-jie-mian">8. 以类似 <code>imgui</code> 的库 <code>egui</code> 构建界面</h2>
-<h2 id="9-lai-zi-wei-lai-de-wasi">9. 来自“未来”的 <code>WASI</code></h2>
+<p><code>wasm_bindgen_futures</code> 是一个用于在 WebAssembly 中支持异步操作的库。它的作用是将 Rust 的 <code>Future</code> 与 JavaScript 的 <code>Promise</code> 进行绑定，使得我们可以在 Rust 中使用 <code>async/await</code> 语法。</p>
+<p>这个库能做出来，很大程度上依赖于浏览器的单线程模型。在浏览器中，所有的异步操作都是基于事件循环的，同一时间保证只做一件事，甚至为此 WebAssembly 在运行时 JavaScript 主线程会被暂时挂起。</p>
+<p>下面简单演示一下它的用法：</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>wasm_bindgen::prelude::*;
+</span><span>
+</span><span>wasm_bindgen_futures::spawn_local(async {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> client = reqwest::Client::get(&quot;</span><span style="color:#a3be8c;">https://httpbin.org/status/418</span><span>&quot;)
+</span><span>        .</span><span style="color:#96b5b4;">send</span><span>()
+</span><span>        .await
+</span><span>        .</span><span style="color:#96b5b4;">unwrap_throw</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">if</span><span> client.</span><span style="color:#96b5b4;">status</span><span>() == reqwest::StatusCode::</span><span style="color:#d08770;">IM_A_TEAPOT </span><span>{
+</span><span>        gloo::dialogs::alert(&quot;</span><span style="color:#a3be8c;">你说得对，但我只是一个茶壶。</span><span>&quot;);
+</span><span>    }
+</span><span>});
+</span></code></pre>
+<p>既然浏览器中 WebAssembly 运行时同样也会阻塞主线程，那为什么浏览器还能正常响应同一页面下其它 JavaScript 代码的事件呢？实际上，在浏览器的事件模型中，WebAssembly 代码也是可以“暂停”运行的，就像 JavaScript 正在运行的长时间计算，也有可能会因为用户操作而临时挂起一样。</p>
+<blockquote>
+<p>可能有经验的同学会问，为什么不使用 <code>tokio</code> 或者 <code>async-std</code> 这类更通用的异步库呢？</p>
+<p>很显然，浏览器这种单线程、基于事件循环的异步模型与 <code>tokio</code>、<code>async-std</code> 这类多线程、基于线程池的异步模型是不同的。作为通用的异步库，它们很难为了浏览器这么一类奇葩而自断一臂，以此强行适配。</p>
+<p>不过，<code>yew</code> 的开发组也有两边都进行异步操作的需求，所以他们写了个名为 <a href="https://github.com/yewstack/prokio"><code>prokio</code></a> 的库，以提供一个同时兼容浏览器与通用多线程架构的接口，分别在两边使用不同的异步库。</p>
+</blockquote>
+<h2 id="5-shou-dong-bian-yi-da-bao-shou-duan-wasm-bindgen-cli">5. 手动编译打包手段 <code>wasm-bindgen-cli</code></h2>
+<p>现在，我们终于进入 WebAssembly 的编译与打包阶段了。</p>
+<p>除了 <code>wasm_bindgen</code> 本体可用作依赖库外，其开发团队还准备了一个名字很像的 CLI 工具 <code>wasm-bindgen-cli</code>，用于将 Rust 编译出来的成品进一步处理，将其中打好的标记解析出来并生成对应的 JavaScript 代码，这样就可以直接丢浏览器里跑了。</p>
+<p>首先我们可以通过 <code>cargo</code> 安装其 CLI 工具：</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">cargo</span><span> install wasm-bindgen-cli@0.2.93</span><span style="color:#bf616a;"> --force </span><span style="color:#65737e;"># 注意这里的版本不一定是最新的
+</span></code></pre>
+<blockquote>
+<p>如果在运行 <code>wasm-bindgen</code> 时发现版本报错，请通过执行 <code>wasm-bindgen --version</code> 来查看当前安装的版本，<strong>必须</strong>和你当前项目设置的 <code>wasm-bindgen</code> 版本完全对应。</p>
+<p>我个人建议 <code>wasm-bindgen</code> 始终使用固定版本号。如果使用形如 <code>^0.2</code> 这样的浮动版本号，可能会导致不同版本之间的不兼容。也正因如此，当你更新了 <code>wasm-bindgen</code> 依赖库的版本时，也需要检查诸如本地环境或者用于生产构建的 Docker 镜像等所使用的 CLI 版本是否与之匹配。</p>
+</blockquote>
+<p>然后，我们可以通过 <code>wasm-bindgen</code> 命令来编译打包我们的 WebAssembly 代码：</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">wasm-bindgen --out-dir</span><span> ./target/wasm32-html-app</span><span style="color:#bf616a;"> --out-name</span><span> test</span><span style="color:#bf616a;"> --target</span><span> no-modules</span><span style="color:#bf616a;"> --no-typescript --no-modules-global</span><span> wasm_vendor_entry ./target/wasm32-unknown-unknown/release/test.wasm
+</span></code></pre>
+<p>其中，<code>--out-dir</code> 用于指定输出目录，<code>--out-name</code> 用于指定输出文件名，<code>--target</code> 用于指定输出的 JavaScript 代码的模块化方式，<code>--no-typescript</code> 用于禁用 TypeScript 类型提示代码（<code>.d.ts</code>）的生成，<code>--no-modules-global</code> 用于禁用全局模块化。</p>
+<p>最后，在引用了生成的 JavaScript 文件的 HTML 文件中，我们可以这样引用：</p>
+<pre data-lang="html" style="background-color:#2b303b;color:#c0c5ce;" class="language-html "><code class="language-html" data-lang="html"><span>&lt;</span><span style="color:#bf616a;">script </span><span style="color:#d08770;">src</span><span>=&#39;</span><span style="color:#a3be8c;">/test.js</span><span>&#39;&gt;&lt;/</span><span style="color:#bf616a;">script</span><span>&gt;
+</span><span>&lt;</span><span style="color:#bf616a;">script</span><span>&gt;
+</span><span>(</span><span style="color:#b48ead;">async </span><span>() </span><span style="color:#b48ead;">=&gt; </span><span>{
+</span><span>    </span><span style="color:#b48ead;">await </span><span style="color:#bf616a;">wasm_vendor_entry</span><span>(&#39;</span><span style="color:#a3be8c;">/test_bg.wasm</span><span>&#39;);
+</span><span>    (</span><span style="color:#b48ead;">await </span><span>(new </span><span style="color:#bf616a;">wasm_vendor_entry</span><span>.</span><span style="color:#bf616a;">WebHandle</span><span>())).</span><span style="color:#bf616a;">start</span><span>();
+</span><span>})()
+</span><span>&lt;/</span><span style="color:#bf616a;">script</span><span>&gt;
+</span></code></pre>
+<p>这里的全局变量 <code>wasm_vendor_entry</code> 直接对应我们在调用 <code>wasm-bindgen-cli</code> 时指定的参数项 <code>--no-modules-global</code>。另外，<code>wasm-bindgen-cli</code> 生成的文件中，WASM 文件的后缀是 <code>_bg.wasm</code>，JavaScript 文件的后缀是 <code>.js</code>，小心别搞错了。</p>
+<h2 id="6-guo-qu-de-wasm-pack-yu-xian-zai-de-trunk">6. 过去的 <code>wasm-pack</code> 与现在的 <code>trunk</code></h2>
+<p>上面这一顿操作还是比较麻烦的，所以在浏览器 WASM 推广的初期，有人想到了可以把这些操作封装成一个工具，这样就可以直接用命令行一键编译打包了。</p>
+<p><code>wasm-pack</code> 就是其中最出名的一个，它用于简化 <code>wasm-bindgen-cli</code> 的使用，自动帮我们完成编译 Rust 代码、和打包生成配套的 JavaScript 代码的工作。</p>
+<p>要安装 <code>wasm-pack</code>，可以直接通过 <code>cargo</code> 安装：</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">cargo</span><span> install wasm-pack
+</span></code></pre>
+<p>理论上，<code>wasm-pack</code> 的所有工作其实都可以由我们手动完成，无非是如何花式写 <code>wasm-bindgen-cli</code> 的命令行参数。但是，<code>wasm-pack</code> 的存在还是很有必要的，因为它提供了一种标准化的打包方式，使得我们可以更方便地在不同项目之间复用打包配置。</p>
+<p>除了向浏览器平台编译以外，它还提供了针对其它 JavaScript 执行环境的打包方式，如 NodeJS、Deno。如果向这些目标编译，它还会根据不同的打包方式额外补充一些 JavaScript 样板代码和配置文件。</p>
+<p>不过，现在 <code>wasm-pack</code> 似乎已经不再有人积极维护了，取而代之的是新兴的 <code>trunk</code>。<code>trunk</code> 同样也是一个基于 <code>wasm-bindgen</code> 的打包工具，但它更着重于只针对浏览器端做各种打包工作。</p>
+<p><code>trunk</code> 的安装也是通过 <code>cargo</code> 进行：</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">cargo</span><span> install trunk
+</span></code></pre>
+<p><code>trunk</code> 有点像是 <code>vite</code> 的 Rust 版本，通过识别用户给的粗略的 HTML 文件，根据其中列出引用的资源文件做各种打包工作。<a href="https://trunkrs.dev/assets">它能接受的资源类型很丰富</a>，除了基本的 <code>CSS</code> 与 <code>JavaScript</code> 之外，还可以直接引用包含额外的 Rust 代码、扩展的 SASS / SCSS 样式表、图标文件等。</p>
+<pre data-lang="html" style="background-color:#2b303b;color:#c0c5ce;" class="language-html "><code class="language-html" data-lang="html"><span>&lt;</span><span style="color:#bf616a;">html</span><span>&gt;
+</span><span>  &lt;</span><span style="color:#bf616a;">head</span><span>&gt;
+</span><span>    &lt;</span><span style="color:#bf616a;">link </span><span style="color:#d08770;">data-trunk rel</span><span>=&quot;</span><span style="color:#a3be8c;">scss</span><span>&quot; </span><span style="color:#d08770;">href</span><span>=&quot;</span><span style="color:#a3be8c;">path/to/index.scss</span><span>&quot;/&gt;
+</span><span>    &lt;</span><span style="color:#bf616a;">link </span><span style="color:#d08770;">data-trunk rel</span><span>=&quot;</span><span style="color:#a3be8c;">copy-file</span><span>&quot; </span><span style="color:#d08770;">href</span><span>=&quot;</span><span style="color:#a3be8c;">path/to/image</span><span>&quot;/&gt;
+</span><span>  &lt;/</span><span style="color:#bf616a;">head</span><span>&gt;
+</span><span>&lt;/</span><span style="color:#bf616a;">html</span><span>&gt;
+</span></code></pre>
+<p><code>trunk</code> 会根据这些标签自动识别并处理这些资源文件。在项目的根目录下准备一个 <code>index.html</code> 文件，写上类似上述的配置，然后在项目根目录下运行 <code>trunk serve</code>。它会在编译完成后开放一个端口，用浏览器打开即可看到实时的编译结果。如果需要发布，可以运行 <code>trunk build</code>，它会将编译结果输出到工作目录下的 <code>dist</code> 目录。</p>
+<blockquote>
+<p><code>trunk</code> 的配置文件是 <code>Trunk.toml</code>，一般可以不用写。如果需要定制，<a href="https://github.com/trunk-rs/trunk/blob/main/Trunk.toml">这里有一份官方的示例配置可以参考</a>。</p>
+</blockquote>
+<p>其实，这两个工具 <code>wasm-pack</code> 与 <code>trunk</code> 都是基于 <code>wasm-bindgen-cli</code> 的封装。如果你对这两个工具不满意，或者有更复杂的定制需求，可以直接使用 <code>wasm-bindgen-cli</code>。</p>
+<h2 id="7-yi-dui-biao-react-de-xuan-ran-ku-yew-gou-jian-jie-mian">7. 以对标 <code>react</code> 的渲染库 <code>yew</code> 构建界面</h2>
+<p>前面我们有介绍过基于 <code>web_sys</code> 与 <code>js_sys</code> 手动控制浏览器渲染界面的方法。很明显，这么一套写法还是比较劝退的。别说手动创建侦听器了，就连手动操作 DOM 这件事本身都有种上世纪 JQuery 库的观感。所幸，我们可以使用一些更高级的库来帮助我们更方便地操作 DOM。</p>
+<p>目前 <code>yew</code> 算是最适合担任这种任务的框架。<code>yew</code> 可以视作 Rust 语言版本的 <code>react</code>，它同样引入了虚拟 DOM 和函数化组件，并且还做了个用于解析类似 HTML 结构的宏，使得我们可以直接在 Rust 代码中写类似 <code>react</code> 中 <code>jsx</code> 那样的代码：</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>yew::prelude::*;
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">derive</span><span>(Properties, Debug, PartialEq)]
+</span><span style="color:#b48ead;">pub struct </span><span>Props {
+</span><span>    #[</span><span style="color:#bf616a;">prop_or</span><span>(&quot;</span><span style="color:#a3be8c;">Ciallo～(∠・ω&lt; )⌒☆</span><span>&quot;.</span><span style="color:#bf616a;">to_string</span><span>())]
+</span><span>    </span><span style="color:#b48ead;">pub </span><span style="color:#bf616a;">onclick_message</span><span>: String,
+</span><span>    </span><span style="color:#b48ead;">pub </span><span style="color:#bf616a;">children</span><span>: Html,
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">function_component</span><span>]
+</span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">NewButton</span><span>(</span><span style="color:#bf616a;">props</span><span>: &amp;Props) -&gt; Html {
+</span><span>    html! {
+</span><span>        &lt;div&gt;
+</span><span>            &lt;button onclick={
+</span><span>                </span><span style="color:#b48ead;">let</span><span> onclick_message = props.onclick_message.</span><span style="color:#96b5b4;">clone</span><span>();
+</span><span>
+</span><span>                </span><span style="color:#b48ead;">move </span><span>|_| {
+</span><span>                    gloo::dialogs::alert(&amp;onclick_message);
+</span><span>                }
+</span><span>            }&gt;
+</span><span>                { props.children.</span><span style="color:#96b5b4;">clone</span><span>() }
+</span><span>            &lt;/button&gt;
+</span><span>        &lt;/div&gt;
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>尽管 <code>yew</code> 不是必须要求掌握的，但我个人还是建议大家在试图让 Rust 接管浏览器渲染逻辑时使用 <code>yew</code>。熟悉 <code>react</code> 或者 <code>vue</code> 的同学可以很快上手，不过如果你是第一次接触这类框架，最好还是先熟悉在 JavaScript 下 <code>vue</code> 或者 <code>react</code> 的基本用法。</p>
+<blockquote>
+<p>可能有的同学也不是很熟悉 <code>react</code> 与 <code>vue</code> 的用法，只是知道它是一个出名的前端框架。尽管这没有脱离 JavaScript 既有的语法，但 <code>react</code> 与 <code>vue</code> 特有的业务逻辑写法还是不太容易入门的。个人建议，理解此类框架设计逻辑的最好办法就是尝试“抄”官方文档提供的例程，照着官方流程来个一两遍就能理解了。</p>
+<p>我个人也在着手尝试开发一个基于 yew 的界面框架，除了能够自动初始化页面路由、全局状态、提供一大批通用界面组件等以外，而且还在尝试实现同构开发，即直接在客户端业务代码中书写服务端业务代码（例如用户凭据验证、数据库读写等），编译后自动拆分与对接。目前还处于开发阶段，有兴趣的同学可以看一下 <a href="https://github.com/celestia-island/hikari">Hikari 项目的仓库</a>。</p>
+</blockquote>
+<h2 id="8-yi-dui-biao-imgui-de-ku-egui-gou-jian-jie-mian">8. 以对标 <code>imgui</code> 的库 <code>egui</code> 构建界面</h2>
+<p>浏览器渲染界面的方式不止一种，除了通过操作 DOM 配合 CSS 来构建界面外，还有一种办法是通过 <code>&lt;canvas&gt;</code> 元素来绘制界面。这种方式的优势在于，我们可以直接操作绘制区域的每一个像素，不仅能实现 CSS 无法实现的各种特殊渲染需求，而且还能间接实现渲染内容的反篡改保护。</p>
+<p><code>egui</code> 就是这样一种直接绘制像素的界面库。它的设计灵感来自于 <code>imgui</code>，是一个基于立即模式的 GUI 库。它不依赖于任何外部库，只需要一个 <code>&lt;canvas&gt;</code> 元素就可以绘制界面。除了浏览器以外，它也可以通过 <code>wgpu</code> 等库实现本地操作系统程序的界面绘制。</p>
+<p>正式使用 <code>egui</code> 之前，我们需要在 <code>Cargo.toml</code> 中加入 <code>egui</code> 与 <code>eframe</code> 依赖：</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[dependencies]
+</span><span style="color:#bf616a;">egui </span><span>= &quot;</span><span style="color:#a3be8c;">^0.28</span><span>&quot;      </span><span style="color:#65737e;"># 注意这里的版本不一定是最新的
+</span><span style="color:#bf616a;">eframe </span><span>= &quot;</span><span style="color:#a3be8c;">^0.28</span><span>&quot;    </span><span style="color:#65737e;"># 必须与 egui 版本号对应
+</span></code></pre>
+<p><code>egui</code> 的使用方式也很简单，只需要在 <code>wasm-bindgen</code> 初始化阶段创建一个 <code>egui</code> 的上下文，然后在每一帧绘制时调用 <code>egui</code> 的绘制函数即可：</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">pub struct </span><span>Entry {
+</span><span>    </span><span style="color:#bf616a;">label</span><span>: String
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">impl </span><span>Default </span><span style="color:#b48ead;">for </span><span>Entry {
+</span><span>    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">default</span><span>() -&gt; </span><span style="color:#b48ead;">Self </span><span>{
+</span><span>        </span><span style="color:#b48ead;">Self </span><span>{
+</span><span>            label: &quot;</span><span style="color:#a3be8c;">Ciallo～(∠・ω&lt; )⌒☆</span><span>&quot;.</span><span style="color:#96b5b4;">to_string</span><span>()
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">impl </span><span>eframe::App </span><span style="color:#b48ead;">for </span><span>Entry {
+</span><span>    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">update</span><span>(&amp;</span><span style="color:#b48ead;">mut </span><span style="color:#bf616a;">self</span><span>, </span><span style="color:#bf616a;">ctx</span><span>: &amp;eframe::Context, </span><span style="color:#bf616a;">_frame</span><span>: &amp;</span><span style="color:#b48ead;">mut </span><span>eframe::Frame) {
+</span><span>        egui::CentralPanel::default().</span><span style="color:#96b5b4;">show</span><span>(ctx, |</span><span style="color:#bf616a;">ui</span><span>| {
+</span><span>            ui.</span><span style="color:#96b5b4;">label</span><span>(</span><span style="color:#bf616a;">self</span><span>.label.</span><span style="color:#96b5b4;">clone</span><span>());
+</span><span>        });
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">use </span><span>eframe::wasm_bindgen::{</span><span style="color:#bf616a;">self</span><span>, prelude::*};
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">derive</span><span>(Clone)]
+</span><span>#[</span><span style="color:#bf616a;">wasm_bindgen</span><span>]
+</span><span style="color:#b48ead;">pub struct </span><span>WebHandle {
+</span><span>    </span><span style="color:#bf616a;">runner</span><span>: eframe::WebRunner,
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">wasm_bindgen</span><span>]
+</span><span style="color:#b48ead;">impl </span><span>WebHandle {
+</span><span>    #[</span><span style="color:#bf616a;">allow</span><span>(clippy::new_without_default)]
+</span><span>    #[</span><span style="color:#bf616a;">wasm_bindgen</span><span>(constructor)]
+</span><span>    </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">new</span><span>() -&gt; </span><span style="color:#b48ead;">Self </span><span>{
+</span><span>        </span><span style="color:#b48ead;">Self </span><span>{
+</span><span>            runner: eframe::WebRunner::new(),
+</span><span>        }
+</span><span>    }
+</span><span>
+</span><span>    #[</span><span style="color:#bf616a;">wasm_bindgen</span><span>]
+</span><span>    </span><span style="color:#b48ead;">pub</span><span> async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">start</span><span>(&amp;</span><span style="color:#bf616a;">self</span><span>) -&gt; Result&lt;(), wasm_bindgen::JsValue&gt; {
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.runner
+</span><span>            .</span><span style="color:#96b5b4;">start</span><span>(
+</span><span>                &quot;</span><span style="color:#a3be8c;">entry_canvas</span><span>&quot;,
+</span><span>                eframe::WebOptions::default(),
+</span><span>                Box::new(|</span><span style="color:#bf616a;">cc</span><span>| Ok(Box::new(Entry::default()))),
+</span><span>            )
+</span><span>            .await
+</span><span>    }
+</span><span>
+</span><span>    #[</span><span style="color:#bf616a;">wasm_bindgen</span><span>]
+</span><span>    </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">destroy</span><span>(&amp;</span><span style="color:#bf616a;">self</span><span>) {
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.runner.</span><span style="color:#96b5b4;">destroy</span><span>();
+</span><span>    }
+</span><span>
+</span><span>    #[</span><span style="color:#bf616a;">wasm_bindgen</span><span>]
+</span><span>    </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">has_panicked</span><span>(&amp;</span><span style="color:#bf616a;">self</span><span>) -&gt; </span><span style="color:#b48ead;">bool </span><span>{
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.runner.</span><span style="color:#96b5b4;">has_panicked</span><span>()
+</span><span>    }
+</span><span>
+</span><span>    #[</span><span style="color:#bf616a;">wasm_bindgen</span><span>]
+</span><span>    </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">panic_message</span><span>(&amp;</span><span style="color:#bf616a;">self</span><span>) -&gt; Option&lt;String&gt; {
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.runner.</span><span style="color:#96b5b4;">panic_summary</span><span>().</span><span style="color:#96b5b4;">map</span><span>(|</span><span style="color:#bf616a;">s</span><span>| s.</span><span style="color:#96b5b4;">message</span><span>())
+</span><span>    }
+</span><span>
+</span><span>    #[</span><span style="color:#bf616a;">wasm_bindgen</span><span>]
+</span><span>    </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">panic_callstack</span><span>(&amp;</span><span style="color:#bf616a;">self</span><span>) -&gt; Option&lt;String&gt; {
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.runner.</span><span style="color:#96b5b4;">panic_summary</span><span>().</span><span style="color:#96b5b4;">map</span><span>(|</span><span style="color:#bf616a;">s</span><span>| s.</span><span style="color:#96b5b4;">callstack</span><span>())
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>在 HTML 文件中，我们需要加入一个 <code>&lt;canvas&gt;</code> 元素，用于绘制 <code>egui</code> 界面：</p>
+<pre data-lang="html" style="background-color:#2b303b;color:#c0c5ce;" class="language-html "><code class="language-html" data-lang="html"><span>&lt;</span><span style="color:#bf616a;">canvas </span><span style="color:#8fa1b3;">id</span><span>=&quot;</span><span style="color:#a3be8c;">entry_canvas</span><span>&quot; </span><span style="color:#d08770;">width</span><span>=&quot;</span><span style="color:#a3be8c;">800</span><span>&quot; </span><span style="color:#d08770;">height</span><span>=&quot;</span><span style="color:#a3be8c;">600</span><span>&quot;&gt;&lt;/</span><span style="color:#bf616a;">canvas</span><span>&gt;
+</span><span>&lt;</span><span style="color:#bf616a;">script </span><span style="color:#d08770;">src</span><span>=&#39;</span><span style="color:#a3be8c;">/test.js</span><span>&#39;&gt;&lt;/</span><span style="color:#bf616a;">script</span><span>&gt;
+</span><span>&lt;</span><span style="color:#bf616a;">script</span><span>&gt;
+</span><span>(</span><span style="color:#b48ead;">async </span><span>() </span><span style="color:#b48ead;">=&gt; </span><span>{
+</span><span>    </span><span style="color:#b48ead;">await </span><span style="color:#bf616a;">wasm_vendor_entry</span><span>(&#39;</span><span style="color:#a3be8c;">/test_bg.wasm</span><span>&#39;);
+</span><span>    (</span><span style="color:#b48ead;">await </span><span>(new </span><span style="color:#bf616a;">wasm_vendor_entry</span><span>.</span><span style="color:#bf616a;">WebHandle</span><span>())).</span><span style="color:#bf616a;">start</span><span>();
+</span><span>})();
+</span><span>&lt;/</span><span style="color:#bf616a;">script</span><span>&gt;
+</span></code></pre>
+<p><code>egui</code> 的使用方式与 <code>yew</code> 有很大不同，由于立即模式的特性，我们需要在每一帧绘制时重新绘制整个界面。这样的设计使得 <code>egui</code> 更适合于实时渲染的应用，如游戏 HUD 界面、仪表盘等。官方没有就这个库的每个组件提供具体的文档，而是直接写了一个包含各种内置界面元素的<a href="https://www.egui.rs">示例页面</a>，在交互式的界面中可以直接查看每个组件的运行效果。</p>
+<h2 id="9-wasm-de-biao-zhun-jie-kou-wasi">9. WASM 的标准接口 WASI</h2>
+<p>最后，我们来介绍一下 <code>WASI</code>。<code>WASI</code> 是 <code>WebAssembly System Interface</code> 的缩写，是一个标准化的 WebAssembly 与宿主环境交互的接口。它的设计目标是为 WebAssembly 提供一个标准的系统调用接口，使得 WebAssembly 可以在不同的宿主环境中运行，而不需要对每个宿主环境进行特定的适配。</p>
+<p>WASI 的设计灵感大多来自于 POSIX 标准，它提供了一系列的系统调用，如文件读写、网络操作、时间获取、随机数等。我们不必为不同的虚拟机环境而头疼，只需要利用 WASI 的标准接口，就可以在任何支持 WASI 的虚拟机环境中运行。</p>
+<p>我们可以通过 <code>rustup</code> 安装 <code>wasm32-wasip1</code> 目标平台：</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">rustup</span><span> target add wasm32-wasip1
+</span></code></pre>
+<blockquote>
+<p>可能有的同学之前使用过这套工具链，发现这个编译目标的名字不是 <code>wasm32-wasi</code> 而是 <code>wasm32-wasip1</code>。这是近期 Rust 官方就此编译目标做的重大更改，<a href="https://blog.rust-lang.net.cn/2024/04/09/updates-to-rusts-wasi-targets.html">详情可以参考这篇博客</a>。</p>
+</blockquote>
+<p>这之后，编写 WASI 程序的流程其实和编写普通的 Rust 程序没什么区别。只是在编译时，我们需要指定编译目标为 <code>wasm32-wasip1</code>：</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>std::fs::File;
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#b48ead;">let</span><span> file = File::create(&quot;</span><span style="color:#a3be8c;">test.txt</span><span>&quot;).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>    file.</span><span style="color:#96b5b4;">write_all</span><span>(</span><span style="color:#b48ead;">b</span><span>&quot;</span><span style="color:#a3be8c;">Ciallo～(∠・ω&lt; )⌒☆</span><span>&quot;).</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>}
+</span></code></pre>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">cargo</span><span> build</span><span style="color:#bf616a;"> --target</span><span> wasm32-wasip1
+</span></code></pre>
+<p>以我个人的眼光来看，WASI 的出现是 WebAssembly 发展的一个重要里程碑。它使得 WebAssembly 不再局限于浏览器环境，可以将 WebAssembly 用于 Serverless、通用嵌入式设备等领域，以此作为一个轻量级的高性能虚拟机与 JVM、CLR 等虚拟机平台竞争。</p>
+<blockquote>
+<p>我个人也在着手尝试开发一个基于 WASI 的服务端框架，为所有兼容我这个框架的 WASI 程序提供全自动的数据库、文件缓存、日志、负载均衡等服务。目前还处于开发阶段，有兴趣的同学可以看一下 <a href="https://github.com/celestia-island/tairitsu">Tairitsu 项目的仓库</a>。</p>
+</blockquote>
+<p>不过，WASI 目前的路还是比较坎坷，主要原因是社区间意见不统一。目前最具代表性的三个虚拟机实现 <code>wasmtime</code>、<code>wasmedge</code>、<code>wasmer</code> 都对 WASI 有自己的实现，但它们之间的实现并不完全兼容。</p>
 <h2 id="10-wasmtime-wasmedge-wasmer-san-jia-fen-jin">10. <code>wasmtime</code>、<code>wasmedge</code>、<code>wasmer</code> 三家分晋</h2>
-<p>三家从其路线上可以分别看作 “学院派”、“实干派”、“实验派”。</p>
-<p><code>wasmtime</code> 更倾向于严格遵循标准，毕竟 <code>WASI</code> 标准也是主要由这个团队起草的，但也因此这位的产出是最慢的，一天到晚都在开会。不过他们手里同时也有至今最有发展潜力的纯 Rust 写的编译器后端之一 <code>cranelift</code>，另外两家想踢了他是想都别想的事情。</p>
-<p><code>wasmedge</code> 更倾向于快速投入商业使用，到处寻求合作，甚至已经和 Docker 官方达成战略合作，Docker 可以直接部署基于 <code>wasmedge</code> 的容器。不过它是 C++ 写的，并且有很多私货，在遵守 <code>WASI</code> 基本规范的同时自行加了很多东西。</p>
-<p><code>wasmer</code> 更倾向于将其做得更有利于工程化，保证上游链路可以按原样直接用，为此甚至不惜代价重写了一直蔓延到 <code>rustc</code> 编译器本身的代码。但也因此魔改的过于剧烈，直接导致其维护的大量上游分支产能跟不上社区，有点割裂。但是 <code>wasmer</code> 率先做了 WASI 中心库的设施，所以一时间大家对此也很看好。</p>
+<p>个人认为，三家从其路线上可以分别看作 “学院派”、“市场派”、“工程派”。</p>
+<p>学院派 <code>wasmtime</code> 更倾向于脚踏实地一步步做标准化，毕竟 <code>WASI</code> 标准也是主要由这个团队起草的。但不得不吐槽的是，这位的产出也因此是最慢的，<a href="https://bytecodealliance.zulipchat.com/#narrow/stream/217126-wasmtime">毕竟一天到晚都在开会</a>。不过他们手里同时也有至今最有发展潜力的纯 Rust 写的编译器后端之一 <code>cranelift</code>——本来是专门写给 <code>wasmtime</code> 用的，后面发现也可以用于 Rust 本身的开发，于是就拿去作为 <code>rustc</code> 的备用编译器后端了~~，另外两家想踢了他单干是想都别想的~~。</p>
+<p>市场派 <code>wasmedge</code> 更倾向于快速投入商业使用，到处寻求合作。目前它已经和 Docker 官方达成战略合作，<a href="https://wasmedge.org/docs/zh/start/build-and-run/docker_wasm">Docker 可以直接部署基于 <code>wasmedge</code> 的容器</a>。不过它是 C++ 写的，并且有很多私货，在遵守 <code>WASI</code> 基本规范的同时自行加了很多东西。</p>
+<p>工程派 <code>wasmer</code> 更倾向于将其做得更有利于工程化，保证上游链路可以按原样直接用，为此甚至不惜代价重写了一直蔓延到 <code>tokio</code>、<code>mio</code>、<code>rustc</code> 等的代码。但也因此，它对基础设施魔改的过于剧烈，直接导致其维护的大量上游分支产能跟不上社区，有点割裂。除此之外，<code>wasmer</code> 还率先做了 <a href="https://wasmer.io/explore">WASI 中心库</a>的设施，就连像 <code>sqlite</code>、<code>lua</code> 等这些用 C 写的知名依赖库也给做进这个中心库了，所以一时间大家对此也很看好。</p>
+<p>目前，我倾向于使用 <code>wasmtime</code> 作为 WASI 的运行时，因为它是最接近标准的实现，有官方背书的标准起码不必担心跑路问题。尤其是最近 WASI 0.2 标准的发布，让整个 Rust 社区就 WASI 的话题中心都集中到 <code>wasmtime</code> 与其背后的 Bytecode Alliance 开源组织身上了。不过，如果你想尽快提前体验 WASI 承诺的诸如网络请求、文件操作等功能，<code>wasmedge</code> 与 <code>wasmer</code> 也是不错的选择，只是得想清楚未来可能得承担技术迁移的代价。</p>
+<h2 id="jie-yu-yi-dian-sui-sui-nian">结语：一点碎碎念</h2>
+<p>目前，WebAssembly 这玩意算是除了 Rust 以外最符合我对近未来新技术主流架构的设想了。我经常在想能将 WASI 作为嵌入式设备与 Serverless 云服务集群的基础，以此弥补 JVM 过于臃肿和带有版权争议的问题，进而可以设计制造我力所能及的各种智能设备。如果不能先打好这种基础，不论是星辰大海还是赛博朋克，都还只能是空中楼阁。</p>
+<p>这篇博客自 5 月份开坑以来，断断续续写了很久，终于在 9 月中秋节前夕完成了。这篇博客的初衷更多是为了整理一些我目前了解到的知识，顺便再给大家看迅速了解一下目前这个还算小众的生态现在过得如何。总之，还是希望这篇文章能对你有点帮助。</p>
 
     </div>
     <hr class="post-end">
@@ -214,7 +488,7 @@
           <line x1="16" y1="13" x2="8" y2="13"></line>
           <line x1="16" y1="17" x2="8" y2="17"></line>
           <polyline points="10 9 9 9 8 9"></polyline>
-        </svg>2141 Words</p>
+        </svg>6316 Words</p>
       
       <p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
