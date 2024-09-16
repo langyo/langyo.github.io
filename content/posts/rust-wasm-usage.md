@@ -160,6 +160,8 @@ el.add_event_listener_with_callback("click", Closure::wrap(Box::new(
 ).unwrap_throw();
 ```
 
+> 可能有同学注意到其中的 [`gloo` 库](https://docs.rs/gloo/latest/gloo)。它是一个进一步封装了 `web_sys` 的库，提供了一些更方便的接口，如控制台打印、弹窗提示、事件、延迟执行、文件读写、网络通信、缓存、Worker 等，可以节省一些代码量。
+
 ## 4. 异步支持 `wasm_bindgen_futures`
 
 `wasm_bindgen_futures` 是一个用于在 WebAssembly 中支持异步操作的库。它的作用是将 Rust 的 `Future` 与 JavaScript 的 `Promise` 进行绑定，使得我们可以在 Rust 中使用 `async/await` 语法。

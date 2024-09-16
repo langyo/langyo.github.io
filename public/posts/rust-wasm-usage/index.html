@@ -246,6 +246,9 @@
 </span><span>    }) as Box&lt;dyn FnMut(_)&gt;).</span><span style="color:#96b5b4;">as_ref</span><span>().</span><span style="color:#96b5b4;">unchecked_ref</span><span>()
 </span><span>).</span><span style="color:#96b5b4;">unwrap_throw</span><span>();
 </span></code></pre>
+<blockquote>
+<p>可能有同学注意到其中的 <a href="https://docs.rs/gloo/latest/gloo"><code>gloo</code> 库</a>。它是一个进一步封装了 <code>web_sys</code> 的库，提供了一些更方便的接口，如控制台打印、弹窗提示、事件、延迟执行、文件读写、网络通信、缓存、Worker 等，可以节省一些代码量。</p>
+</blockquote>
 <h2 id="4-yi-bu-zhi-chi-wasm-bindgen-futures">4. 异步支持 <code>wasm_bindgen_futures</code></h2>
 <p><code>wasm_bindgen_futures</code> 是一个用于在 WebAssembly 中支持异步操作的库。它的作用是将 Rust 的 <code>Future</code> 与 JavaScript 的 <code>Promise</code> 进行绑定，使得我们可以在 Rust 中使用 <code>async/await</code> 语法。</p>
 <p>这个库能做出来，很大程度上依赖于浏览器的单线程模型。在浏览器中，所有的异步操作都是基于事件循环的，同一时间保证只做一件事，甚至为此 WebAssembly 在运行时 JavaScript 主线程会被暂时挂起。</p>
@@ -488,7 +491,7 @@
           <line x1="16" y1="13" x2="8" y2="13"></line>
           <line x1="16" y1="17" x2="8" y2="17"></line>
           <polyline points="10 9 9 9 8 9"></polyline>
-        </svg>6316 Words</p>
+        </svg>6395 Words</p>
       
       <p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
