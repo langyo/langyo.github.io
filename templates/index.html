@@ -50,7 +50,8 @@
 			<p>&copy; {{ now() | date(format="%Y")}}
 				<a href="{{config.base_url}}">{{config.extra.author.name}}</a>
 				{% if config.generate_feed %}
-				&#183; <a href="{{ get_url(path=config.feed_filename, trailing_slash=false) }}" target="_blank" title="rss">
+				&#183; <a href="{{ get_url(path=config.feed_filename, trailing_slash=false) }}" target="_blank"
+					title="rss">
 					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
 						stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
 						class="feather feather-rss">
@@ -65,6 +66,13 @@
 				{% if config.extra.footer_recordation_text %}
 				<a href="https://beian.miit.gov.cn/" target="_blank">
 					{{config.extra.footer_recordation_text}}
+				</a>
+				{% endif %}
+			</p>
+			<p>
+				{% if config.extra.footer_recordation_text_moe %}
+				<a href="https://icp.gov.moe/?keyword=20255233" target="_blank">
+					{{config.extra.footer_recordation_text_moe}}
 				</a>
 				{% endif %}
 			</p>

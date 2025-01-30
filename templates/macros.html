@@ -6,8 +6,11 @@
     {% macro footer() %}
 
     <footer id="site-footer" class="section-inner thin animated fadeIn faster">
-      <p>&copy; {{ now() | date(format="%Y") }} <a href="{{ config.base_url }}">{{ config.extra.author.name }}</a>{{
-        config.extra.footer_copyright | safe }}</p>
+      <p>
+        &copy; {{ now() | date(format="%Y") }}
+        <a href="{{ config.base_url }}">{{ config.extra.author.name }}</a>
+        {{ config.extra.footer_copyright | safe }}
+      </p>
       <p>
         Made with
         <a href="https://www.getzola.org" target="_blank" rel="noopener">Zola</a>
