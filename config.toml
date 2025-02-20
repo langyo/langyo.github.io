@@ -14,6 +14,8 @@ home_subtitle = "这里是伊欧的个人站"
 
 footer_copyright = ' &#183; <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a>'
 footer_recordation_text = '沪ICP备20025013号-2'
+footer_recordation_text_security = '沪公网安备31011502403090号'
+footer_recordation_text_security_code = '31011502403090'
 footer_recordation_text_moe = '萌ICP备20255233号'
 
 hermit_menu = [
