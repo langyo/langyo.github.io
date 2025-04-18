@@ -1,6 +1,9 @@
-FROM nginx:mainline
+FROM ghcr.io/getzola/zola:v0.17.1 AS zola
 
-COPY ./public /www
-COPY ./nginx.conf /etc/nginx/conf.d/default.conf
+COPY . /home
+WORKDIR /home
+RUN ["zola", "build"]
 
-EXPOSE 80
+FROM ghcr.io/static-web-server/static-web-server:2
+WORKDIR /
+COPY --from=zola /home/public /public
