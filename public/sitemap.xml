@@ -11,6 +11,10 @@
         <loc>https://langyo.xyz/posts/</loc>
     </url>
     <url>
+        <loc>https://langyo.xyz/posts/docker-compose-toggle/</loc>
+        <lastmod>2025-08-11</lastmod>
+    </url>
+    <url>
         <loc>https://langyo.xyz/posts/nginx-certbot-config/</loc>
         <lastmod>2024-03-15</lastmod>
     </url>

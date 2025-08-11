@@ -123,7 +123,7 @@
         <span>May 27, 2024</span>
         <small> - 
 <span class="reading-time" title="Estimated read time">
-   24 min read  </span>
+   22 min read  </span>
     </small>
         
         
@@ -170,7 +170,7 @@
 <p>我们可以通过 <code>rustup</code> 安装 <code>wasm32-unknown-unknown</code> 目标平台：</p>
 <pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">rustup</span><span> target add wasm32-unknown-unknown
 </span></code></pre>
-<h2 id="2-shi-yao-shi-wasm-bindgen">2. 什么是 <code>wasm_bindgen</code>？</h2>
+<h2 id="2-shen-me-shi-wasm-bindgen">2. 什么是 <code>wasm_bindgen</code>？</h2>
 <p>作为 Rust 语言开启 WebAssembly 之旅的第一步，<code>wasm_bindgen</code> 是一个很好的起点。它的作用是将 Rust 代码与 JavaScript 代码进行绑定，使得 Rust 代码可以在 JavaScript 中被调用。</p>
 <p>新建一个项目，在其中加入 <code>wasm_bindgen</code> 依赖：</p>
 <pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[lib]
@@ -471,7 +471,7 @@
 <p>不过，WASI 目前的路还是比较坎坷，主要原因是社区间意见不统一。目前最具代表性的三个虚拟机实现 <code>wasmtime</code>、<code>wasmedge</code>、<code>wasmer</code> 都对 WASI 有自己的实现，但它们之间的实现并不完全兼容。</p>
 <h2 id="10-wasmtime-wasmedge-wasmer-san-jia-fen-jin">10. <code>wasmtime</code>、<code>wasmedge</code>、<code>wasmer</code> 三家分晋</h2>
 <p>个人认为，三家从其路线上可以分别看作 “学院派”、“市场派”、“工程派”。</p>
-<p>学院派 <code>wasmtime</code> 更倾向于脚踏实地一步步做标准化，毕竟 <code>WASI</code> 标准也是主要由这个团队起草的。但不得不吐槽的是，这位的产出也因此是最慢的，<a href="https://bytecodealliance.zulipchat.com/#narrow/stream/217126-wasmtime">毕竟一天到晚都在开会</a>。不过他们手里同时也有至今最有发展潜力的纯 Rust 写的编译器后端之一 <code>cranelift</code>——本来是专门写给 <code>wasmtime</code> 用的，后面发现也可以用于 Rust 本身的开发，于是就拿去作为 <code>rustc</code> 的备用编译器后端了~~，另外两家想踢了他单干是想都别想的~~。</p>
+<p>学院派 <code>wasmtime</code> 更倾向于脚踏实地一步步做标准化，毕竟 <code>WASI</code> 标准也是主要由这个团队起草的。但不得不吐槽的是，这位的产出也因此是最慢的，<a href="https://bytecodealliance.zulipchat.com/#narrow/stream/217126-wasmtime">毕竟一天到晚都在开会</a>。不过他们手里同时也有至今最有发展潜力的纯 Rust 写的编译器后端之一 <code>cranelift</code>——本来是专门写给 <code>wasmtime</code> 用的，后面发现也可以用于 Rust 本身的开发，于是就拿去作为 <code>rustc</code> 的备用编译器后端了<del>，另外两家想踢了他单干是想都别想的</del>。</p>
 <p>市场派 <code>wasmedge</code> 更倾向于快速投入商业使用，到处寻求合作。目前它已经和 Docker 官方达成战略合作，<a href="https://wasmedge.org/docs/zh/start/build-and-run/docker_wasm">Docker 可以直接部署基于 <code>wasmedge</code> 的容器</a>。不过它是 C++ 写的，并且有很多私货，在遵守 <code>WASI</code> 基本规范的同时自行加了很多东西。</p>
 <p>工程派 <code>wasmer</code> 更倾向于将其做得更有利于工程化，保证上游链路可以按原样直接用，为此甚至不惜代价重写了一直蔓延到 <code>tokio</code>、<code>mio</code>、<code>rustc</code> 等的代码。但也因此，它对基础设施魔改的过于剧烈，直接导致其维护的大量上游分支产能跟不上社区，有点割裂。除此之外，<code>wasmer</code> 还率先做了 <a href="https://wasmer.io/explore">WASI 中心库</a>的设施，就连像 <code>sqlite</code>、<code>lua</code> 等这些用 C 写的知名依赖库也给做进这个中心库了，所以一时间大家对此也很看好。</p>
 <p>目前，我倾向于使用 <code>wasmtime</code> 作为 WASI 的运行时，因为它是最接近标准的实现，有官方背书的标准起码不必担心跑路问题。尤其是最近 WASI 0.2 标准的发布，让整个 Rust 社区就 WASI 的话题中心都集中到 <code>wasmtime</code> 与其背后的 Bytecode Alliance 开源组织身上了。不过，如果你想尽快提前体验 WASI 承诺的诸如网络请求、文件操作等功能，<code>wasmedge</code> 与 <code>wasmer</code> 也是不错的选择，只是得想清楚未来可能得承担技术迁移的代价。</p>
@@ -491,7 +491,7 @@
           <line x1="16" y1="13" x2="8" y2="13"></line>
           <line x1="16" y1="17" x2="8" y2="17"></line>
           <polyline points="10 9 9 9 8 9"></polyline>
-        </svg>6395 Words</p>
+        </svg>5803 Words</p>
       
       <p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"

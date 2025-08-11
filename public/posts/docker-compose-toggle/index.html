@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="X-UA-Compatible" content="ie=edge" />
+<meta itemprop="name" content="LANGYO" />
+<meta itemprop="description" content="伊欧的个人空间站点" />
+
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/style.css" />
+
+<title>让本地 Docker CLI 连上别处服务器的 Dockerd 服务的方法</title>
+
+
+
+
+<body id="page">
+
+	
+<header id="site-header" class="animated slideInUp faster">
+  <div class="hdr-wrapper section-inner">
+    <div class="hdr-left">
+      <div class="site-branding">
+        <a href="https:&#x2F;&#x2F;langyo.xyz">LANGYO</a>
+      </div>
+      <nav class="site-nav hide-in-mobile">
+
+        
+        <a href="https://langyo.xyz/posts">记录</a>
+        
+        <a href="https://langyo.xyz/about">关于</a>
+        
+      </nav>
+    </div>
+    <div class="hdr-right hdr-icons">
+      <span class="hdr-social hide-in-mobile">
+        
+    
+    <a href="https:&#x2F;&#x2F;github.com&#x2F;langyo" target="_blank" rel="noopener me" title="github">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 1024 1024"
+        fill="currentColor">
+        <path
+          d="M950.857143 512q0 143.428571-83.714286 258T650.857143 928.571429q-15.428571 2.857143-22.571429-4t-7.142857-17.142858v-120.571428q0-55.428571-29.714286-81.142857 32.571429-3.428571 58.571429-10.285715t53.714286-22.285714 46.285714-38 30.285714-60T792 489.142857q0-69.142857-45.142857-117.714286 21.142857-52-4.571429-116.571428-16-5.142857-46.285714 6.285714t-52.571429 25.142857l-21.714285 13.714286q-53.142857-14.857143-109.714286-14.857143t-109.714286 14.857143q-9.142857-6.285714-24.285714-15.428571T330.285714 262.571429 281.142857 254.857143q-25.142857 64.571429-4 116.571428-45.142857 48.571429-45.142857 117.714286 0 48.571429 11.714286 85.714286t30 60 46 38.285714 53.714285 22.285714 58.571429 10.285715q-22.857143 20.571429-28 58.857143-12 5.714286-25.714286 8.571428t-32.571428 2.857143-37.428572-12.285714T276.571429 728q-10.857143-18.285714-27.714286-29.714286t-28.285714-13.714285l-11.428572-1.714286q-12 0-16.571428 2.571428t-2.857143 6.571429 5.142857 8 7.428571 6.857143l4 2.857143q12.571429 5.714286 24.857143 21.714285t18 29.142858l5.714286 13.142857q7.428571 21.714286 25.142857 35.142857t38.285714 17.142857 39.714286 4 31.714286-2l13.142857-2.285714q0 21.714286 0.285714 50.857143t0.285714 30.857142q0 10.285714-7.428571 17.142858t-22.857143 4q-132.571429-44-216.285714-158.571429T73.142857 512q0-119.428571 58.857143-220.285714T291.714286 132 512 73.142857t220.285714 58.857143T892 291.714286 950.857143 512z"
+          p-id="3233"></path>
+      </svg>
+      
+    </a>
+    
+    <a href="mailto:langyo.china@gmail.com" target="_blank" rel="noopener me" title="email">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 1024 1024"
+        fill="currentColor">
+        <path
+          d="M170.666667 128l682.666667 0q52.992 0 90.496 37.504t37.504 90.496l0 512q0 52.992-37.504 90.496t-90.496 37.504l-682.666667 0q-52.992 0-90.496-37.504t-37.504-90.496l0-512q0-52.992 37.504-90.496t90.496-37.504zM896 768l0-466.005333-357.333333 285.994667q-11.349333 9.344-26.666667 9.344t-26.666667-9.344l-357.333333-285.994667 0 466.005333q0 17.664 12.501333 30.165333t30.165333 12.501333l682.666667 0q17.664 0 30.165333-12.501333t12.501333-30.165333zM853.333333 213.333333l-682.666667 0q-6.314667 0-13.994667 2.346667l355.328 284.330667 355.328-284.330667q-7.68-2.346667-13.994667-2.346667z"
+          p-id="2277"></path>
+      </svg>
+      
+    </a>
+    
+    <a href="https:&#x2F;&#x2F;space.bilibili.com&#x2F;5741197" target="_blank" rel="noopener me" title="bilibili">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 1024 1024"
+        fill="currentColor">
+        <path
+          d="M777.514667 131.669333a53.333333 53.333333 0 0 1 0 75.434667L728.746667 255.829333h49.92A160 160 0 0 1 938.666667 415.872v320a160 160 0 0 1-160 160H245.333333A160 160 0 0 1 85.333333 735.872v-320a160 160 0 0 1 160-160h49.749334L246.4 207.146667a53.333333 53.333333 0 1 1 75.392-75.434667l113.152 113.152c3.370667 3.370667 6.186667 7.04 8.448 10.965333h137.088c2.261333-3.925333 5.12-7.68 8.490667-11.008l113.109333-113.152a53.333333 53.333333 0 0 1 75.434667 0z m1.152 231.253334H245.333333a53.333333 53.333333 0 0 0-53.205333 49.365333l-0.128 4.010667v320c0 28.117333 21.76 51.157333 49.365333 53.162666l3.968 0.170667h533.333334a53.333333 53.333333 0 0 0 53.205333-49.365333l0.128-3.968v-320c0-29.44-23.893333-53.333333-53.333333-53.333334z m-426.666667 106.666666c29.44 0 53.333333 23.893333 53.333333 53.333334v53.333333a53.333333 53.333333 0 1 1-106.666666 0v-53.333333c0-29.44 23.893333-53.333333 53.333333-53.333334z m320 0c29.44 0 53.333333 23.893333 53.333333 53.333334v53.333333a53.333333 53.333333 0 1 1-106.666666 0v-53.333333c0-29.44 23.893333-53.333333 53.333333-53.333334z"
+          p-id="2438"></path>
+      </svg>
+      
+    </a>
+    
+    <a href="https:&#x2F;&#x2F;steamcommunity.com&#x2F;id&#x2F;langyo_china" target="_blank" rel="noopener me" title="steam">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 1024 1024"
+        fill="currentColor">
+        <path
+          d="M895.51 350.26a415.67 415.67 0 0 0-782.86 49l59.73 24.59c39.23-151.32 176.93-263.35 340.3-263.35 193.82 0 351.5 157.68 351.5 351.5S706.5 863.5 512.68 863.5c-119.33 0-225-59.78-288.53-151l-96.22-43.43c0.63 1.55 1.27 3.08 1.91 4.62a415.6 415.6 0 0 0 765.67-323.43z"
+          p-id="7864"></path>
+        <path
+          d="M627.655345 424.39011m-61.539174 14.524565a63.23 63.23 0 1 0 123.078348-29.049129 63.23 63.23 0 1 0-123.078348 29.049129Z"
+          p-id="7865"></path>
+        <path
+          d="M395.55 755.79a99.31 99.31 0 0 0 99.31-99.31v-1.92l120-93.8c4.24 0.39 8.53 0.6 12.87 0.6a137 137 0 1 0-137-137q0 6.17 0.55 12.18L396.87 557.2h-1.32a98.87 98.87 0 0 0-50.1 13.55L100.34 460.39a421.9 421.9 0 0 0 3.85 128.13l193.94 87.31a99.34 99.34 0 0 0 97.42 79.96zM627.67 335a89.42 89.42 0 1 1-89.41 89.41A89.41 89.41 0 0 1 627.67 335zM375.4 710.61a57.63 57.63 0 0 0 76.21-28.89 57.63 57.63 0 0 0-28.89-76.2L371 582.24a78.2 78.2 0 1 1-47.33 105.08z"
+          p-id="7866"></path>
+      </svg>
+      
+    </a>
+    
+    
+      </span>
+      <button id="menu-btn" class="hdr-btn" title="Menu">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class="feather feather-menu">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+<div id="mobile-menu" class="animated fast">
+  <ul>
+    
+    <li><a href="https://langyo.xyz/posts">记录</a></li>
+    
+    <li><a href="https://langyo.xyz/about">关于</a></li>
+    
+  </ul>
+</div>
+
+
+	
+
+			
+<main class="site-main section-inner animated fadeIn faster">
+  <article class="thin">
+    <header class="post-header">
+      <div class="post-meta">
+        
+        <span>Aug 11, 2025</span>
+        <small> - 
+<span class="reading-time" title="Estimated read time">
+   6 min read  </span>
+    </small>
+        
+        
+      </div>
+      <h1>让本地 Docker CLI 连上别处服务器的 Dockerd 服务的方法</h1>
+    </header>
+
+    <div class="content">
+
+      <p>前段时间，我实验室的工作站原装的 Win11 出了点问题，尝试开启多用户同时登录的能力，但却被登录认证服务锁门外进不去了，索性只能联系供货商给我发了一份 exsi7 的系统装了上去。</p>
+<p>还别说，exsi 确实相对好控制多了，系统炸了还能回滚，但这样一来虚拟机内部的 Win11 就不允许额外安装基于 WSL2 的 Docker 了，究其原因是 <strong>exsi 已经用了一层虚拟化设施，虚拟化后的 CPU 内没办法再开一层虚拟化</strong>。起初我在 exsi 里额外开了个 Debian 虚拟机，并在其中搭建了 Docker 服务。但是这种隔离开来的做法不太优雅，真要使用 Docker 就必须先切到 Debian 那边，源代码和配置文件也得从 Win11 这一侧同步过去，甚至因此有好几次出现了源代码 git 树修改不同步的问题。</p>
+<p>为了能在 Win11 还像以前那样使用 Docker，我想到了一个折中的办法，那就是让本地的 Docker CLI 连接到 Debian 虚拟机中的 Docker 服务。这样一来，我就可以在 Win11 中使用 Docker 命令，而不必频繁切换到 Debian 虚拟机，顺带还能规避文件同步的问题。</p>
+<p>话不多说，开整。</p>
+<blockquote>
+<p><strong>警告</strong>：这种配置方法最好只在局域网环境中使用，直接将 Dockerd 的端口暴露到公网中是极其危险的行为，请务必注意至少准备必要的内外网隔离措施，包括且不限于配置防火墙规则、通过虚拟局域网组网而非物理局域网 IP 互相通信。</p>
+</blockquote>
+<h2 id="1-xiu-gai-docker-zhu-ji-de-pei-zhi">1. 修改 Docker 主机的配置</h2>
+<p>首先，我们需要确保 Debian 虚拟机中的 Docker 服务可以接受来自外部的连接，其实就是开一个 TCP 的连入监听通道。作为一种后台服务，dockerd 对外的通信手段无非是 IPC 和网络套接字，其中 IPC 走的是 Unix 套接字 <code>/var/run/docker.sock</code>，网络套接字则是通过 TCP/IP 协议进行通信。</p>
+<blockquote>
+<p>某种意义上，自己写个 Docker CLI 还是很简单的，毕竟只要连进套接字、以 HTTP 协议通信就可以了。</p>
+</blockquote>
+<p>这里有两种方案，一种是直接修改 Docker 的配置文件，另一种是通过 Docker 的命令行参数来实现。建议优先考虑前一种方法，前一种方法报错提示冲突时，再考虑后一种方法。</p>
+<h3 id="1-1-xiu-gai-daemon-json-pei-zhi-wen-jian">1.1. 修改 daemon.json 配置文件</h3>
+<p>我们需要修改 Docker 的配置文件，通常位于 <code>/etc/docker/daemon.json</code>。如果该文件不存在，可以手动创建一个。</p>
+<p>运行 <code>sudo vim /etc/docker/daemon.json</code> 在 <code>daemon.json</code> 中添加以下内容：</p>
+<pre data-lang="json" style="background-color:#2b303b;color:#c0c5ce;" class="language-json "><code class="language-json" data-lang="json"><span>{
+</span><span>  &quot;</span><span style="color:#a3be8c;">hosts</span><span>&quot;: [&quot;</span><span style="color:#a3be8c;">unix:///var/run/docker.sock</span><span>&quot;, &quot;</span><span style="color:#a3be8c;">tcp://0.0.0.0:2375</span><span>&quot;]
+</span><span>}
+</span></code></pre>
+<p>这段配置的意思是让 Docker 同时监听 Unix 套接字和 TCP 端口 2375。</p>
+<p>修改完配置文件后，重启 Docker 服务使其生效：</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">sudo</span><span> systemctl restart docker
+</span></code></pre>
+<h3 id="1-2-fu-gai-xiu-gai-systemctl-de-pei-zhi-wen-jian">1.2. 覆盖修改 systemctl 的配置文件</h3>
+<p>如果 systemctl 的配置文件中已经明确指定了 <code>-H</code> 参数，前一种修改 <code>daemon.json</code> 的方法就会报错，<code>dockerd</code> 无法同时使用命令行与配置文件输入的两种参数。这时候，我们还可以考虑干脆修改 systemctl 的配置文件。</p>
+<p>在 Debian 系统中，Docker 的 systemd 服务文件通常位于 <code>/lib/systemd/system/docker.service</code>。</p>
+<p>为了不影响原有服务的运行，我们可以创建一个 <code>override.service</code> 在 <code>/etc/systemd/system/docker.service.d/</code> 目录下：</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">sudo</span><span> mkdir</span><span style="color:#bf616a;"> -p</span><span> /etc/systemd/system/docker.service.d/
+</span><span style="color:#bf616a;">sudo</span><span> vim /etc/systemd/system/docker.service.d/override.conf
+</span></code></pre>
+<p>在 <code>override.conf</code> 中添加以下内容：</p>
+<pre data-lang="ini" style="background-color:#2b303b;color:#c0c5ce;" class="language-ini "><code class="language-ini" data-lang="ini"><span style="color:#b48ead;">[Service]
+</span><span style="color:#bf616a;">ExecStart</span><span>=
+</span><span style="color:#bf616a;">ExecStart</span><span>=/usr/bin/dockerd -H fd:// -H </span><span style="color:#d08770;">tcp://0.0.0.0:2375
+</span></code></pre>
+<blockquote>
+<p>这里的 <code>fd://</code> 默认指向 <code>unix:///var/run/docker.sock</code>。</p>
+</blockquote>
+<p>保存并退出后，重新加载 systemd 配置并重启 Docker 服务：</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">sudo</span><span> systemctl daemon-reload
+</span><span style="color:#bf616a;">sudo</span><span> systemctl restart docker
+</span></code></pre>
+<blockquote>
+<p>再次提醒，记得配置好防火墙，开放局域网中的 2375 端口的准入连接；如果没整防火墙，就不用操心这个事情了</p>
+<p>以 <code>ufw</code> 为例，可以使用以下命令：</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">sudo</span><span> ufw allow from &lt;客户端的内网地址&gt; to any port 2375
+</span></code></pre>
+<p>或者以 <code>iptables</code> 为例，可以使用以下命令：</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">sudo</span><span> iptables</span><span style="color:#bf616a;"> -A</span><span> INPUT</span><span style="color:#bf616a;"> -p</span><span> tcp</span><span style="color:#bf616a;"> -s </span><span>&lt;客户端的内网地址&gt; --dport 2375</span><span style="color:#bf616a;"> -j</span><span> ACCEPT
+</span></code></pre>
+</blockquote>
+<h2 id="2-an-zhuang-docker-cli-ke-hu-duan">2. 安装 Docker CLI 客户端</h2>
+<p>Win11 这一侧需要一个 Docker CLI 程序来提供 Docker 命令行相关的服务，但是目前 Docker Inc. 在其官网上只放了 Docker Desktop 的下载链接，而这么个玩意光是安装包就有差不多 1 GiB，而且很明显其中大部分用来自动配置 WSL2 的设施我们是用不到的。</p>
+<p>这里有两种方案，一种是走官方偷偷藏起来的下载列表，直接下载 Docker CLI 的独立版本，这是<a href="https://download.docker.com/win/static/stable/x86_64">下载列表链接</a>；另一种则是走 choco 之类的包管理工具进行安装。</p>
+<p>我个人倾向于用后一种方案，主要还是图个方便。<a href="https://chocolatey.org/install">这里贴一下 choco 的官方安装流程链接</a>。</p>
+<p>然后，<strong>以管理员模式</strong>启动终端，运行以下命令安装 Docker CLI：</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">choco</span><span> install docker-cli
+</span><span style="color:#bf616a;">choco</span><span> install docker-compose
+</span></code></pre>
+<p>如果一切正常，输入 <code>y</code> 或者 <code>yes</code> 进行确认就可以安装了。</p>
+<blockquote>
+<p>当然，如果你实在不想折腾，也可以直接使用 Docker Desktop。哪怕安装完之后没办法用本地 WSL2 也没关系，因为它连带着 Docker CLI 也给你安装好了，而位于 Win11 环境下的 Docker CLI 当然是功能正常的。</p>
+</blockquote>
+<h2 id="3-pei-zhi-docker-cli-ke-hu-duan">3. 配置 Docker CLI 客户端</h2>
+<p>下面，我们还需要给客户端配置远程连接的 URL，指向 Debian 虚拟机中的 Docker 服务。对于永久配置，我们可以通过 <code>docker context</code> 的一些命令做到。</p>
+<p>首先，运行以下命令创建一个新的 Docker 上下文：</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">docker</span><span> context create remote</span><span style="color:#bf616a;"> --docker </span><span>&quot;</span><span style="color:#a3be8c;">host=tcp://&lt;Docker所在服务器的局域网IP&gt;:2375</span><span>&quot;
+</span></code></pre>
+<p>可以通过这个命令来查看现在都有哪些上下文：</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">docker</span><span> context ls
+</span></code></pre>
+<p>接下来，使用以下命令切换到刚刚创建的上下文：</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">docker</span><span> context use remote
+</span></code></pre>
+<p>现在，你的 Docker CLI 就会通过 TCP 连接到 Debian 虚拟机中的 Docker 服务了。</p>
+<p>可以尝试运行 <code>docker ps</code> 看看能不能和远程的 Docker 服务对的上号。</p>
+<h2 id="hou-ji">后记</h2>
+<p>其实，这篇笔记只讲了一半的操作流程，但另外一半本质上和 Docker 没啥关系。</p>
+<p>另外一半是什么呢？是如何基于 Easytier 组个虚拟局域网。这几天高温假，如果我还有点空的话，考虑再写一篇 Easytier 的使用笔记。这个工具我用了得有两三个月了，比别的各种开源或商业竞品都好用太多了，它值得我花时间专门写一篇。</p>
+<p>这几个月下来有太多工程笔记没来得及写，实验室真的太忙了，也就这会儿我好歹能稍微写一写。Orz</p>
+<p>先这样吧，该文章同时同步在我的个人博客和论坛里。</p>
+
+    </div>
+    <hr class="post-end">
+    <footer class="post-info">
+      
+      <p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class="feather feather-file-text">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>1663 Words</p>
+      
+      <p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class="feather feather-calendar">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>2025-08-11</p>
+      
+    </footer>
+  </article>
+  
+
+  <div class="post-nav thin">
+    
+    
+  </div>
+
+  
+</main>
+
+		</div>
+
+		
+
+
+    <footer id="site-footer" class="section-inner thin animated fadeIn faster">
+      <p>
+        &copy; 2025
+        <a href="https:&#x2F;&#x2F;langyo.xyz">langyo</a>
+         &#183; <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a>
+      </p>
+      <p>
+        Made with
+        <a href="https://www.getzola.org" target="_blank" rel="noopener">Zola</a>
+        &#183; Theme based on
+        <a href="https://github.com/VersBinarii/hermit_zola" target="_blank" rel="noopener">Hermit Zola</a>
+        
+      </p>
+    </footer>
+
+    
+
+	</div>
+
+	<script src="/js/main.js"></script>
+
+	<!-- Math rendering -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"
+		integrity="sha384-zB1R0rpPzHqg7Kpt0Aljp8JPLqbXI3bhnPWROx27a9N0Ll6ZP/+DiW/UqRcLbRjq" crossorigin="anonymous">
+	<script defer src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"
+		integrity="sha384-y23I5Q6l+B6vatafAwxRu/0oK/79VlbSz7Q9aiSZUvyWYIYsd+qj+o24G5ZU2zJz"
+		crossorigin="anonymous"></script>
+	<script defer src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"
+		integrity="sha384-kWPLUVMOks5AQFrykwIup5lo0m3iMkkHrD0uJ4H5cjeGihAutqP0yW0J6dpFiVkI" crossorigin="anonymous"
+		onload="renderMathInElement(document.body, { delimiters: [ {left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}, {left: '\\[', right: '\\]', display: true}, {left: '\\(', right: '\\)', display: false}]});"></script>
+
+	
+	<link href="https://unpkg.com/highlightjs-badge/highlightjs/styles/obsidian.css"
+		rel="stylesheet">
+	<script src="https://unpkg.com/highlightjs-badge/highlightjs/highlight.pack.js"></script>
+	<script src="https://unpkg.com/highlightjs-badge/highlightjs-badge.min.js"></script>
+	<script>
+		var pres = document.querySelectorAll("pre>code");
+		for (var i = 0; i < pres.length; i++) {
+			hljs.highlightBlock(pres[i]);
+		}
+	</script>
+	
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js"></script>
+	<script>
+		var options = {
+			copyIconClass: "gg-clipboard",
+			checkIconClass: "gg-check"
+		};
+		window.highlightJsBadge(options);
+	</script>
+	
+
+	
+
+	
+
+	
+	
+
+	
+	<!-- Global Site Tag (gtag.js) - Google Analytics -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-QHZB20Q6RQ"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag() { dataLayer.push(arguments); }
+		gtag('js', new Date());
+		gtag('config', 'G-QHZB20Q6RQ');
+	</script>
+	
+</body>
+
+</html>

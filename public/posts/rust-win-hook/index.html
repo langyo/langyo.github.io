@@ -123,7 +123,7 @@
         <span>Mar 22, 2024</span>
         <small> - 
 <span class="reading-time" title="Estimated read time">
-   13 min read  </span>
+   8 min read  </span>
     </small>
         
         
@@ -195,7 +195,7 @@
 <p>下面我会准备两个部分，一个用于实验 EAT Hook，另一个用于实验 inline Hook。</p>
 <p>稍微科普一下，EAT Hook 是指修改导入表中的函数地址，使得目标程序在调用某个函数时，实际上调用的是我们的函数。这种 Hook 是最简单的，但是也最容易被杀软检测到。inline Hook 则是直接修改目标函数的代码，使得目标函数在执行时跳转到我们的函数。这种 Hook 的优点是不容易被检测到，但是实现起来比较复杂。</p>
 <h2 id="2-hua-yi-ge-yong-yu-zhu-ru-eat-hook-de-ba-zi">2. 画一个用于注入 EAT Hook 的靶子</h2>
-<p>按理说以 C 语言编写的程序是最容易被注入的，但是我这里还是用 Rust 来写~~，不然怎么上强度呢~~。</p>
+<p>按理说以 C 语言编写的程序是最容易被注入的，但是我这里还是用 Rust 来写<del>，不然怎么上强度呢</del>。</p>
 <p>以 <code>cargo new</code> 新建一个项目 <code>rust-winhook-demo-core</code>，然后照常加入<code>windows</code> 依赖：</p>
 <pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[package]
 </span><span style="color:#bf616a;">name </span><span>= &quot;</span><span style="color:#a3be8c;">rust-winhook-demo-core</span><span>&quot;
@@ -589,7 +589,7 @@
           <line x1="16" y1="13" x2="8" y2="13"></line>
           <line x1="16" y1="17" x2="8" y2="17"></line>
           <polyline points="10 9 9 9 8 9"></polyline>
-        </svg>3363 Words</p>
+        </svg>2181 Words</p>
       
       <p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
