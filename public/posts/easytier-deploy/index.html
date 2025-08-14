@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="X-UA-Compatible" content="ie=edge" />
+<meta itemprop="name" content="LANGYO" />
+<meta itemprop="description" content="伊欧的个人空间站点" />
+
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/style.css" />
+
+<title>以 Easytier 部署虚拟局域网服务的流程</title>
+
+
+
+
+<body id="page">
+
+	
+<header id="site-header" class="animated slideInUp faster">
+  <div class="hdr-wrapper section-inner">
+    <div class="hdr-left">
+      <div class="site-branding">
+        <a href="https:&#x2F;&#x2F;langyo.xyz">LANGYO</a>
+      </div>
+      <nav class="site-nav hide-in-mobile">
+
+        
+        <a href="https://langyo.xyz/posts">记录</a>
+        
+        <a href="https://langyo.xyz/about">关于</a>
+        
+      </nav>
+    </div>
+    <div class="hdr-right hdr-icons">
+      <span class="hdr-social hide-in-mobile">
+        
+    
+    <a href="https:&#x2F;&#x2F;github.com&#x2F;langyo" target="_blank" rel="noopener me" title="github">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 1024 1024"
+        fill="currentColor">
+        <path
+          d="M950.857143 512q0 143.428571-83.714286 258T650.857143 928.571429q-15.428571 2.857143-22.571429-4t-7.142857-17.142858v-120.571428q0-55.428571-29.714286-81.142857 32.571429-3.428571 58.571429-10.285715t53.714286-22.285714 46.285714-38 30.285714-60T792 489.142857q0-69.142857-45.142857-117.714286 21.142857-52-4.571429-116.571428-16-5.142857-46.285714 6.285714t-52.571429 25.142857l-21.714285 13.714286q-53.142857-14.857143-109.714286-14.857143t-109.714286 14.857143q-9.142857-6.285714-24.285714-15.428571T330.285714 262.571429 281.142857 254.857143q-25.142857 64.571429-4 116.571428-45.142857 48.571429-45.142857 117.714286 0 48.571429 11.714286 85.714286t30 60 46 38.285714 53.714285 22.285714 58.571429 10.285715q-22.857143 20.571429-28 58.857143-12 5.714286-25.714286 8.571428t-32.571428 2.857143-37.428572-12.285714T276.571429 728q-10.857143-18.285714-27.714286-29.714286t-28.285714-13.714285l-11.428572-1.714286q-12 0-16.571428 2.571428t-2.857143 6.571429 5.142857 8 7.428571 6.857143l4 2.857143q12.571429 5.714286 24.857143 21.714285t18 29.142858l5.714286 13.142857q7.428571 21.714286 25.142857 35.142857t38.285714 17.142857 39.714286 4 31.714286-2l13.142857-2.285714q0 21.714286 0.285714 50.857143t0.285714 30.857142q0 10.285714-7.428571 17.142858t-22.857143 4q-132.571429-44-216.285714-158.571429T73.142857 512q0-119.428571 58.857143-220.285714T291.714286 132 512 73.142857t220.285714 58.857143T892 291.714286 950.857143 512z"
+          p-id="3233"></path>
+      </svg>
+      
+    </a>
+    
+    <a href="mailto:langyo.china@gmail.com" target="_blank" rel="noopener me" title="email">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 1024 1024"
+        fill="currentColor">
+        <path
+          d="M170.666667 128l682.666667 0q52.992 0 90.496 37.504t37.504 90.496l0 512q0 52.992-37.504 90.496t-90.496 37.504l-682.666667 0q-52.992 0-90.496-37.504t-37.504-90.496l0-512q0-52.992 37.504-90.496t90.496-37.504zM896 768l0-466.005333-357.333333 285.994667q-11.349333 9.344-26.666667 9.344t-26.666667-9.344l-357.333333-285.994667 0 466.005333q0 17.664 12.501333 30.165333t30.165333 12.501333l682.666667 0q17.664 0 30.165333-12.501333t12.501333-30.165333zM853.333333 213.333333l-682.666667 0q-6.314667 0-13.994667 2.346667l355.328 284.330667 355.328-284.330667q-7.68-2.346667-13.994667-2.346667z"
+          p-id="2277"></path>
+      </svg>
+      
+    </a>
+    
+    <a href="https:&#x2F;&#x2F;space.bilibili.com&#x2F;5741197" target="_blank" rel="noopener me" title="bilibili">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 1024 1024"
+        fill="currentColor">
+        <path
+          d="M777.514667 131.669333a53.333333 53.333333 0 0 1 0 75.434667L728.746667 255.829333h49.92A160 160 0 0 1 938.666667 415.872v320a160 160 0 0 1-160 160H245.333333A160 160 0 0 1 85.333333 735.872v-320a160 160 0 0 1 160-160h49.749334L246.4 207.146667a53.333333 53.333333 0 1 1 75.392-75.434667l113.152 113.152c3.370667 3.370667 6.186667 7.04 8.448 10.965333h137.088c2.261333-3.925333 5.12-7.68 8.490667-11.008l113.109333-113.152a53.333333 53.333333 0 0 1 75.434667 0z m1.152 231.253334H245.333333a53.333333 53.333333 0 0 0-53.205333 49.365333l-0.128 4.010667v320c0 28.117333 21.76 51.157333 49.365333 53.162666l3.968 0.170667h533.333334a53.333333 53.333333 0 0 0 53.205333-49.365333l0.128-3.968v-320c0-29.44-23.893333-53.333333-53.333333-53.333334z m-426.666667 106.666666c29.44 0 53.333333 23.893333 53.333333 53.333334v53.333333a53.333333 53.333333 0 1 1-106.666666 0v-53.333333c0-29.44 23.893333-53.333333 53.333333-53.333334z m320 0c29.44 0 53.333333 23.893333 53.333333 53.333334v53.333333a53.333333 53.333333 0 1 1-106.666666 0v-53.333333c0-29.44 23.893333-53.333333 53.333333-53.333334z"
+          p-id="2438"></path>
+      </svg>
+      
+    </a>
+    
+    <a href="https:&#x2F;&#x2F;steamcommunity.com&#x2F;id&#x2F;langyo_china" target="_blank" rel="noopener me" title="steam">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 1024 1024"
+        fill="currentColor">
+        <path
+          d="M895.51 350.26a415.67 415.67 0 0 0-782.86 49l59.73 24.59c39.23-151.32 176.93-263.35 340.3-263.35 193.82 0 351.5 157.68 351.5 351.5S706.5 863.5 512.68 863.5c-119.33 0-225-59.78-288.53-151l-96.22-43.43c0.63 1.55 1.27 3.08 1.91 4.62a415.6 415.6 0 0 0 765.67-323.43z"
+          p-id="7864"></path>
+        <path
+          d="M627.655345 424.39011m-61.539174 14.524565a63.23 63.23 0 1 0 123.078348-29.049129 63.23 63.23 0 1 0-123.078348 29.049129Z"
+          p-id="7865"></path>
+        <path
+          d="M395.55 755.79a99.31 99.31 0 0 0 99.31-99.31v-1.92l120-93.8c4.24 0.39 8.53 0.6 12.87 0.6a137 137 0 1 0-137-137q0 6.17 0.55 12.18L396.87 557.2h-1.32a98.87 98.87 0 0 0-50.1 13.55L100.34 460.39a421.9 421.9 0 0 0 3.85 128.13l193.94 87.31a99.34 99.34 0 0 0 97.42 79.96zM627.67 335a89.42 89.42 0 1 1-89.41 89.41A89.41 89.41 0 0 1 627.67 335zM375.4 710.61a57.63 57.63 0 0 0 76.21-28.89 57.63 57.63 0 0 0-28.89-76.2L371 582.24a78.2 78.2 0 1 1-47.33 105.08z"
+          p-id="7866"></path>
+      </svg>
+      
+    </a>
+    
+    
+      </span>
+      <button id="menu-btn" class="hdr-btn" title="Menu">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class="feather feather-menu">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+<div id="mobile-menu" class="animated fast">
+  <ul>
+    
+    <li><a href="https://langyo.xyz/posts">记录</a></li>
+    
+    <li><a href="https://langyo.xyz/about">关于</a></li>
+    
+  </ul>
+</div>
+
+
+	
+
+			
+<main class="site-main section-inner animated fadeIn faster">
+  <article class="thin">
+    <header class="post-header">
+      <div class="post-meta">
+        
+        <span>Aug 11, 2025</span>
+        <small> - 
+<span class="reading-time" title="Estimated read time">
+   10 min read  </span>
+    </small>
+        
+        
+      </div>
+      <h1>以 Easytier 部署虚拟局域网服务的流程</h1>
+    </header>
+
+    <div class="content">
+
+      <p>几个月前，我头一回听说 Easytier，一听是哪位北航大的老哥用 Rust 写的，我就尝试用了一下，意外觉得很好用。</p>
+<p>现在，我已经用这个工具给我手里和实验室的设备组建了相对还算完整的虚拟局域网，让我得以在外出差或者假期在家时，也能随时连回实验室内网的工作站继续干活。<del>社畜本色暴露了，哈哈</del></p>
+<p>下面简单讲一讲 Easytier 官网上没写明白的很多细节流程，也算是我对这段时间就组网这块踩坑的总结。</p>
+<blockquote>
+<p>本文需要读者具备一定的计科基础知识，了解基本的计算机网络架构和具备基础的 Linux 终端操作能力。如果确实碰到有一些难以理解的地方，请先考虑询问具备联网搜索能力的 AI 问答服务。</p>
+</blockquote>
+<h2 id="1-bu-shu-gong-wang-easytier-jie-dian">1. 部署公网 Easytier 节点</h2>
+<blockquote>
+<p>这一步其实是可选的。如果仅想测试体验，或是没有条件搭建服务端，可以直接使用<a href="https://easytier.gd.nkbpal.cn/status/easytier">社区提供的公用节点</a>。</p>
+<p>另外，该步骤的官网参考步骤<a href="https://easytier.cn/guide/installation.html">在这里</a>。</p>
+</blockquote>
+<p>由于 NAT 的存在，一般我们手里的设备接入的网络都是不具备公网 IP 的，这就导致我们无法直接将设备暴露在互联网上。为了解决这个问题，我们需要在云端或其他具有公网 IP 的服务器上部署一个 Easytier 节点，以此实现不同内网间设备之间的互相感知。</p>
+<p>在正式开始之前，我们需要一台拥有公网 IP 的服务器，建议使用包含了 Docker 服务的 Linux 系统。</p>
+<blockquote>
+<p>不推荐在 Windows 上部署对外公网 Easytier 节点，因为 Windows 的网络防火墙配置更复杂，并且一般不支持基于 Docker 的容器化部署，总之就是非常费事。</p>
+</blockquote>
+<h3 id="1-1-ben-di-an-zhuang-fang-an">1.1. 本地安装方案</h3>
+<p>如果你的这台机器的网络环境不那么复杂，并且希望能简单安装，可以优先考虑这个方案。</p>
+<p>以 Debian / Ubuntu 为例，在 <code>root</code> 用户权限下进入服务器的远程终端。对于中国大陆的网络环境，可以使用以下命令来一键安装：</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">apt</span><span> update
+</span><span style="color:#bf616a;">apt</span><span> install unzip</span><span style="color:#bf616a;"> -y
+</span><span style="color:#bf616a;">wget -O</span><span> /tmp/easytier.sh &quot;</span><span style="color:#a3be8c;">https://ghfast.top/https://raw.githubusercontent.com/EasyTier/EasyTier/main/script/install.sh</span><span>&quot; &amp;&amp; </span><span style="color:#bf616a;">sudo</span><span> bash /tmp/easytier.sh install</span><span style="color:#bf616a;"> --gh-proxy</span><span> https://ghfast.top/
+</span></code></pre>
+<p>如果网络环境不受限制，可以使用以下命令：</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">apt</span><span> update
+</span><span style="color:#bf616a;">apt</span><span> install unzip</span><span style="color:#bf616a;"> -y
+</span><span style="color:#bf616a;">wget -O</span><span> /tmp/easytier.sh &quot;</span><span style="color:#a3be8c;">https://raw.githubusercontent.com/EasyTier/EasyTier/main/script/install.sh</span><span>&quot; &amp;&amp; </span><span style="color:#bf616a;">sudo</span><span> bash /tmp/easytier.sh install
+</span></code></pre>
+<p>Easytier 会作为一个 systemctl 服务安装到系统中，对应于 <code>/etc/systemd/system/easytier@.service</code>。</p>
+<blockquote>
+<p><code>easytier@.service</code> 中的 <code>@</code> 符号表示这是一个模板服务，文件中的 <code>%i</code> 会被替换为具体的实例名称。例如，运行 <code>systemctl start easytier@&lt;实例名称&gt;</code> 即可启动对应的服务。</p>
+</blockquote>
+<p>安装过后，我们可以打开由安装脚本默认提供的 <code>/opt/easytier/config/default.conf</code> 进行具体配置：</p>
+<pre data-lang="conf" style="background-color:#2b303b;color:#c0c5ce;" class="language-conf "><code class="language-conf" data-lang="conf"><span style="color:#bf616a;">instance_name </span><span>= </span><span style="color:#a3be8c;">&quot;default&quot; </span><span style="color:#65737e;"># 这里名字随便改，对应于 systemctl 的服务实例名称
+</span><span style="color:#bf616a;">ipv4 </span><span>= </span><span style="color:#a3be8c;">&quot;192.168.10.1&quot; </span><span style="color:#65737e;"># 这里设定这个节点的静态 IP，必须在局域网号段中
+</span><span style="color:#65737e;"># 如果想动态分配 IP 地址，可以改为使用下面这句
+</span><span style="color:#65737e;"># dhcp = true
+</span><span style="color:#65737e;"># 如果不希望这台机器具有 IP 地址，ipv4 和 dhcp 就都别配置
+</span><span style="color:#bf616a;">listeners </span><span>= [
+</span><span>    </span><span style="color:#a3be8c;">&quot;tcp://0.0.0.0:11010&quot;</span><span>, </span><span style="color:#65737e;"># 监听端口配置，记得同时配置防火墙，需要进各家 VPS 的后台面板放行 11010 端口
+</span><span>    </span><span style="color:#a3be8c;">&quot;udp://0.0.0.0:11010&quot;</span><span>,
+</span><span>    </span><span style="color:#a3be8c;">&quot;wg://0.0.0.0:11011&quot;</span><span>,
+</span><span>]
+</span><span style="color:#bf616a;">rpc_portal </span><span>= </span><span style="color:#a3be8c;">&quot;0.0.0.0:0&quot;
+</span><span style="color:#bf616a;">hostname </span><span>= </span><span style="color:#a3be8c;">&quot;在虚拟局域网中的标识主机英文名&quot; </span><span style="color:#65737e;"># 可选，不填的话默认为该机器的真实登录用户名
+</span><span>
+</span><span style="color:#b48ead;">[network_identity]
+</span><span style="color:#bf616a;">network_name </span><span>= </span><span style="color:#a3be8c;">&quot;网络名称，自己随便取一个英文名&quot;
+</span><span style="color:#bf616a;">network_secret </span><span>= </span><span style="color:#a3be8c;">&quot;网络密码，留空则为直接允许任何人加入网络&quot;
+</span></code></pre>
+<blockquote>
+<p>注意这里的 <code>instance_name</code> 的值就是这个配置的实例名称。如果要启动这个配置文件的服务，就运行 <code>systemctl start easytier@default</code>，也就是 <code>@</code> 后面换成对应的实例名称。</p>
+</blockquote>
+<p>通过 <code>vim /opt/easytier/config/default.conf</code> 打开配置文件进行编辑，之后我们需要在 <code>sudo</code> 权限下运行：</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">systemctl</span><span> daemon-reload </span><span style="color:#65737e;"># 刷新服务配置
+</span><span style="color:#bf616a;">systemctl</span><span> enable easytier@default </span><span style="color:#65737e;"># 启用
+</span><span style="color:#bf616a;">systemctl</span><span> start easytier@default </span><span style="color:#65737e;"># 启动，注意必须先启用才能启动
+</span><span>
+</span><span style="color:#bf616a;">systemctl</span><span> status easytier@default </span><span style="color:#65737e;"># 查看服务运行状态，如果正常应该能看到绿字的 active (running)
+</span><span>
+</span><span style="color:#65737e;"># 如果需要停止与停用服务，按顺序执行以下命令
+</span><span style="color:#bf616a;">systemctl</span><span> stop easytier@default </span><span style="color:#65737e;"># 停止
+</span><span style="color:#bf616a;">systemctl</span><span> disable easytier@default </span><span style="color:#65737e;"># 禁用
+</span><span>
+</span><span style="color:#65737e;"># 如果修改了服务配置文件，需要重启，按顺序执行以下命令
+</span><span style="color:#bf616a;">systemctl</span><span> daemon-reload </span><span style="color:#65737e;"># 刷新服务配置
+</span><span style="color:#bf616a;">systemctl</span><span> restart easytier@default </span><span style="color:#65737e;"># 重启
+</span></code></pre>
+<blockquote>
+<p><a href="https://easytier.cn/guide/network/oneclick-install-as-service.html">这里还有另一种手动安装服务的方案</a>，需要你自行上载 Easytier 的那几个可执行文件。其中 <code>easytier-cli</code> 自身是有能创建服务的能力的。这种方案适用于外网隔绝、但是防火墙开了口子到指定外网 IP 的情况，如涉密网络环境的虚拟局域网部署等。</p>
+</blockquote>
+<h3 id="1-2-docker-an-zhuang-fang-an">1.2. Docker 安装方案</h3>
+<p>如果你的这台机器同时兼职跑着别的一些服务，不希望 Easytier 可能会影响其它服务的运行，可以优先考虑这个方案。</p>
+<blockquote>
+<p>如果机器还没安装过 Docker，我建议使用这个<a href="https://linuxmirrors.cn/#docker">一键安装脚本</a>，在安装后还能顺带帮你把镜像源也配置了。</p>
+<p>请注意，<code>docker</code> 指令的执行可能需要 <code>sudo</code> 权限。</p>
+</blockquote>
+<p>找一处合适的目录，创建一个 Docker Compose 配置文件。这里以 <code>vim /home/easytier.yml</code> 为例：</p>
+<pre data-lang="yaml" style="background-color:#2b303b;color:#c0c5ce;" class="language-yaml "><code class="language-yaml" data-lang="yaml"><span style="color:#bf616a;">services</span><span>:
+</span><span>  </span><span style="color:#bf616a;">easytier</span><span>:
+</span><span>    </span><span style="color:#bf616a;">image</span><span>: </span><span style="color:#a3be8c;">m.daocloud.io/docker.io/easytier/easytier:latest
+</span><span>    </span><span style="color:#65737e;"># 如果网络环境不受限制，可以考虑将上一行的内容修改为下面这一行
+</span><span>    </span><span style="color:#65737e;"># image: easytier/easytier:latest
+</span><span>    </span><span style="color:#bf616a;">hostname</span><span>: </span><span style="color:#a3be8c;">easytier
+</span><span>    </span><span style="color:#bf616a;">container_name</span><span>: </span><span style="color:#a3be8c;">easytier
+</span><span>    </span><span style="color:#bf616a;">restart</span><span>: </span><span style="color:#a3be8c;">unless-stopped
+</span><span>    </span><span style="color:#bf616a;">network_mode</span><span>: </span><span style="color:#a3be8c;">host
+</span><span>    </span><span style="color:#bf616a;">cap_add</span><span>:
+</span><span>      - </span><span style="color:#a3be8c;">NET_ADMIN
+</span><span>      - </span><span style="color:#a3be8c;">NET_RAW
+</span><span>    </span><span style="color:#bf616a;">environment</span><span>:
+</span><span>      - </span><span style="color:#a3be8c;">TZ=Asia/Shanghai
+</span><span>    </span><span style="color:#bf616a;">devices</span><span>:
+</span><span>      - </span><span style="color:#a3be8c;">/dev/net/tun:/dev/net/tun </span><span style="color:#65737e;"># 建议使用，用于映射宿主机 tun 设备到本地，相当于模拟一个三级交换机，以拦截处理局域网地址
+</span><span>    </span><span style="color:#bf616a;">volumes</span><span>:
+</span><span>      - </span><span style="color:#a3be8c;">/etc/easytier:/root </span><span style="color:#65737e;"># 可选，用于在 Docker 容器外部也能使用 Easytier 的命令行
+</span><span>      - </span><span style="color:#a3be8c;">/etc/machine-id:/etc/machine-id:ro </span><span style="color:#65737e;"># 便于 Easytier 读取宿主机的真实主机名
+</span><span>    </span><span style="color:#bf616a;">command</span><span>: </span><span style="color:#a3be8c;">-i &quot;这台机器的静态 IP 地址&quot; --network-name &quot;网络名称，自己随便取一个英文名&quot; --network-secret &quot;网络密码，不加这句参数则为准许任何人加入网络&quot; -l 11010
+</span><span>    </span><span style="color:#65737e;"># 如果不需要这台机器有静态 IP 地址，以上的 -i &quot;xxx&quot; 可以换成 -d，以分配动态 IP 地址；或者干脆不写，这台机器就不分配具体地址
+</span><span>    </span><span style="color:#65737e;"># 如果需要指定自定义主机名，可以补充参数 --hostname &quot;自定义英文主机名&quot;
+</span></code></pre>
+<p>其中，<code>-i</code> 参数用于指定这台机器的静态 IP 地址，<code>--network-name</code> 和 <code>--network-secret</code> 分别用于指定网络名称和网络密码，最后的 <code>-l</code> 参数用于指定监听端口（即 11010，同时监听 TCP 与 UDP）。</p>
+<p>然后运行以下命令启动 Docker 容器：</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">docker</span><span> compose</span><span style="color:#bf616a;"> -f</span><span> /home/easytier.yml up</span><span style="color:#bf616a;"> -d
+</span></code></pre>
+<p>如果有需要，可以运行以下命令停止并清理 Docker 容器，不留痕迹：</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">docker</span><span> compose</span><span style="color:#bf616a;"> -f</span><span> /home/easytier.yml down
+</span></code></pre>
+<h3 id="1-3-yu-ming-pei-zhi-jian-yi">1.3. 域名配置建议</h3>
+<p>强烈建议给第一个公网 IP 的主机配置一个域名，这样后续如果有更换主机的需求，就不用动原本组网的机器的配置了。</p>
+<blockquote>
+<p>虽说如此，如果你使用了诸如 Cloudflare 等<strong>具备反代保护</strong>的 DNS 提供商，请记得关闭 DNS 代理，因为这些代理所在的主机位置反而可能会影响 Easytier 组网，副作用包括且不限于连接延迟更高、被墙风险增加等。</p>
+</blockquote>
+<h2 id="2-ru-wang-she-bei-pei-zhi-easytier">2. 入网设备配置 Easytier</h2>
+<p>Easytier 的组网方式是去中心化的，只要与其中一个节点握上手，这个子网下的其它所有设备就都可以探知到。因此，配置一个 Easytier 的“服务端”与“客户端”的步骤是没什么区别的，唯一区别是谁先配置、充当第一个公网主机，其余的设备只要连上这个主机就可以了。</p>
+<h3 id="2-1-wei-linux-zhu-ji-pei-zhi-easytier">2.1. 为 Linux 主机配置 Easytier</h3>
+<p>在 Linux 主机上安装 Easytier 的步骤与前文其实是差不多的，区别在于配置内容。</p>
+<p>对于前文 1.1 的方案，举个例子，配置文件可以这么改：</p>
+<pre data-lang="conf" style="background-color:#2b303b;color:#c0c5ce;" class="language-conf "><code class="language-conf" data-lang="conf"><span style="color:#bf616a;">instance_name </span><span>= </span><span style="color:#a3be8c;">&quot;default&quot; </span><span style="color:#65737e;"># 这里名字随便改，对应于 systemctl 的服务实例名称
+</span><span style="color:#bf616a;">ipv4 </span><span>= </span><span style="color:#a3be8c;">&quot;192.168.10.2&quot; </span><span style="color:#65737e;"># 这里设定这个节点的静态 IP，道理和前面也是类似的，注意别和已有主机搞重复了
+</span><span style="color:#bf616a;">rpc_portal </span><span>= </span><span style="color:#a3be8c;">&quot;0.0.0.0:0&quot;
+</span><span style="color:#bf616a;">hostname </span><span>= </span><span style="color:#a3be8c;">&quot;在虚拟局域网中的标识主机英文名&quot; </span><span style="color:#65737e;"># 可选，不填的话默认为该机器的真实登录用户名
+</span><span>
+</span><span style="color:#b48ead;">[[peer]]
+</span><span style="color:#bf616a;">uri </span><span>= </span><span style="color:#a3be8c;">&quot;tcp://&lt;第一个公网 IP 主机的公网 IP 或域名&gt;:11010&quot;
+</span><span>
+</span><span style="color:#65737e;"># 可选，如果觉得网络环境可能不够稳定，再加一个 UDP 就相当于上个保险
+</span><span style="color:#b48ead;">[[peer]]
+</span><span style="color:#bf616a;">uri </span><span>= </span><span style="color:#a3be8c;">&quot;udp://&lt;第一个公网 IP 主机的公网 IP 或域名&gt;:11010&quot;
+</span><span>
+</span><span style="color:#b48ead;">[network_identity]
+</span><span style="color:#bf616a;">network_name </span><span>= </span><span style="color:#a3be8c;">&quot;网络名称，需要跟随第一个主机的名称&quot;
+</span><span style="color:#bf616a;">network_secret </span><span>= </span><span style="color:#a3be8c;">&quot;网络密码，也是需要跟随第一个主机的配置，如有就得对上号&quot;
+</span></code></pre>
+<p>除了修改 IP 地址以外，主要修改就是增加了个 <code>[[peer]]</code> 段落，用于指定用于并网的公网主机的地址，可以指定多个不同的主机地址，也可以分别指定不同协议的同一地址。</p>
+<p>对于前文 1.2 的方案，命令行部分则改为这样：</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">-i </span><span>&lt;这台机器的静态 IP 地址&gt; --network-name &lt;网络名称，自己随便取一个英文名&gt; --network-secret &lt;网络密码，不加这句参数则为准许任何人加入网络&gt; -p tcp://&lt;第一个公网 IP 主机的公网 IP 或域名&gt;:11010</span><span style="color:#bf616a;"> -p</span><span> udp://&lt;第一个公网 IP 主机的公网 IP 或域名&gt;:11010
+</span></code></pre>
+<p>除了前文讲过的部分外，<code>-p</code> 参数用于指定用于并网的公网主机的地址，和前面那个 <code>[[peer]]</code> 段落中的 <code>uri</code> 是对应的关系，也是可以多次书写。</p>
+<h3 id="2-2-wei-windows-zhu-ji-pei-zhi-lin-shi-easytier">2.2. 为 Windows 主机配置临时 Easytier</h3>
+<p>Easytier 官方提供了一个名为 Easytier GUI 的程序，<a href="https://easytier.cn/guide/download.html">在这里下载</a>。如果前文都认真阅读了的话，其实这个软件我是不必专门讲解如何使用的，<a href="https://easytier.cn/guide/gui/manual.html">参考官方文档即可</a>。</p>
+<p>这里唯一需要注意的坑，是高级配置选项中有一个“无 TUN 模式”。除非你这个主机是铁定了只接受外部连入、自己不主动连出的，否则这个选项就<strong>不要</strong>勾选上。前面我说过，TUN 是作为一个虚拟的三级交换机帮你拦截处理局域网地址请求的，如果没有它，从本机向虚拟局域网的地址发起的请求就没人能处理了。</p>
+<h3 id="2-3-wei-windows-zhu-ji-pei-zhi-kai-ji-qi-dong-de-easytier-fu-wu">2.3. 为 Windows 主机配置开机启动的 Easytier 服务</h3>
+<p>这里的操作主要也可以参考官方文档，并且有两种方式。一种是<a href="https://easytier.cn/guide/network/oneclick-install-as-service.html">直接使用官方脚本自动安装配置</a>，另一种则是<a href="https://easytier.cn/guide/network/install-as-a-windows-service.html">手动下载 Easytier 的可执行文件再用 nssm 配置服务</a>。</p>
+<p>老实说，其实后一种方法没太大必要，因为 <code>easytier-cli</code> 已经自带了在各个操作系统下自动创建系统服务的能力，这一点前文 1.1 就有提及。</p>
+<p>把下载好的 Easytier 可执行文件解压到一个合适的目录下，举个例子，这里我们就解压到 <code>C:\easytier</code>。</p>
+<p>打开管理员模式的终端，然后运行以下命令，以安装服务：</p>
+<pre data-lang="powershell" style="background-color:#2b303b;color:#c0c5ce;" class="language-powershell "><code class="language-powershell" data-lang="powershell"><span>.\</span><span style="color:#96b5b4;">easytier-cli.exe</span><span> service install `
+</span><span>    --description &quot;</span><span style="color:#a3be8c;">自定义服务描述</span><span>&quot; `    </span><span style="color:#65737e;"># 可选，默认使用包描述
+</span><span>    --display-name &quot;</span><span style="color:#a3be8c;">显示名称</span><span>&quot; `    </span><span style="color:#65737e;"># 可选，服务显示名称
+</span><span>    </span><span style="color:#65737e;"># --disable-autostart `    # 可选，禁用开机自启（默认启用）
+</span><span>    -- `  </span><span style="color:#65737e;"># 以下开始就都是和前面 1.2 一样的传递参数格式了
+</span><span>    --hostname &quot;</span><span style="color:#a3be8c;">在虚拟局域网中的标识主机英文名</span><span>&quot; -i &quot;</span><span style="color:#a3be8c;">这台机器的静态 IP 地址</span><span>&quot; `
+</span><span>    --network-name &quot;</span><span style="color:#a3be8c;">网络名称，自己随便取一个英文名</span><span>&quot; --network-secret &quot;</span><span style="color:#a3be8c;">网络密码，不加这句参数则为准许任何人加入网络</span><span>&quot; `
+</span><span>    -p tcp://&lt;第一个公网 IP 主机的公网 IP 或域名&gt;:</span><span style="color:#d08770;">11010 </span><span>-p udp://&lt;第一个公网 IP 主机的公网 IP 或域名&gt;:</span><span style="color:#d08770;">11010
+</span></code></pre>
+<p>然后使用以下命令启动服务：</p>
+<pre data-lang="powershell" style="background-color:#2b303b;color:#c0c5ce;" class="language-powershell "><code class="language-powershell" data-lang="powershell"><span>.\</span><span style="color:#96b5b4;">easytier-cli.exe</span><span> service start
+</span></code></pre>
+<p>如有需要，使用以下命令停止服务：</p>
+<pre data-lang="powershell" style="background-color:#2b303b;color:#c0c5ce;" class="language-powershell "><code class="language-powershell" data-lang="powershell"><span>.\</span><span style="color:#96b5b4;">easytier-cli.exe</span><span> service stop
+</span></code></pre>
+<blockquote>
+<p>在我实际测试中，如果出现诸如笔记本电脑盒盖等行为导致的系统进入睡眠，重新唤醒后就可能需要手动重启服务。</p>
+<p>除非需要修改连接参数，重启服务不需要重新安装服务。</p>
+</blockquote>
+<p>如果需要卸载服务，可以使用以下命令：</p>
+<pre data-lang="powershell" style="background-color:#2b303b;color:#c0c5ce;" class="language-powershell "><code class="language-powershell" data-lang="powershell"><span>.\</span><span style="color:#96b5b4;">easytier-cli.exe</span><span> service uninstall
+</span></code></pre>
+<h2 id="3-jin-jie-pei-zhi-cidr-ying-she">3. 进阶配置：CIDR 映射</h2>
+<p>在一些使用场景中，可能不仅需要连接虚拟局域网中的各个主机，还需要将某些特定的 IP 地址段映射到虚拟局域网中。这时可以使用 CIDR 映射功能。</p>
+<p>这里我举个实践过的例子，我的虚拟局域网部署的 IP 地址均位于 <code>192.168.10.*</code> 段内，而我的实验室仪器的内网地址可能有 <code>192.168.15.1</code> 和 <code>192.168.18.*</code>。我希望能将 <code>192.168.15.1</code> 按原样映射，<code>192.168.18.*</code> 则映射到 <code>192.168.11.*</code> 段内。直观来看，是这么个映射：</p>
+<pre data-lang="text" style="background-color:#2b303b;color:#c0c5ce;" class="language-text "><code class="language-text" data-lang="text"><span>源主机网络        发起连接的主机网络
+</span><span>192.168.15.1 -&gt; 192.168.15.1
+</span><span>192.168.18.* -&gt; 192.168.11.*
+</span></code></pre>
+<p>这里同样是有两种方案。如果是以配置文件的形式，可以这样添加 CIDR 映射：</p>
+<pre data-lang="conf" style="background-color:#2b303b;color:#c0c5ce;" class="language-conf "><code class="language-conf" data-lang="conf"><span style="color:#b48ead;">[[proxy_network]]
+</span><span style="color:#bf616a;">cidr </span><span>= </span><span style="color:#a3be8c;">&quot;192.168.15.1&quot;
+</span><span style="color:#bf616a;">mapped_cidr </span><span>= </span><span style="color:#a3be8c;">&quot;192.168.15.1&quot;
+</span><span>
+</span><span style="color:#b48ead;">[[proxy_network]]
+</span><span style="color:#bf616a;">cidr </span><span>= </span><span style="color:#a3be8c;">&quot;192.168.18.0/24&quot;
+</span><span style="color:#bf616a;">mapped_cidr </span><span>= </span><span style="color:#a3be8c;">&quot;192.168.11.0/24&quot;
+</span></code></pre>
+<blockquote>
+<p>这里的 <code>/24</code> 是 CIDR 表示法中的子网掩码，表示前 24 位是网络地址，后 8 位是主机地址。</p>
+</blockquote>
+<p>如果是以命令行配置的形式，则是这么添加的：</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">-n </span><span>&quot;</span><span style="color:#a3be8c;">192.168.15.1</span><span>&quot;</span><span style="color:#bf616a;"> -n </span><span>&quot;</span><span style="color:#a3be8c;">192.168.18.0/24-&gt;192.168.11.0/24</span><span>&quot;
+</span></code></pre>
+<blockquote>
+<p>如果源地址和目标地址相同，可以省略重复的部分和箭头，写一次就行。</p>
+</blockquote>
+<h2 id="hou-ji">后记</h2>
+<p>本来还想提一嘴有些国内的中继 NAT 服务商的，这类 VPS 的 IP 不能直接被访问，但是因为在锥形 NAT 下，所以很容易被打洞。考虑到论坛不能直接涉及任何商业宣传，我在这里就先不具体提了。如有需要，大家可以沿着我说的这个文本，直接问联网 AI 都有什么运营商，也算是我避个嫌。</p>
+<p>趁着高温假，连着写了两三天，写上头了，到现在才写好。其实 Easytier 按理说不止这点东西，还有很多可能一般大家用不上的功能，我就先不在这里提了，官方文档都有提到一些，再不济还可以直接去 Github 看具体实现，反正是开源的。</p>
+<p>总之，就先这样，希望能帮到大家。该文章同时同步在我的个人博客和论坛里。</p>
+
+    </div>
+    <hr class="post-end">
+    <footer class="post-info">
+      
+      <p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class="feather feather-file-text">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>2601 Words</p>
+      
+      <p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class="feather feather-calendar">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>2025-08-11</p>
+      
+    </footer>
+  </article>
+  
+
+  <div class="post-nav thin">
+    
+    
+  </div>
+
+  
+</main>
+
+		</div>
+
+		
+
+
+    <footer id="site-footer" class="section-inner thin animated fadeIn faster">
+      <p>
+        &copy; 2025
+        <a href="https:&#x2F;&#x2F;langyo.xyz">langyo</a>
+         &#183; <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a>
+      </p>
+      <p>
+        Made with
+        <a href="https://www.getzola.org" target="_blank" rel="noopener">Zola</a>
+        &#183; Theme based on
+        <a href="https://github.com/VersBinarii/hermit_zola" target="_blank" rel="noopener">Hermit Zola</a>
+        
+      </p>
+    </footer>
+
+    
+
+	</div>
+
+	<script src="/js/main.js"></script>
+
+	<!-- Math rendering -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"
+		integrity="sha384-zB1R0rpPzHqg7Kpt0Aljp8JPLqbXI3bhnPWROx27a9N0Ll6ZP/+DiW/UqRcLbRjq" crossorigin="anonymous">
+	<script defer src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"
+		integrity="sha384-y23I5Q6l+B6vatafAwxRu/0oK/79VlbSz7Q9aiSZUvyWYIYsd+qj+o24G5ZU2zJz"
+		crossorigin="anonymous"></script>
+	<script defer src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"
+		integrity="sha384-kWPLUVMOks5AQFrykwIup5lo0m3iMkkHrD0uJ4H5cjeGihAutqP0yW0J6dpFiVkI" crossorigin="anonymous"
+		onload="renderMathInElement(document.body, { delimiters: [ {left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}, {left: '\\[', right: '\\]', display: true}, {left: '\\(', right: '\\)', display: false}]});"></script>
+
+	
+	<link href="https://unpkg.com/highlightjs-badge/highlightjs/styles/obsidian.css"
+		rel="stylesheet">
+	<script src="https://unpkg.com/highlightjs-badge/highlightjs/highlight.pack.js"></script>
+	<script src="https://unpkg.com/highlightjs-badge/highlightjs-badge.min.js"></script>
+	<script>
+		var pres = document.querySelectorAll("pre>code");
+		for (var i = 0; i < pres.length; i++) {
+			hljs.highlightBlock(pres[i]);
+		}
+	</script>
+	
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js"></script>
+	<script>
+		var options = {
+			copyIconClass: "gg-clipboard",
+			checkIconClass: "gg-check"
+		};
+		window.highlightJsBadge(options);
+	</script>
+	
+
+	
+
+	
+
+	
+	
+
+	
+	<!-- Global Site Tag (gtag.js) - Google Analytics -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-QHZB20Q6RQ"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag() { dataLayer.push(arguments); }
+		gtag('js', new Date());
+		gtag('config', 'G-QHZB20Q6RQ');
+	</script>
+	
+</body>
+
+</html>
