@@ -18,13 +18,7 @@ private = true
 script = '''
 #!@duckscript
 
-if is_windows
-    exec wsl --exec docker build -t east-hydro .
-    exec wsl --exec docker tag east-hydro:latest crpi-88d7shkt0yo9qvvt.cn-shanghai.personal.cr.aliyuncs.com/langyo_personal/homepage:latest
-    exec wsl --exec docker push crpi-88d7shkt0yo9qvvt.cn-shanghai.personal.cr.aliyuncs.com/langyo_personal/homepage:latest
-else
-    exec docker build -t east-hydro .
-    exec docker tag east-hydro:latest crpi-88d7shkt0yo9qvvt.cn-shanghai.personal.cr.aliyuncs.com/langyo_personal/homepage:latest
-    exec docker push crpi-88d7shkt0yo9qvvt.cn-shanghai.personal.cr.aliyuncs.com/langyo_personal/homepage:latest
-end
+exec docker build -t homepage .
+exec docker tag homepage:latest crpi-88d7shkt0yo9qvvt.cn-shanghai.personal.cr.aliyuncs.com/langyo_personal/homepage:latest
+exec docker push crpi-88d7shkt0yo9qvvt.cn-shanghai.personal.cr.aliyuncs.com/langyo_personal/homepage:latest
 '''
