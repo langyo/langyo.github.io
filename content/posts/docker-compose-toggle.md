@@ -131,6 +131,32 @@ docker context use remote
 
 可以尝试运行 `docker ps` 看看能不能和远程的 Docker 服务对的上号。
 
+## 4. 彩蛋：将本地的 Docker Desktop 换成 Podman Desktop
+
+出于对 Docker Inc. 商业化的顾虑，我决定尝试将本地的 Docker Desktop 换成 Podman Desktop。
+
+> 如果你对此感兴趣，可以考虑[下载 Podman Desktop](https://podman-desktop.io/downloads)。Podman Desktop 同时包含了能安装到 WSL2 的 Podman 本体、Podman CLI 命令行工具和 Compose 插件，下载安装后就无需再额外配置。
+
+Podman 的 CLI 命令与 Docker 非常相似，因此从 Docker 切换到 Podman 的过程其实很简单，基本什么指令都能把开头的 `docker` 修改为 `podman` 直接执行。
+
+不过，我这有兼容旧项目的构建脚本的需求，构建脚本仍然是用 `docker` 的。因此，我需要再安装和配置 Docker CLI 工具，这样就做到了 Docker 的壳子、Podman 的里子了。
+
+> Docker CLI 的安装详见本文第 2 节，建议使用 `choco` 安装。
+
+都安装好之后，可以通过以下命令来验证 Docker 和 Podman 是否都能正常工作：
+
+```bash
+docker ps
+podman ps
+```
+
+很明显，`docker ps` 在你只装了 Docker CLI 的情况下是无法正常工作的，因为它找不到 Docker 守护进程。为此，我们需要修改它指向的上下文为 Podman 的：
+
+```bash
+docker context create local-podman --docker host=npipe:////./pipe/podman-default
+docker context use local-podman
+```
+
 ## 后记
 
 其实，这篇笔记只讲了一半的操作流程，但另外一半本质上和 Docker 没啥关系。
