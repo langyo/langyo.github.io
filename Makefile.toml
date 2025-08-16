@@ -11,7 +11,7 @@ cm_run_task _publish_${1}
 
 [tasks._publish_]
 private = true
-extend = "_publish_docker"
+extend = "_publish_podman"
 
 [tasks._publish_docker]
 private = true
@@ -21,4 +21,14 @@ script = '''
 exec docker build -t homepage .
 exec docker tag homepage:latest crpi-88d7shkt0yo9qvvt.cn-shanghai.personal.cr.aliyuncs.com/langyo_personal/homepage:latest
 exec docker push crpi-88d7shkt0yo9qvvt.cn-shanghai.personal.cr.aliyuncs.com/langyo_personal/homepage:latest
+'''
+
+[tasks._publish_podman]
+private = true
+script = '''
+#!@duckscript
+
+exec podman build -t homepage -f ./dockerfile
+exec podman tag homepage:latest crpi-88d7shkt0yo9qvvt.cn-shanghai.personal.cr.aliyuncs.com/langyo_personal/homepage:latest
+exec podman push crpi-88d7shkt0yo9qvvt.cn-shanghai.personal.cr.aliyuncs.com/langyo_personal/homepage:latest
 '''
