@@ -11,10 +11,14 @@ draft=false
 下面简单讲一讲 Easytier 官网上没写明白的很多细节流程，也算是我对这段时间就组网这块踩坑的总结。
 
 > 本文需要读者具备一定的计科基础知识，了解基本的计算机网络架构和具备基础的 Linux 终端操作能力。如果确实碰到有一些难以理解的地方，请先考虑询问具备联网搜索能力的 AI 问答服务。
+>
+> **本文可以跳着看**。对于只是想体验 Easytier 的用户，可以直接参考**第 1 节的安装部分**和**第 4 节的官网接入部分**的内容。
 
 ## 1. 部署公网 Easytier 节点
 
-> 这一步其实是可选的。如果仅想测试体验，或是没有条件搭建服务端，可以直接使用[社区提供的公用节点](https://easytier.gd.nkbpal.cn/status/easytier)。
+> **这一步是可选的。如果仅想测试体验，或是没有条件搭建服务端，可以直接使用[社区提供的公用节点](https://easytier.gd.nkbpal.cn/status/easytier)。**
+>
+> 仅建议在企业场景等架设自己的主节点，如果是个人玩一玩，大可以拿公用节点先用着，而且可用的公用节点还挺多。
 >
 > 另外，该步骤的官网参考步骤[在这里](https://easytier.cn/guide/installation.html)。
 
@@ -266,6 +270,84 @@ mapped_cidr = "192.168.11.0/24"
 ```
 
 > 如果源地址和目标地址相同，可以省略重复的部分和箭头，写一次就行。
+
+## 4. 统筹协调：Web 控制台
+
+由于 Easytier 是一个分布式的虚拟局域网解决方案，因此如果直接用上述的方法组网，各个入网的主机之间是**没有权限**相互踢掉对方的。
+
+为此，Easytier 还提供了一个 Web 控制台，可以方便地管理和监控虚拟局域网中的各个主机。这对于实时动态配置与管理的场景非常有用。
+
+### 4.1. 直接使用官网控制台
+
+最简便也最快速的办法是使用官方的 Web 控制台。请先[在这里注册账号](https://easytier.cn/web#/auth/register)。
+
+> 如果信不过，可以直接考虑用下一节的自行部署方案。
+
+注册并登录后，可以看到控制台里设备数量暂时为 0 个，毕竟刚注册嘛。下面我们再配置要入网的主机，同样是两种做法。
+
+如果是用的 Docker Compose，就直接给 `command` 传递一个 `-w <注册时的用户名>` 就行：
+
+```yaml
+services:
+  easytier:
+    image: m.daocloud.io/docker.io/easytier/easytier:latest
+    hostname: easytier
+    container_name: easytier
+    restart: unless-stopped
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      - TZ=Asia/Shanghai
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - /etc/easytier:/root
+      - /etc/machine-id:/etc/machine-id:ro
+    command: -w <注册时的用户名> --hostname <在虚拟局域网中的标识主机英文名>
+```
+
+如果是通过 `easytier-cli` 创建的服务，创建时也是只需要传个 `-w` 就行：
+
+```bash
+easytier-cli service install -- -w <注册时的用户名> --hostname <在虚拟局域网中的标识主机英文名>
+```
+
+> 如果使用 Web 控制台，就**用不了配置文件方案**，因为 Web 控制台本身就是分发配置文件的中心。
+>
+> 打比方就是，餐厅门口有个服务员（Web 控制台）给你发用餐券（配置文件），你就用不着在窗口单独点菜（单独写自己的配置文件）了，直接根据用餐券取对应的菜品就行。
+
+### 4.2. 自行部署控制台
+
+可能你信不过官网的控制台，毕竟光是注册只要个验证码这件事本身就让人觉得很不踏实，防不住有人滥用。
+
+所以，为了隐私安全或是部署涉密局域网，我们也可以选择自行部署 Web 控制台，它的本体就在 Easytier 发布的二进制文件包中一个名为 `easytier-web-embed` 的程序中。
+
+直接运行 `easytier-web-embed` 即可启动控制台。如果觉得可以开机启动，在 Linux 下可以考虑用 systemd 把它做成一个系统服务常驻在后台。创建 `/etc/systemd/system/easytier-web-embed.service` 文件，内容如下：
+
+```ini
+[Unit]
+Description=Easytier Web Embed
+
+[Service]
+ExecStart=/home/easytier-web-embed  # 注意需要根据实际情况指向实际路径；如果忘记在哪里了，可以用 which easytier-web-embed 定位一下
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+这个服务端的 Web 控制台可以通过访问 `http://<配置服务器 IP>:11211` 来进行管理和监控，而如果想让别的节点连入这里，默认情况下还需要额外开放 `22020` 端口。注意提前放行防火墙。
+
+注册一个管理员账号，登录后就可以着手做和前面一样的事情了，把节点一个个都塞进来。不同的是，`-w` 参数后面跟的参数就需要携带服务器地址了：
+
+```bash
+# 这里以 easytier-cli 注册流程举例，Docker Compose 配置文件同理，改一下 -w 后面的内容就行
+easytier-cli service install -- -w tcp://<配置服务器 IP>:22020/<注册时的用户名>
+```
+
+这样就差不多了。
 
 ## 后记
 
