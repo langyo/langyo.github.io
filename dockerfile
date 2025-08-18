@@ -1,4 +1,4 @@
-FROM ghcr.io/getzola/zola:v0.17.1 AS zola
+FROM ghcr.io/getzola/zola:v0.21.0 AS zola
 
 COPY . /home
 WORKDIR /home
