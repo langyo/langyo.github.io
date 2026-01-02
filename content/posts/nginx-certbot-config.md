@@ -8,11 +8,14 @@ draft=false
 
 下面是我在 Nginx 为反代服务端时以 Certbot 自动申请 HTTPS 证书的流程。
 
+> Nginx 自 1.29 起，[基于 ACMEv2 协议的自动申领 HTTPS 证书模块](https://nginx.org/en/docs/http/ngx_http_acme_module.html)将直接随附 Nginx 安装，相比较于手动方式更稳妥、更方便。如果想看自动方式，可以直接拉到文章末尾，我额外补充了基于该模块的自动申领流程。
+
 ## 1. 安装 Nginx 与 Certbot
 
 这里我以 Ubuntu 系统作例子，别的发行版的方法大同小异。先更新一下包管理器：
 
 ```bash
+# 国内建议选用镜像源，例如可以使用 https://linuxmirrors.cn 的换源脚本
 sudo apt update
 sudo apt upgrade
 ```
@@ -20,7 +23,7 @@ sudo apt upgrade
 然后安装 Nginx 与 Certbot：
 
 ```bash
-sudo apt install nginx certbot
+sudo apt install nginx certbot -y
 ```
 
 确保 Nginx 服务已经启动：
@@ -143,3 +146,64 @@ crontab -e
 ```
 
 > 这里的 `0 0 1 * *` 是指每个月的第一天零点零分执行一次。
+
+## 7. 自动获取证书流程
+
+新版本的 Nginx 开始支持了自动申领与更新 HTTPS 证书的能力，这里我们还是以 Certbot 作为签发平台，尝试一下操作。
+
+> 如果你是直接跳到这里的，恭喜你，前面那 5 步你应该是一步也不用做了，就第一步安装得看看……
+
+还是在 `/etc/nginx/conf.d` 下创建或修改已有配置：
+
+```nginx
+# 这里需要先定义提供商，也就是 certbot 默认的提供商 Let's Encrypt
+acme_issuer letsencrypt {
+    uri         https://acme-v02.api.letsencrypt.org/directory;
+    # contact   你的邮箱@xxx.com;
+    state_path  /var/cache/nginx/acme-letsencrypt;
+
+    accept_terms_of_service; # 嗯，我同意使用，你别再问我同不同意了（
+}
+
+# 可选，设定共享缓存，这样一个服务器的不同 nginx 配置证书就都能塞一起了
+acme_shared_zone zone=ngx_acme_shared:1M;
+
+# 目前唯一支持的 HTTP-01 质询方法必须要求服务端好歹开了 80 端口
+# 哪怕你以后不准备在这里加任何路由，也不能省略，起码得返回个 404
+server {
+    # 响应 ACME HTTP-01 质询
+    listen 80;
+
+    location / {
+        # 默认写个空响应
+        return 404;
+    }
+}
+
+server {
+    listen 443 ssl;
+    server_name xxx.com;
+
+    # 这里写的证书路径可以直接用 Nginx 变量，很方便
+    # 下面的 ACME 自动质询配置是会自动设定这里的值的，不需要自己再手写
+    ssl_certificate       $acme_certificate;
+    ssl_certificate_key   $acme_certificate_key;
+    ssl_certificate_cache max=2; # 可选，最多保存最近几份缓存证书，这样过期了的能自动删
+
+    # 这里配置 ACME 自动质询
+    acme on;
+    acme_domain xxx.com;
+    acme_email 你的邮箱@xxx.com;
+    acme_certificate letsencrypt; # 前面用的啥名儿，这儿就写的啥
+
+    location / {
+        proxy_pass http://localhost:3000;
+    }
+}
+```
+
+……其实这就结束了！
+
+请记得通过 `nginx -t` 确认你的 Nginx 版本，必须至少为 1.29。
+
+> 如果你尴尬的发现服务器上的 nginx 不是最新的，你可以试试用各种包管理器进行更新，例如 Debian/Ubuntu 可以用 `sudo apt update && sudo apt upgrade nginx`，然后再 `nginx -t` 看看。
