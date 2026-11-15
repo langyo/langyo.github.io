@@ -1,0 +1,209 @@
+// hikari-zola — dossier: the /about operator file — sticky ID card (avatar,
+// VERIFIED stamp, attribute meters) beside the long-form body, plus the two
+// reusable sub-blocks (skill groups, career log).
+@use "./mixins" as *;
+
+.hk-dossier {
+  display: grid;
+  gap: clamp(24px, 3.4vw, 44px);
+  align-items: start;
+
+  @media (min-width: 1000px) {
+    grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+  }
+}
+
+.hk-dossier__card {
+  @include hk-panel;
+  align-self: start;
+  padding: clamp(16px, 2.2vw, 24px);
+
+  @media (min-width: 1000px) {
+    position: sticky;
+    top: calc(var(--hk-topbar-h) + 24px);
+  }
+}
+
+.hk-dossier__figure {
+  position: relative;
+  margin-bottom: 16px;
+  background: var(--hk-sunken);
+}
+
+.hk-dossier__avatar {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border: var(--hk-hair) solid var(--hk-line);
+}
+
+.hk-dossier__figure .hk-stamp {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+}
+
+.hk-dossier__name {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.4vw, 1.7rem);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.hk-dossier__handle {
+  margin: 4px 0 0;
+  color: var(--hk-fg-3);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+}
+
+.hk-dossier__roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hk-dossier__attrs {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 0;
+  padding: 16px 0 0;
+  border-top: var(--hk-hair) solid var(--hk-line);
+  list-style: none;
+}
+
+.hk-attr {
+  display: grid;
+  grid-template-columns: 5.2rem minmax(0, 1fr) 2.1rem;
+  align-items: center;
+  gap: 10px;
+}
+
+.hk-attr__k {
+  color: var(--hk-fg-3);
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hk-attr__bar {
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  border: var(--hk-hair) solid var(--hk-line);
+  background: var(--hk-sunken);
+}
+
+.hk-attr__fill {
+  display: block;
+  width: var(--v, 0%);
+  height: 100%;
+  background: linear-gradient(90deg, var(--hk-accent), rgb(var(--hk-cyanish)));
+}
+
+.hk-attr__v {
+  @include hk-readout;
+  color: var(--hk-fg-2);
+  font-size: 0.6875rem;
+  text-align: right;
+}
+
+.hk-dossier__contact {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: var(--hk-hair) solid var(--hk-line);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    overflow-wrap: anywhere;
+  }
+}
+
+.hk-dossier__body {
+  min-width: 0;
+}
+
+// ── Skill groups / career log ─────────────────────────────────────────
+.hk-skillgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hk-skill {
+  padding: 14px 16px;
+  border: var(--hk-hair) solid var(--hk-line);
+  background: var(--hk-surface);
+}
+
+.hk-skill__name {
+  @include hk-label;
+  display: block;
+  margin: 0 0 10px;
+}
+
+.hk-skill__items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hk-career {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hk-career__item {
+  display: grid;
+  grid-template-columns: 5.4rem minmax(0, 1fr);
+  gap: 4px 16px;
+  padding: 12px 0 12px 12px;
+  border-bottom: var(--hk-hair) solid var(--hk-line);
+  border-left: 2px solid var(--hk-accent-line);
+}
+
+.hk-career__year {
+  @include hk-readout;
+  color: var(--hk-fg-3);
+  font-size: 0.6875rem;
+}
+
+.hk-career__text {
+  color: var(--hk-fg-2);
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+
+// Millennium emblem stamped on the ID card's top-right corner.
+.hk-dossier__card::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  background: var(--hk-fg-3);
+  -webkit-mask: url("/img/millennium-mark.svg") center / contain no-repeat;
+  mask: url("/img/millennium-mark.svg") center / contain no-repeat;
+  opacity: 0.32;
+  pointer-events: none;
+}

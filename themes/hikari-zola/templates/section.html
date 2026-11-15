@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block content %}
+{% set last_date = "" %}
+{% if section.pages %}{% set last_date = section.pages | first | get(key="date") | date(format="%Y.%m.%d") %}{% endif %}
+<main id="main" class="hk-main">
+  <header class="hk-pagehead hk-frame">
+    <p class="hk-label"><span class="hk-tick" aria-hidden="true"></span>// ARCHIVE</p>
+    <h1 class="hk-pagehead__title">{{ section.title | default(value=config.title) }}</h1>
+    {% if section.description %}<p class="hk-pagehead__desc">{{ section.description }}</p>{% elif section.content %}<div class="hk-pagehead__desc">{{ section.content | safe }}</div>{% endif %}
+    <p class="hk-pagehead__count">{{ section.pages | length }} ENTRIES{% if last_date %} <span class="hk-diamond" aria-hidden="true"></span> LAST {{ last_date }}{% endif %}</p>
+  </header>
+  {% if section.pages %}
+  <div class="hk-timeline hk-frame">
+    {% for year, pages in section.pages | group_by(attribute="year") %}
+    <section class="hk-year hk-reveal" data-hk-reveal style="--i: {{ loop.index0 }}">
+      <h2 class="hk-year__num">{{ year }}</h2>
+      <ul class="hk-postlist">
+        {% for p in pages %}{{ m::postrow(p=p, idx=loop.index) }}{% endfor %}
+      </ul>
+    </section>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="hk-label">// NO ENTRIES</p>
+  {% endif %}
+</main>
+{% endblock content %}

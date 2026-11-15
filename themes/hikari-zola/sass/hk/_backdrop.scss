@@ -1,0 +1,61 @@
+// hikari-zola — backdrop: the fixed WebGL2 point-cloud stage everything else
+// paints above. hero = home (full strength), ambient = inner pages (quiet).
+.hk-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hk-backdrop__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hk-backdrop[data-variant="hero"] {
+  opacity: 0.85;
+}
+
+.hk-backdrop[data-variant="ambient"] {
+  opacity: 0.25;
+}
+
+// Phones wrap the hero copy across the full viewport, so the cloud drops back a
+// step instead of competing with the headline and datalines.
+@media (max-width: 767px) {
+  .hk-backdrop[data-variant="hero"] {
+    opacity: 0.6;
+  }
+}
+
+.hk-backdrop[data-variant="off"],
+.hk-backdrop[hidden] {
+  display: none;
+}
+
+// Dark mode has more contrast headroom: the additive cloud reads at full.
+html[data-theme="dark"] {
+  .hk-backdrop[data-variant="hero"] {
+    opacity: 1;
+  }
+
+  .hk-backdrop[data-variant="ambient"] {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-backdrop {
+    opacity: 0.6;
+  }
+}
+
+@media print {
+  .hk-backdrop {
+    display: none;
+  }
+}

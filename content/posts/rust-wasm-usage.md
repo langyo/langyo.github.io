@@ -2,6 +2,14 @@
 title="基于 Rust 的 WebAssembly 漫游指南"
 date=2024-05-27
 draft=false
+description="基于 Rust 的 WebAssembly 漫游指南：wasm-bindgen、wasmtime 与浏览器异步实践。"
+
+[taxonomies]
+tags = ["rust", "wasm", "web"]
+
+[extra]
+summary = "从 ASM.js 到 wasm-bindgen：以 Rust 在浏览器里做异步与 WASM 落地的基础设施梳理。"
+toc = true
 +++
 
 时隔许久，尽管我已经在此期间成功上线了好几个纯 Rust 编写的 Web 服务，但一直没能抽空整理与此相关的基础设施的入门指南。不同于隔壁 JavaScript 娱乐圈每天都能有人整活，Rust 这边不论是要做浏览器还是 WebAssembly 的基础设施都还是非常缺人的，自然也就没有卖课的去关注这方面内容。索性，我决定就如何以 Rust 在浏览器中实现异步操作做个简单的知识梳理。

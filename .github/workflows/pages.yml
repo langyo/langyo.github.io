@@ -1,0 +1,58 @@
+# Deploy the Zola site to GitHub Pages.
+#
+# Pages serves the output of "zola build" only — this workflow replaces the old
+# static-content deployment (static.yml, deleted) so the deployed artifact is
+# exactly what .github/workflows/checks.yml verified on the pull request.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+# Required by the Pages deployment API.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; never cancel a production deployment mid-flight.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  ZOLA_VERSION: "0.21.0"
+  ZOLA_TARGET: x86_64-unknown-linux-gnu
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Zola
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://github.com/getzola/zola/releases/download/v${ZOLA_VERSION}/zola-v${ZOLA_VERSION}-${ZOLA_TARGET}.tar.gz" | tar -xz
+          sudo install -m 0755 zola /usr/local/bin/zola
+          zola --version
+      - name: Build site
+        run: zola build
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

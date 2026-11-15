@@ -1,0 +1,104 @@
+// hikari-zola — type layer: system stack only, heading scale, inline code,
+// global link ink. Prose-level typography lives in hk/_prose.scss.
+@use "./mixins" as *;
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  color: var(--hk-fg);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: clamp(1.85rem, 3.2vw, 2.45rem);
+}
+
+h2 {
+  font-size: clamp(1.4rem, 2.2vw, 1.75rem);
+}
+
+h3 {
+  font-size: 1.2rem;
+}
+
+h4 {
+  font-size: 1.0625rem;
+}
+
+h5,
+h6 {
+  font-size: 0.9375rem;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--hk-link);
+  text-decoration: none;
+}
+
+strong,
+b {
+  color: var(--hk-fg);
+  font-weight: 700;
+}
+
+em,
+i {
+  font-style: italic;
+}
+
+small {
+  font-size: 0.8125rem;
+}
+
+sup,
+sub {
+  font-size: 0.7em;
+  line-height: 0;
+}
+
+mark {
+  background: var(--hk-warn);
+  color: var(--hk-ink);
+}
+
+code,
+kbd,
+samp,
+pre {
+  font-family: var(--font-mono);
+}
+
+code {
+  padding: 0.1em 0.36em;
+  border: var(--hk-hair) solid var(--hk-line);
+  border-radius: 2px;
+  background: var(--hk-sunken);
+  color: var(--hk-fg);
+  font-size: 0.875em;
+}
+
+kbd {
+  padding: 0.1em 0.4em;
+  border: var(--hk-hair) solid var(--hk-line-strong);
+  border-bottom-width: 2px;
+  background: var(--hk-surface);
+  font-size: 0.75em;
+}
+
+hr {
+  height: 1px;
+  margin: 2.4em 0;
+  border: 0;
+  background: var(--hk-line);
+}

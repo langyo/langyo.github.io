@@ -1,0 +1,77 @@
+// hikari-zola — author-only mixins. This partial emits nothing on its own;
+// every hk/* sheet that needs them does `@use "./mixins" as *`.
+// Geometry follows the design language contract: hard edges, hairline
+// borders, cut corners and corner brackets instead of shadows.
+
+/// Cut panel: hairline border + the canonical notch (top-right + bottom-left).
+/// Implemented as a 1px "border" surface + an inset ::before, so the clip-path
+/// corner cuts keep a real 1px edge on their diagonals (a plain
+/// `border + clip-path` would drop the border on both diagonal segments).
+/// Repaint with --hk-panel-bg / --hk-panel-line; the element itself keeps
+/// `background` = border colour so hover rules only swap two custom props.
+@mixin hk-panel($cut: var(--hk-cut)) {
+  position: relative;
+  isolation: isolate;
+  background: var(--hk-panel-line, var(--hk-line));
+  @include hk-cut($cut);
+
+  &::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: var(--hk-hair);
+    background: var(--hk-panel-bg, var(--hk-surface));
+    @include hk-cut($cut);
+  }
+}
+
+/// Canonical notch geometry (top-right + bottom-left, fixed direction).
+@mixin hk-cut($n: var(--hk-cut)) {
+  clip-path: polygon(
+    0 0,
+    calc(100% - #{$n}) 0,
+    100% #{$n},
+    100% 100%,
+    #{$n} 100%,
+    0 calc(100% - #{$n})
+  );
+}
+
+/// Four corner brackets (``[  ]`` style) drawn with eight background bars.
+/// Used for HUD frames; the element keeps its own background otherwise.
+@mixin hk-brackets($len: 18px, $w: 1px, $c: var(--hk-accent-line)) {
+  $grad: linear-gradient(#{$c}, #{$c});
+  background-image: #{$grad}, #{$grad}, #{$grad}, #{$grad}, #{$grad}, #{$grad}, #{$grad}, #{$grad};
+  background-repeat: no-repeat;
+  background-size: $len $w, $w $len, $len $w, $w $len, $len $w, $w $len, $len $w, $w $len;
+  background-position: left top, left top, right top, right top, left bottom, left bottom, right bottom, right bottom;
+}
+
+/// HUD micro label: mono, uppercase, wide tracking, tertiary ink.
+@mixin hk-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--hk-fg-3);
+}
+
+/// Mono readout (numerals, dates, indices) — tabular so HUD lines align.
+@mixin hk-readout {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+/// Hairline separator on one side.
+@mixin hk-hair($side: bottom, $c: var(--hk-line)) {
+  border-#{$side}: var(--hk-hair) solid $c;
+}
+
+/// Keyboard focus ring — the one global focus contract (spec 2.5).
+@mixin hk-focus {
+  outline: 2px solid var(--hk-accent);
+  outline-offset: 2px;
+}

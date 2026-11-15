@@ -1,0 +1,381 @@
+// hikari-zola — prose: every markdown element under .hk-prose, the mono HUD
+// code block (plain pre for no-JS, .hk-code shell for the enhanced state) and
+// the two-mode syntect palette required by spec §4.10.
+@use "./mixins" as *;
+
+.hk-prose {
+  max-width: var(--hk-measure);
+  line-height: 1.78;
+  overflow-wrap: break-word;
+
+  > :first-child {
+    margin-top: 0;
+  }
+
+  p {
+    margin: 0 0 1.15em;
+  }
+
+  del {
+    color: var(--hk-fg-3);
+  }
+
+  abbr[title] {
+    text-decoration: underline dotted;
+    text-underline-offset: 0.2em;
+  }
+
+  a {
+    color: var(--hk-link);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-decoration-color: rgb(var(--color-primary) / 45%);
+    text-underline-offset: 0.2em;
+
+    &:hover {
+      text-decoration-color: currentColor;
+    }
+  }
+
+  h2,
+  h3,
+  h4 {
+    scroll-margin-top: calc(var(--hk-topbar-h) + 20px);
+  }
+
+  h2 {
+    margin: 2.1em 0 0.75em;
+    padding-top: 0.85em;
+    border-top: var(--hk-hair) solid var(--hk-line);
+    font-size: 1.4rem;
+
+    &::before {
+      content: "";
+      display: inline-block;
+      width: 3px;
+      height: 0.85em;
+      margin-right: 11px;
+      vertical-align: -0.06em;
+      background: var(--hk-accent);
+    }
+  }
+
+  h3 {
+    margin: 1.8em 0 0.55em;
+    font-size: 1.15rem;
+
+    &::before {
+      content: "//";
+      margin-right: 8px;
+      color: var(--hk-accent);
+      font-family: var(--font-mono);
+      font-size: 0.8em;
+    }
+  }
+
+  h4 {
+    margin: 1.6em 0 0.5em;
+    padding-left: 10px;
+    border-left: 2px solid var(--hk-line);
+    font-size: 1rem;
+  }
+
+  h5,
+  h6 {
+    margin: 1.4em 0 0.4em;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  ul,
+  ol {
+    margin: 0 0 1.15em;
+    padding-left: 1.4em;
+  }
+
+  li {
+    margin: 0.32em 0;
+  }
+
+  ul {
+    list-style: square;
+
+    li::marker {
+      color: var(--hk-accent);
+    }
+  }
+
+  ol li::marker {
+    color: var(--hk-fg-3);
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+  }
+
+  blockquote {
+    margin: 1.7em 0;
+    padding: 6px 0 6px 18px;
+    border-left: 2px solid var(--hk-accent-line);
+    background: linear-gradient(90deg, var(--hk-accent-soft), transparent 70%);
+    color: var(--hk-fg-2);
+
+    p:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  hr {
+    height: 2px;
+    margin: 2.6em 0;
+    background-image: linear-gradient(var(--hk-accent), var(--hk-accent)), linear-gradient(var(--hk-line), var(--hk-line)), linear-gradient(var(--hk-accent), var(--hk-accent));
+    background-repeat: no-repeat;
+    background-size: 20px 2px, 100% 1px, 20px 2px;
+    background-position: left center, center, right center;
+  }
+
+  figure {
+    margin: 1.7em 0;
+
+    img {
+      margin: 0 auto;
+    }
+  }
+
+  figcaption {
+    margin-top: 8px;
+    color: var(--hk-fg-3);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+    text-align: center;
+  }
+
+  // GFM task lists.
+  input[type="checkbox"] {
+    margin-right: 6px;
+    vertical-align: -1px;
+    accent-color: var(--hk-accent);
+  }
+
+  details {
+    margin: 1.5em 0;
+    padding: 10px 14px;
+    border: var(--hk-hair) solid var(--hk-line);
+  }
+
+  summary {
+    color: var(--hk-fg-2);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    cursor: pointer;
+
+    &::marker {
+      color: var(--hk-accent);
+    }
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 1.7em auto;
+    border: var(--hk-hair) solid var(--hk-line);
+    background: var(--hk-sunken);
+  }
+
+  // GitHub-style horizontally scrollable table.
+  table {
+    display: block;
+    width: max-content;
+    max-width: 100%;
+    margin: 1.7em 0;
+    overflow-x: auto;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+
+  th,
+  td {
+    padding: 8px 12px;
+    border: var(--hk-hair) solid var(--hk-line);
+    text-align: left;
+  }
+
+  th {
+    background: var(--hk-sunken);
+    color: var(--hk-fg-2);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  tbody tr:nth-child(even) {
+    background: rgb(var(--color-background) / 55%);
+  }
+
+  // Footnotes (pulldown-cmark).
+  sup.footnote-reference a {
+    text-decoration: none;
+    font-family: var(--font-mono);
+  }
+
+  .footnotes {
+    margin-top: 3em;
+    padding-top: 1.2em;
+    border-top: var(--hk-hair) solid var(--hk-line);
+    color: var(--hk-fg-2);
+    font-size: 0.875rem;
+  }
+
+  .footnote-definition {
+    display: grid;
+    grid-template-columns: 2rem minmax(0, 1fr);
+    gap: 4px;
+  }
+}
+
+// ── Code blocks ────────────────────────────────────────────────────────
+// No-JS state: Zola emits pre.language-x.z-code and we draw the language tag
+// from data-lang, so the block already reads as HUD without script.
+.hk-prose pre,
+.hk-code pre {
+  position: relative;
+  overflow-x: auto;
+  padding: 14px 16px;
+  border: var(--hk-hair) solid var(--hk-line);
+  border-left: 2px solid var(--hk-accent-line);
+  background: var(--hk-sunken);
+  color: var(--hk-fg);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  tab-size: 2;
+
+  code {
+    display: block;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font-size: inherit;
+  }
+}
+
+.hk-prose pre::before {
+  content: attr(data-lang);
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 2px 8px;
+  border-bottom: var(--hk-hair) solid var(--hk-line);
+  border-left: var(--hk-hair) solid var(--hk-line);
+  background: var(--hk-surface);
+  color: var(--hk-fg-3);
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+// Enhanced state, built by copy.js.
+.hk-code {
+  margin: 1.7em 0;
+  border: var(--hk-hair) solid var(--hk-line);
+  background: var(--hk-sunken);
+}
+
+.hk-code__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 5px 10px;
+  border-bottom: var(--hk-hair) solid var(--hk-line);
+}
+
+.hk-code__lang,
+.hk-code__copy {
+  color: var(--hk-fg-3);
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.hk-code__copy {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border: var(--hk-hair) solid var(--hk-line);
+  border-radius: 2px;
+  background: transparent;
+  cursor: pointer;
+
+  &:hover,
+  &.is-done {
+    border-color: var(--hk-accent-line);
+    color: var(--hk-link);
+  }
+}
+
+.hk-code__body {
+  margin: 0;
+}
+
+.hk-code pre {
+  margin: 0;
+  padding: 14px 16px;
+  border: 0;
+  background: none;
+
+  &::before {
+    display: none;
+  }
+}
+
+// ── Syntect scopes (highlight_theme = "css") ───────────────────────────
+// Every colour rides the --code-* family so light/dark flip for free.
+.z-comment {
+  color: rgb(var(--code-comment));
+  font-style: italic;
+}
+
+.z-string {
+  color: rgb(var(--code-string));
+}
+
+.z-keyword,
+.z-storage {
+  color: rgb(var(--code-keyword));
+}
+
+.z-entity {
+  color: rgb(var(--code-function));
+}
+
+.z-constant,
+.z-numeric {
+  color: rgb(var(--code-number));
+}
+
+.z-variable {
+  color: rgb(var(--code-variable));
+}
+
+.z-meta {
+  color: rgb(var(--code-type));
+}
+
+.z-support {
+  color: rgb(var(--code-builtin));
+}
+
+.z-punctuation {
+  color: var(--hk-fg-2);
+}
+
+.z-invalid {
+  color: rgb(var(--color-error));
+  text-decoration: underline wavy;
+}

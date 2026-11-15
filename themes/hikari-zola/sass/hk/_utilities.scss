@@ -1,0 +1,39 @@
+// hikari-zola — utilities: the two escape hatches the theme allows itself.
+@use "./mixins" as *;
+
+// Screen-reader-only text that still participates in the a11y tree.
+.hk-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+// Content stays selectable (body re-enables it over the vendor deny-by-default
+// selection sheet); chrome subtrees opt back out.
+.hk-prose,
+.hk-article__title,
+.hk-pagehead,
+.hk-postcard__title,
+.hk-postcard__sum,
+.hk-dossier__body {
+  user-select: text;
+}
+
+.hk-topbar,
+.hk-drawer,
+.hk-footer,
+.hk-btn,
+.hk-chip,
+.hk-iconbtn,
+.hk-label,
+.hk-nav,
+.hk-tag {
+  user-select: none;
+}

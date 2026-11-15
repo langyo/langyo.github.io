@@ -1,0 +1,36 @@
+// hikari-zola — motion: the one entrance system (.hk-reveal + --i stagger)
+// and the global reduced-motion kill switch. Per-component interaction
+// transitions are declared where the component lives.
+@use "./mixins" as *;
+
+// Semantics: content is visible by default. Only a document that script has
+// upgraded (html.js, replacing html.no-js on the first line of main.js) hides
+// its reveal targets, so no-JS visitors always get the full page.
+html.js .hk-reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 420ms var(--ease-out-expo), transform 420ms var(--ease-out-expo);
+  transition-delay: calc(var(--i, 0) * 55ms);
+}
+
+html.js .hk-reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  html.js .hk-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

@@ -1,0 +1,56 @@
+# Pull-request gate: build the Zola site and run the static quality gate.
+#
+# The devtools drift check is advisory on purpose: installing the CLI needs
+# network and PyPI/git access, and a failed install must never hide a real
+# content failure behind an infrastructure error.
+name: Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  ZOLA_VERSION: "0.21.0"
+  ZOLA_TARGET: x86_64-unknown-linux-gnu
+
+jobs:
+  site:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Zola
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://github.com/getzola/zola/releases/download/v${ZOLA_VERSION}/zola-v${ZOLA_VERSION}-${ZOLA_TARGET}.tar.gz" | tar -xz
+          sudo install -m 0755 zola /usr/local/bin/zola
+          zola --version
+      - name: Build site
+        run: zola build
+      - name: Zola internal link check
+        run: zola check --skip-external-links
+      - name: Static quality gate
+        run: python3 scripts/check_site.py
+      - name: celestia-devtools init --check (advisory)
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          if ! python3 -m pip install --quiet --disable-pip-version-check "git+https://github.com/celestia-island/celestia-devtools.git"; then
+            echo "::warning::celestia-devtools could not be installed; skipping the justfile/workflow drift gate"
+            exit 0
+          fi
+          if ! celestia-devtools init --check; then
+            echo "::warning::celestia-devtools init --check reported drift (advisory; run: celestia-devtools init --with-workflows --force)"
+          fi

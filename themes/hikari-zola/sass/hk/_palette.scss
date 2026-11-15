@@ -1,0 +1,124 @@
+// hikari-zola — palette layer.
+// Re-declares hikari's --color-* channel seeds (vendor/hikari/_channels.scss)
+// with the site palette, then derives the --hk-* semantic layer from them.
+// Vendor files are never edited (spec §3): every override is a re-declaration
+// here. Semantic tokens are written as live rgb()/color-mix() expressions over
+// the channels, so switching themes only has to restate the channels + syntax
+// family — light and dark can never drift apart.
+
+// Light channel seeds — Millennium white + pale cyan / flat HUD ink.
+:root {
+  --color-background: 247 250 255;
+  --color-surface: 255 255 255;
+  --color-selected-bg: 226 242 255;
+  --color-status-bar-bg: 240 246 255;
+  --color-text: 14 34 55;
+  --color-text-secondary: 75 100 121;
+  --color-text-tertiary: 107 130 153;
+  --color-muted: 160 184 208;
+  --color-border: 197 214 233;
+  --color-primary: 79 165 245;
+  --color-accent: 240 180 41;
+  --color-secondary: 81 154 115;
+  --color-success: 15 181 106;
+  --color-error: 240 112 140;
+  --color-warning: 238 214 119;
+  --color-info: 106 190 214;
+  --color-on-primary: 255 255 255;
+  --color-on-solid: 255 255 255;
+
+  // Syntax family (spec §4.10) — GitHub-Light leaning.
+  --code-keyword: 175 66 140;
+  --code-builtin: 41 104 191;
+  --code-string: 12 125 74;
+  --code-number: 178 84 9;
+  --code-comment: 96 112 134;
+  --code-function: 41 104 191;
+  --code-type: 12 125 74;
+  --code-variable: 178 84 9;
+
+  // Derived site tokens. Literal values are avoided wherever a channel mix can
+  // express the same intent (see PROVENANCE/README for the one-off formulas).
+  --hk-bg: rgb(var(--color-background));
+  --hk-surface: rgb(var(--color-surface));
+  --hk-sunken: color-mix(in srgb, rgb(var(--color-background)) 93%, rgb(var(--color-muted)));
+  --hk-elev: color-mix(in srgb, rgb(var(--color-surface)) 94%, rgb(var(--color-primary)));
+  --hk-fg: rgb(var(--color-text));
+  --hk-fg-2: rgb(var(--color-text-secondary));
+  // Informative micro copy needs >=4.5:1: the channel tertiary (3.8:1) is too
+  // light for dates/handles/TOC, so the site ink is deepened one step.
+  --hk-fg-3: rgb(84 106 128);
+  --hk-muted: rgb(var(--color-muted));
+  --hk-line: rgb(var(--color-border));
+  --hk-line-strong: color-mix(in srgb, rgb(var(--color-border)) 70%, rgb(var(--color-text-tertiary)));
+  --hk-accent: rgb(var(--color-primary));
+  --hk-cyanish: 127 216 255;
+  --hk-glow: rgb(var(--color-primary) / 45%);
+  --hk-accent-soft: rgb(var(--color-primary) / 8%);
+  --hk-accent-line: rgb(var(--color-primary) / 40%);
+  --hk-warn: rgb(var(--color-accent));
+  // Amber stays decorative (rules/stripes/borders); any amber TEXT uses this
+  // ink instead — light amber on paper is 1.8:1 and unreadable.
+  --hk-warn-ink: rgb(138 90 0);
+  // Body links must clear 4.5:1; the accent channel itself is too light in the
+  // light theme, so the contract pins these two values.
+  --hk-link: rgb(31 111 208);
+  --hk-ink: rgb(var(--color-text));
+  --hk-on-ink: rgb(var(--color-background));
+  --hk-shadow-1: 0 1px 2px rgb(0 0 0 / 16%);
+  --hk-shadow-2: 0 12px 32px rgb(0 0 0 / 24%);
+  --hk-page-max: 1180px;
+  --hk-article-max: 780px;
+  --hk-gutter: clamp(16px, 4vw, 40px);
+  --hk-topbar-h: 64px;
+  --hk-measure: 68ch;
+  --hk-cut: 14px;
+  --hk-cut-sm: 8px;
+  --hk-hair: 1px;
+
+  color-scheme: light;
+}
+
+// Dark channel seeds (spec 2.2). Everything derived above follows for free.
+@mixin hk-dark-seeds {
+  --color-background: 7 18 28;
+  --color-surface: 12 27 40;
+  --color-selected-bg: 20 44 66;
+  --color-status-bar-bg: 13 30 45;
+  --color-text: 230 241 251;
+  --color-text-secondary: 154 182 207;
+  --color-text-tertiary: 123 150 176;
+  --color-muted: 84 110 134;
+  --color-border: 27 49 71;
+  --color-primary: 110 194 255;
+  --color-accent: 255 194 75;
+  --color-secondary: 106 186 141;
+  --color-success: 34 197 122;
+  --color-error: 255 128 152;
+  --color-warning: 246 222 132;
+  --color-info: 126 205 229;
+  --color-on-primary: 7 18 28;
+  --color-on-solid: 7 18 28;
+  --code-keyword: 198 120 221;
+  --code-builtin: 198 120 221;
+  --code-string: 152 195 121;
+  --code-number: 209 154 102;
+  --code-comment: 138 148 163;
+  --code-function: 97 175 239;
+  --code-type: 229 192 123;
+  --code-variable: 224 108 117;
+  --hk-link: rgb(140 209 255);
+  --hk-fg-3: rgb(var(--color-text-tertiary));
+  --hk-warn-ink: rgb(var(--color-accent));
+  color-scheme: dark;
+}
+
+html[data-theme="dark"] {
+  @include hk-dark-seeds;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) {
+    @include hk-dark-seeds;
+  }
+}

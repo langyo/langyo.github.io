@@ -1,0 +1,14 @@
+# Build output and local scratch must never enter the image build context.
+/public/
+/_build/
+/.git/
+/.just/
+/celestia-devtools.just
+/scripts/__pycache__/
+**/__pycache__/
+*.pyc
+*.log
+.DS_Store
+Thumbs.db
+node_modules/
+/target/

@@ -1,0 +1,27 @@
+// hikari-zola — entry sheet.
+// Composition order is part of the contract (spec §3 + task deliverable 3):
+// vendored hikari sheets first, then the hk/* design system from palette down.
+// @use emits each module once, in load order — do not reorder.
+
+// ── vendored hikari (read-only; see vendor/hikari/PROVENANCE.md) ──────
+@use "vendor/hikari/scale";
+@use "vendor/hikari/channels";
+@use "vendor/hikari/reset";
+@use "vendor/hikari/selection";
+@use "vendor/hikari/scrollbar";
+@use "vendor/hikari/highlight";
+
+// ── site design system ───────────────────────────────────────────────
+@use "hk/palette";
+@use "hk/base";
+@use "hk/type";
+@use "hk/layout";
+@use "hk/chrome";
+@use "hk/controls";
+@use "hk/surfaces";
+@use "hk/prose";
+@use "hk/hero";
+@use "hk/dossier";
+@use "hk/backdrop";
+@use "hk/motion";
+@use "hk/utilities";

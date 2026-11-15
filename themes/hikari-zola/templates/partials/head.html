@@ -1,0 +1,64 @@
+{%- if page is defined -%}
+  {%- set ctx_title = page.title | default(value="") -%}
+  {%- set ctx_desc = page.description | default(value="") -%}
+  {%- set ctx_url = page.permalink | default(value=config.base_url) -%}
+{%- elif section is defined -%}
+  {%- set ctx_title = section.title | default(value="") -%}
+  {%- set ctx_desc = section.description | default(value="") -%}
+  {%- set ctx_url = section.permalink | default(value=config.base_url) -%}
+{%- elif term is defined -%}
+  {%- set ctx_title = term.name | default(value="") -%}
+  {%- set ctx_desc = "" -%}
+  {%- set ctx_url = term.permalink | default(value=config.base_url) -%}
+{%- elif taxonomy is defined -%}
+  {%- set ctx_title = taxonomy.name | default(value="") | upper -%}
+  {%- set ctx_desc = "" -%}
+  {%- set ctx_url = taxonomy.permalink | default(value=config.base_url) -%}
+{%- else -%}
+  {%- set ctx_title = "" -%}
+  {%- set ctx_desc = "" -%}
+  {%- set ctx_url = config.base_url -%}
+{%- endif -%}
+{%- set site_title = config.title | default(value="") -%}
+{%- set doc_title = site_title -%}
+{%- if ctx_title and ctx_title != site_title -%}{% set doc_title = ctx_title ~ " · " ~ site_title %}{%- endif -%}
+{%- set doc_desc = config.description | default(value="") -%}
+{%- if ctx_desc %}{% set doc_desc = ctx_desc %}{%- endif -%}
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ doc_title }}</title>
+<meta name="description" content="{{ doc_desc }}">
+<meta name="theme-color" content="#f7faff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#07121c" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="{{ ctx_url | safe }}">
+<meta property="og:type" content="{% if page is defined %}article{% else %}website{% endif %}">
+<meta property="og:site_name" content="{{ site_title }}">
+<meta property="og:title" content="{{ doc_title }}">
+<meta property="og:description" content="{{ doc_desc }}">
+<meta property="og:url" content="{{ ctx_url | safe }}">
+<meta property="og:locale" content="{{ lang | default(value=config.default_language) | replace(from='-', to='_') }}">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ get_url(path='favicon-32x32.png') }}">
+<link rel="icon" href="{{ get_url(path='favicon.ico') }}" sizes="any">
+<script>
+  /* First-frame theme bootstrap: set data-theme before any CSS paints so the
+     dark palette never flashes light. Plain (non-module) script, runs inline. */
+  (function () {
+    var root = document.documentElement;
+    var theme = null;
+    try { theme = localStorage.getItem("hk-theme"); } catch (e) {}
+    if (theme !== "light" && theme !== "dark") {
+      theme = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+    }
+    root.setAttribute("data-theme", theme);
+  })();
+</script>
+<link rel="stylesheet" href="{{ get_url(path='style.css') }}">
+<noscript><style>.hk-reveal{opacity:1!important;transform:none!important}</style></noscript>
+{% if config.generate_feeds %}<link rel="alternate" type="application/atom+xml" title="{{ site_title }}" href="{{ get_url(path='atom.xml') }}">{% endif %}
+{%- set ga_id = "" -%}
+{%- if config.extra.analytics.enable | default(value=false) -%}{% set ga_id = config.extra.analytics.id | default(value="") %}{%- endif -%}
+{% if ga_id %}
+<script async src="https://www.googletagmanager.com/gtag/js?id={{ ga_id }}"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","{{ ga_id }}");</script>
+{% endif %}

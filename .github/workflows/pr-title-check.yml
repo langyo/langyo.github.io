@@ -1,0 +1,19 @@
+name: PR Title Check
+
+# One in-flight run per pull request (ci-ops 8.3.3): a superseded push cancels
+# its predecessor instead of queueing a second title check behind it on the
+# lane the repository resolves.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+on:
+  # Dispatch-only per the 2026-11-06 trigger policy: CI no longer runs on pull
+  # requests. Format is held by review plus the squash subject; the lane stays
+  # dispatchable so a patch can still be checked on demand.
+  workflow_dispatch:
+jobs:
+  pr-title-check:
+    uses: celestia-island/celestia-devtools/.github/workflows/pr-title-check.yml@bcf5ed8f3caebe8dbf0a528ab9deecb6d42cf211
+    with:
+      devtools-ref: bcf5ed8f3caebe8dbf0a528ab9deecb6d42cf211

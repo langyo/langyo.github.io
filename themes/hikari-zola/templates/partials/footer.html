@@ -1,0 +1,27 @@
+{% import "partials/icons.html" as icons %}
+{% set menu = config.extra.menu | default(value=[]) %}
+{% set social = config.extra.social | default(value=[]) %}
+<footer class="hk-footer">
+  <div class="hk-footer__status">
+    <span class="hk-footer__stat"><b>SYS.STATUS</b> ONLINE</span>
+    <span class="hk-footer__stat"><b>THEME</b> hikari-zola</span>
+    <span class="hk-footer__stat"><b>ENGINE</b> Zola</span>
+    <span class="hk-footer__stat"><b>BUILD</b> {{ now() | date(format="%Y.%m.%d") }}</span>
+  </div>
+  <div class="hk-footer__main">
+    <nav class="hk-footer__nav" aria-label="页脚导航">
+      {% for item in menu %}<a href="{{ item.url | safe }}">{{ item.name }}</a>{% endfor %}
+    </nav>
+    <ul class="hk-footer__social">
+      {% for s in social %}{% set sname = s.name | default(value="") | lower %}<li><a class="hk-chip" href="{{ s.url | safe }}"{% if s.url is starting_with("http") %} target="_blank" rel="noopener noreferrer"{% endif %}>{% if sname == "github" %}{{ icons::github(size=14) }}{% elif sname == "email" %}{{ icons::mail(size=14) }}{% endif %}{{ s.name }}</a></li>{% endfor %}
+      {% if config.generate_feeds %}<li><a class="hk-chip" href="{{ get_url(path='atom.xml') }}">{{ icons::rss(size=14) }} RSS</a></li>{% endif %}
+    </ul>
+  </div>
+  <p class="hk-footer__copy">© {{ now() | date(format="%Y") }} {{ config.extra.author.name | default(value=config.title) }} · <a href="https://creativecommons.org/licenses/by-nc/4.0/">{% if config.extra.footer_copyright %}{{ config.extra.footer_copyright }}{% else %}CC BY-NC 4.0{% endif %}</a></p>
+  <ul class="hk-footer__beian">
+    {% if config.extra.footer_recordation_text %}<li><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">{{ config.extra.footer_recordation_text }}</a></li>{% endif %}
+    {% if config.extra.footer_recordation_text_security %}<li><a href="https://beian.mps.gov.cn/#/query/webSearch?code={{ config.extra.footer_recordation_text_security_code }}" target="_blank" rel="noopener noreferrer">{{ config.extra.footer_recordation_text_security }}</a></li>{% endif %}
+    {% if config.extra.footer_recordation_text_moe %}<li><a href="https://icp.gov.moe/?keyword=20255233" target="_blank" rel="noopener noreferrer">{{ config.extra.footer_recordation_text_moe }}</a></li>{% endif %}
+  </ul>
+  <p class="hk-footer__tech">Built with <a href="https://www.getzola.org" target="_blank" rel="noopener noreferrer">Zola</a> · theme hikari-zola · design tokens by <a href="https://github.com/celestia-island/hikari" target="_blank" rel="noopener noreferrer">hikari</a></p>
+</footer>

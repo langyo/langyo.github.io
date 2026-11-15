@@ -1,0 +1,19 @@
+{#- hikari-zola · shared DOM fragments. Only classes from the contract (spec §4.9) are emitted. -#}
+{% macro dataline(k, v) %}<li class="hk-dataline"><span class="hk-dataline__k">{{ k }}</span><span class="hk-dataline__v">{{ v }}</span></li>{% endmacro dataline %}
+{% macro status_item(k, v) %}<li class="hk-status__item"><span class="hk-status__k">{{ k }}</span><span class="hk-status__v">{{ v }}</span></li>{% endmacro status_item %}
+{% macro postcard(p, idx) %}{% set summary = "" %}{% if p.extra.summary %}{% set summary = p.extra.summary %}{% elif p.description %}{% set summary = p.description %}{% elif p.summary %}{% set summary = p.summary %}{% endif %}<li class="hk-postcard hk-reveal" data-hk-reveal style="--i: {{ idx - 1 }}">
+        <a class="hk-postcard__link" href="{{ p.permalink | safe }}">
+          <span class="hk-postcard__idx">FILE 0x{% if idx < 10 %}0{% endif %}{{ idx }}</span>
+          {% if p.date %}<span class="hk-postcard__date">{{ p.date | date(format="%Y.%m.%d") }}</span>{% endif %}
+          <h3 class="hk-postcard__title">{{ p.title }}</h3>
+          {% if summary %}<p class="hk-postcard__sum">{{ summary }}</p>{% endif %}
+          {% if p.taxonomies.tags %}<ul class="hk-postcard__tags">{% for t in p.taxonomies.tags %}<li class="hk-tag">{{ t }}</li>{% endfor %}</ul>{% endif %}
+        </a>
+      </li>{% endmacro postcard %}
+{% macro postrow(p, idx) %}<li class="hk-postrow hk-reveal" data-hk-reveal>
+          <a class="hk-postrow__link" href="{{ p.permalink | safe }}">
+            <span class="hk-postrow__idx">{% if idx < 10 %}0{% endif %}{{ idx }}</span>
+            <span class="hk-postrow__title">{{ p.title }}</span>
+            {% if p.date %}<span class="hk-postrow__date">{{ p.date | date(format="%m.%d") }}</span>{% endif %}
+          </a>
+        </li>{% endmacro postrow %}

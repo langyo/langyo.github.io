@@ -2,6 +2,14 @@
 title="以 Rust 对 Windows 程序注入 Hook 的方法"
 date=2024-03-22
 draft=false
+description="用 Rust 编写注入 DLL 与注入器，对 Windows 目标进程做函数 Hook 的完整实践记录。"
+
+[taxonomies]
+tags = ["rust", "windows", "reverse"]
+
+[extra]
+summary = "从 DLL 注入到 Hook 目标函数：以 Rust 重做 Windows 逆向工程的一次完整工程实践。"
+toc = true
 +++
 
 有关以 Rust 语言进行各种逆向注入的研究，我断断续续拿零碎时间研究了一年，现在总算拼凑了些成果可以讲讲。~~其实这文章是为了我能留住 52破解的论坛账号才写的，免得又被当成机器人误删。~~

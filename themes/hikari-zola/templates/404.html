@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<main id="main" class="hk-main hk-main--404">
+  <div class="hk-404 hk-frame">
+    <p class="hk-label hk-label--warn">// SIGNAL LOST</p>
+    <h1 class="hk-404__code">404</h1>
+    <span class="hk-meter" style="--v: 8%; width: min(240px, 64vw)" aria-hidden="true"></span>
+    <p>这条记录不在档案里——它可能被移动、删除，或者从未存在过。请从顶栏重新选择入口，或返回首页。</p>
+    <a class="hk-btn hk-btn--primary" href="{{ config.base_url | safe }}">返回首页<span class="hk-btn__arrow" aria-hidden="true">→</span></a>
+    <a class="hk-btn hk-btn--bare" href="/about/">操作员档案</a>
+  </div>
+</main>
+{% endblock content %}

@@ -1,48 +1,128 @@
 base_url = "https://langyo.xyz"
-
-compile_sass = true
-build_search_index = false
-
 title = "LANGYO"
 description = "伊欧的个人空间站点"
+theme = "hikari-zola"
+default_language = "zh-Hans"
+compile_sass = true
+minify_html = false
+generate_feeds = true
+feed_filenames = ["atom.xml"]
+generate_sitemap = true
+generate_robots_txt = true
+build_search_index = false
+
+[[taxonomies]]
+name = "tags"
 
 [markdown]
 highlight_code = true
+highlight_theme = "css"
+smart_punctuation = false
+external_links_target_blank = false
+external_links_no_follow = false
+
+[link_checker]
+skip_prefixes = [
+  "https://space.bilibili.com",
+  "https://steamcommunity.com",
+  "https://beian.miit.gov.cn",
+  "https://icp.gov.moe",
+  "https://beian.mps.gov.cn",
+]
 
 [extra]
-home_subtitle = "这里是伊欧的个人站"
+author = { name = "langyo", email = "langyo.china@gmail.com" }
+menu = [
+  { name = "记录", url = "/posts/" },
+  { name = "标签", url = "/tags/" },
+  { name = "关于", url = "/about/" },
+]
+social = [
+  { name = "GitHub", url = "https://github.com/langyo" },
+  { name = "Email", url = "mailto:langyo.china@gmail.com" },
+  { name = "Bilibili", url = "https://space.bilibili.com/5741197" },
+  { name = "Steam", url = "https://steamcommunity.com/id/langyo_china" },
+]
+footer_copyright = "CC BY-NC 4.0"
+footer_recordation_text = "沪ICP备20025013号-2"
+footer_recordation_text_security = "沪公网安备31011502403090号"
+footer_recordation_text_security_code = "31011502403090"
+footer_recordation_text_moe = "萌ICP备20255233号"
 
-footer_copyright = ' &#183; <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a>'
-footer_recordation_text = '沪ICP备20025013号-2'
-footer_recordation_text_security = '沪公网安备31011502403090号'
-footer_recordation_text_security_code = '31011502403090'
-footer_recordation_text_moe = '萌ICP备20255233号'
-
-hermit_menu = [
-    { link = "/posts", name = "记录" },
-    { link = "/about", name = "关于" },
+# --------------------------------------------------------------------------
+# HERO / OPERATOR FILE
+# 千禧年（Millennium）操作员档案口吻：中文为主，穿插少量英文 HUD 读数。
+# --------------------------------------------------------------------------
+[extra.hero]
+kicker = "MILLENNIUM · OPERATOR FILE"
+subtitle = "全栈工程师 × 氢能科研民工 × 十年折腾记录"
+lede = "从 Web 前端到 MCU 固件，从网关部署到实验室上位机——把能重写的东西都用 Rust 重写一遍。这里是伊欧的操作员档案：技术版图、游戏与创作，以及仍在靠近的科幻。"
+datalines = [
+  { k = "CLASS", v = "FULL-STACK" },
+  { k = "REGION", v = "SHANGHAI · CN" },
+  { k = "CORE", v = "RUST / TS / C" },
+  { k = "UPTIME", v = "10+ YRS" },
+  { k = "STATUS", v = "ONLINE" },
+]
+cta = [
+  { label = "进入记录", url = "/posts/" },
+  { label = "操作员档案", url = "/about/" },
 ]
 
-hermit_social = [
-    { name = "github", link = "https://github.com/langyo" },
-    { name = "email", link = "mailto:langyo.china@gmail.com" },
-    { name = "bilibili", link = "https://space.bilibili.com/5741197" },
-    { name = "steam", link = "https://steamcommunity.com/id/langyo_china" },
-]
+# --------------------------------------------------------------------------
+# PROFILE / DOSSIER
+# --------------------------------------------------------------------------
+[extra.profile]
+codename = "LANGYO"
+name = "伊欧"
+location = "上海 · 中国"
+avatar = "img/alice-badge.webp"
+roles = ["全栈工程师", "氢能燃料电池", "Rust 重构派", "音游半退坑"]
 
-[extra.highlightjs]
+[[extra.profile.attributes]]
+k = "FRONTEND"
+v = 90
+
+[[extra.profile.attributes]]
+k = "BACKEND"
+v = 86
+
+[[extra.profile.attributes]]
+k = "EMBEDDED"
+v = 75
+
+[[extra.profile.attributes]]
+k = "TOOLING"
+v = 88
+
+[[extra.profile.attributes]]
+k = "REVERSE"
+v = 64
+
+[[extra.profile.attributes]]
+k = "MUSIC"
+v = 48
+
+[[extra.profile.attributes]]
+k = "DESIGN"
+v = 67
+
+[[extra.profile.attributes]]
+k = "RESEARCH"
+v = 72
+
+# --------------------------------------------------------------------------
+# BACKDROP / 3D 点云光之剑
+# --------------------------------------------------------------------------
+[extra.backdrop]
 enable = true
-clipboard = true
-theme = "obsidian"
+variant = "hero"
+density = "auto"
+parallax = true
 
-[extra.disqus]
-enable = false
-shortname = "langyo-blog"
-
-[extra.author]
-name = "langyo"
-email = "langyo.china@gmail.com"
-
-[extra.google_analytics]
+# --------------------------------------------------------------------------
+# ANALYTICS
+# --------------------------------------------------------------------------
+[extra.analytics]
 enable = true
 id = "G-QHZB20Q6RQ"

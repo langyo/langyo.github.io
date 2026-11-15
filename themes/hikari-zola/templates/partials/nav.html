@@ -1,0 +1,38 @@
+{% import "partials/icons.html" as icons %}
+{% set menu = config.extra.menu | default(value=[]) %}
+{% set here = current_path | default(value="/") %}
+<header class="hk-topbar" data-hk-topbar>
+  <div class="hk-topbar__inner">
+    <a class="hk-brand" href="{{ config.base_url | safe }}">
+      <span class="hk-brand__mark" aria-hidden="true">◆</span>
+      <span class="hk-brand__name">{{ config.title }}</span>
+      <span class="hk-brand__tag">// PERSONAL ARCHIVE</span>
+    </a>
+    <nav class="hk-nav" aria-label="主导航">
+      {% for item in menu %}
+      <a class="hk-nav__link{% if item.url and here is starting_with(item.url) %} is-active{% endif %}" href="{{ item.url | safe }}"{% if item.url and here is starting_with(item.url) %} aria-current="page"{% endif %}>
+        <span class="hk-nav__idx">{% if loop.index < 10 %}0{% endif %}{{ loop.index }}</span>{{ item.name }}
+      </a>
+      {% endfor %}
+    </nav>
+    <div class="hk-topbar__actions">
+      <button class="hk-iconbtn" type="button" data-hk-theme-toggle aria-label="切换主题" title="切换主题" aria-pressed="false">
+        <span data-hk-theme-icon="light">{{ icons::sun() }}</span>
+        <span data-hk-theme-icon="dark" hidden>{{ icons::moon() }}</span>
+      </button>
+      <button class="hk-iconbtn hk-topbar__burger" type="button" data-hk-nav-toggle aria-label="菜单" title="菜单" aria-expanded="false" aria-controls="hk-drawer">
+        <span data-hk-nav-icon="menu">{{ icons::menu() }}</span>
+        <span data-hk-nav-icon="close" hidden>{{ icons::close() }}</span>
+      </button>
+    </div>
+  </div>
+  <div class="hk-progress" data-hk-progress aria-hidden="true"><span class="hk-progress__bar"></span></div>
+</header>
+<div class="hk-drawer" id="hk-drawer" data-hk-drawer aria-hidden="true">
+  <nav class="hk-drawer__list" aria-label="移动导航">
+    {% for item in menu %}
+    <a class="hk-drawer__link{% if item.url and here is starting_with(item.url) %} is-active{% endif %}" href="{{ item.url | safe }}"{% if item.url and here is starting_with(item.url) %} aria-current="page"{% endif %}><span class="hk-nav__idx">{% if loop.index < 10 %}0{% endif %}{{ loop.index }}</span>{{ item.name }}</a>
+    {% endfor %}
+  </nav>
+  <div class="hk-drawer__meta">// SYS.MENU</div>
+</div>

@@ -1,0 +1,540 @@
+// hikari-zola — surfaces: composed blocks — section heads, card grids, post
+// rows, tag list, status readout, page heads, archive timeline, article
+// footer bits and the 404 panel.
+@use "./mixins" as *;
+
+// ── Section ────────────────────────────────────────────────────────────
+.hk-section {
+  margin-top: clamp(44px, 6vw, 76px);
+}
+
+// Per-section rhythm: the first block under the hero sits tighter, the two
+// narrative blocks breathe, the status readout closes the page quietly.
+.hk-section--latest {
+  margin-top: clamp(32px, 4.6vw, 54px);
+}
+
+.hk-section--about {
+  margin-top: clamp(48px, 6.4vw, 80px);
+}
+
+.hk-section--status {
+  margin-top: clamp(32px, 4.6vw, 54px);
+
+  .hk-section__head {
+    margin-bottom: 14px;
+  }
+}
+
+.hk-section__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px 14px;
+  padding-bottom: 12px;
+  margin-bottom: clamp(16px, 2.2vw, 26px);
+  // Endpoint-thick separator: 18px accent caps over a full-width hairline.
+  background-image: linear-gradient(var(--hk-accent) 0 0), linear-gradient(var(--hk-line) 0 0), linear-gradient(var(--hk-accent) 0 0);
+  background-repeat: no-repeat;
+  background-size: 18px 2px, 100% 1px, 18px 2px;
+  background-position: left bottom, center bottom, right bottom;
+}
+
+.hk-section__label {
+  @include hk-label;
+  margin: 0;
+}
+
+.hk-section__title {
+  margin: 0;
+  font-size: clamp(1.2rem, 1.9vw, 1.45rem);
+}
+
+.hk-section__more {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  color: var(--hk-fg-3);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+
+  &:hover {
+    color: var(--hk-link);
+  }
+}
+
+// ── Card grid / post card ─────────────────────────────────────────────
+.hk-cardgrid {
+  display: grid;
+  gap: clamp(14px, 1.8vw, 22px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (min-width: 1120px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.hk-postcard {
+  min-width: 0;
+}
+
+.hk-postcard__link {
+  @include hk-panel;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 12px;
+  align-content: start;
+  height: 100%;
+  padding: 18px 18px 16px;
+  color: inherit;
+
+  &:hover {
+    --hk-panel-bg: var(--hk-accent-soft);
+    background: var(--hk-accent-line);
+    transform: translateY(-2px);
+
+    .hk-postcard__title {
+      color: var(--hk-link);
+    }
+  }
+}
+
+.hk-postcard__idx,
+.hk-postcard__date {
+  @include hk-readout;
+  color: var(--hk-fg-3);
+  font-size: 0.5625rem;
+}
+
+.hk-postcard__idx {
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hk-postcard__title {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--hk-fg);
+  font-size: 1.0625rem;
+  line-height: 1.4;
+}
+
+.hk-postcard__sum {
+  display: -webkit-box;
+  grid-column: 1 / -1;
+  overflow: hidden;
+  margin: 0;
+  color: var(--hk-fg-2);
+  font-size: 0.8125rem;
+  line-height: 1.62;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.hk-postcard__tags {
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 1 / -1;
+  gap: 6px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+// ── Post rows / timeline ──────────────────────────────────────────────
+.hk-postlist,
+.hk-taglist,
+.hk-timeline,
+.hk-timeline > * {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hk-timeline {
+  display: grid;
+  gap: clamp(22px, 3vw, 34px);
+}
+
+.hk-year {
+  display: grid;
+  gap: 8px;
+
+  @media (min-width: 900px) {
+    grid-template-columns: 84px minmax(0, 1fr);
+    gap: 24px;
+  }
+}
+
+.hk-year__num {
+  align-self: start;
+  margin: 0;
+  color: var(--hk-fg-3);
+  font-family: var(--font-mono);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+
+  @media (min-width: 900px) {
+    position: sticky;
+    top: calc(var(--hk-topbar-h) + 16px);
+  }
+}
+
+.hk-postrow,
+.hk-tagrow {
+  border-bottom: var(--hk-hair) solid var(--hk-line);
+
+  &:first-child {
+    border-top: var(--hk-hair) solid var(--hk-line);
+  }
+}
+
+.hk-postrow__link {
+  display: grid;
+  grid-template-columns: 2.6rem minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  align-items: baseline;
+  padding: 11px 10px 11px 8px;
+  border-left: 2px solid transparent;
+  color: inherit;
+
+  &:hover {
+    background: var(--hk-accent-soft);
+    border-left-color: var(--hk-accent);
+
+    .hk-postrow__title {
+      color: var(--hk-link);
+    }
+  }
+}
+
+.hk-postrow__idx,
+.hk-postrow__date {
+  @include hk-readout;
+  color: var(--hk-fg-3);
+  font-size: 0.625rem;
+}
+
+.hk-postrow__title {
+  color: var(--hk-fg);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.hk-postrow__date {
+  text-align: right;
+}
+
+// ── Tag list ───────────────────────────────────────────────────────────
+.hk-taglist {
+  display: grid;
+}
+
+.hk-tagrow__link {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 10px 13px 8px;
+  border-left: 2px solid transparent;
+  color: var(--hk-fg);
+
+  &:hover {
+    background: var(--hk-accent-soft);
+    border-left-color: var(--hk-accent);
+  }
+}
+
+.hk-tagrow__name {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.9375rem;
+
+  &::before {
+    content: "#";
+    color: var(--hk-accent);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+  }
+}
+
+.hk-tagrow__count {
+  @include hk-readout;
+  color: var(--hk-fg-3);
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+}
+
+// ── Status readout bar ────────────────────────────────────────────────
+.hk-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 26px;
+  margin: 0;
+  padding: 14px 0;
+  border-top: var(--hk-hair) solid var(--hk-line);
+  border-bottom: var(--hk-hair) solid var(--hk-line);
+  list-style: none;
+}
+
+.hk-status__item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+
+  & + & {
+    padding-left: 26px;
+    border-left: var(--hk-hair) solid var(--hk-line);
+  }
+
+  @media (max-width: 600px) {
+    & + & {
+      padding-left: 0;
+      border-left: 0;
+    }
+  }
+}
+
+.hk-status__k {
+  color: var(--hk-fg-3);
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.hk-status__v {
+  @include hk-readout;
+  color: var(--hk-fg);
+  font-size: 0.6875rem;
+}
+
+// ── Page head ──────────────────────────────────────────────────────────
+.hk-pagehead {
+  padding-bottom: clamp(16px, 2.4vw, 28px);
+  margin-bottom: clamp(24px, 3.6vw, 42px);
+  border-bottom: var(--hk-hair) solid var(--hk-line);
+}
+
+.hk-pagehead__title {
+  margin: 10px 0 0;
+  font-size: clamp(1.8rem, 3.6vw, 2.6rem);
+  line-height: 1.12;
+}
+
+.hk-pagehead__desc {
+  max-width: 62ch;
+  margin: 12px 0 0;
+  color: var(--hk-fg-2);
+  font-size: 0.9375rem;
+
+  > p:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.hk-pagehead__count {
+  @include hk-readout;
+  margin: 14px 0 0;
+  color: var(--hk-fg-3);
+  font-size: 0.625rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+// ── Article footer bits ────────────────────────────────────────────────
+.hk-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hk-pager {
+  display: grid;
+  gap: 12px;
+
+  @media (min-width: 720px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.hk-pager__item {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border: var(--hk-hair) solid var(--hk-line);
+  border-radius: 2px;
+  color: inherit;
+
+  &:hover {
+    border-color: var(--hk-accent-line);
+    background: var(--hk-accent-soft);
+  }
+
+  &--prev {
+    text-align: left;
+  }
+
+  &--next {
+    text-align: right;
+  }
+}
+
+.hk-pager__dir {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--hk-fg-3);
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.hk-pager__title {
+  color: var(--hk-fg);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+// ── About teaser (index) ───────────────────────────────────────────────
+.hk-aboutteaser {
+  @include hk-panel;
+  display: grid;
+  align-items: start;
+  gap: 14px 32px;
+  padding: clamp(18px, 2.4vw, 28px);
+
+  // The teaser reuses the dossier attribute list / tag row; strip the card
+  // framing there so it reads as a summary panel, not a second ID card.
+  .hk-dossier__attrs {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .hk-tags {
+    margin-top: 12px;
+  }
+
+  @media (min-width: 860px) {
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  }
+
+  p {
+    margin: 0 0 0.8em;
+    color: var(--hk-fg-2);
+    font-size: 0.9375rem;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+// ── 404 ────────────────────────────────────────────────────────────────
+.hk-404 {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.hk-404__code {
+  margin: 0;
+  color: var(--hk-fg-3);
+  font-family: var(--font-mono);
+  font-size: clamp(4.5rem, 16vw, 9rem);
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: 0.06em;
+  -webkit-text-stroke: 1px rgb(var(--color-primary) / 45%);
+}
+
+// ── Asset watermarks ───────────────────────────────────────────────────
+// The four content-group marks are monochrome SVG; they are applied through
+// mask-image (not background-image) so the stroke is painted with a theme
+// token — currentColor inside a background SVG would freeze to black. Strength
+// stays in the 4-18% band and nothing sits on top of live text.
+
+// Straight-sword mark closing the article (behind the tag row / pager).
+.hk-article__foot::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: -4px;
+  bottom: -26px;
+  width: 86px;
+  height: 86px;
+  background: var(--hk-fg-3);
+  -webkit-mask: url("/img/sword-mark.svg") center / contain no-repeat;
+  mask: url("/img/sword-mark.svg") center / contain no-repeat;
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+// Alice silhouette watermarked into the index "about" panel.
+.hk-aboutteaser::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: 8px;
+  bottom: -6px;
+  width: min(240px, 42%);
+  height: 112%;
+  background: var(--hk-fg-3);
+  -webkit-mask: url("/img/silhouette-alice.svg") right bottom / contain no-repeat;
+  mask: url("/img/silhouette-alice.svg") right bottom / contain no-repeat;
+  opacity: 0.14;
+  pointer-events: none;
+}
+
+// Arona side portrait behind the 404 code.
+.hk-404 {
+  position: relative;
+  isolation: isolate;
+}
+
+.hk-404::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: -8%;
+  bottom: -14%;
+  width: min(400px, 66%);
+  height: 118%;
+  background: url("/img/arona-side.webp") right bottom / contain no-repeat;
+  opacity: 0.16;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to left, #000 42%, transparent 100%);
+  mask-image: linear-gradient(to left, #000 42%, transparent 100%);
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) .hk-404::after {
+    opacity: 0.12;
+    filter: saturate(0.75);
+  }
+}
+
+html[data-theme="dark"] .hk-404::after {
+  opacity: 0.12;
+  filter: saturate(0.75);
+}

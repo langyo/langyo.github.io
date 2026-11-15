@@ -1,0 +1,6 @@
+name = "hikari-zola"
+description = "A flat, HUD-inspired Zola theme built on the hikari design system (tokens from @celestia-island/hikari)."
+license = "SySL-1.0"
+homepage = "https://langyo.xyz"
+min_version = "0.21.0"
+author = "langyo"
