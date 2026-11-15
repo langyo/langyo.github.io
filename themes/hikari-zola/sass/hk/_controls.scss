@@ -1,0 +1,272 @@
+// hikari-zola — controls: the atomic HUD vocabulary (labels, buttons, chips,
+// tags, readouts, rules, diamonds, frames, stamps, ticks, hazards, meters).
+@use "./mixins" as *;
+
+// ── Micro label ────────────────────────────────────────────────────────
+.hk-label {
+  @include hk-label;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.hk-label--warn {
+  color: var(--hk-warn);
+}
+
+// ── Buttons ────────────────────────────────────────────────────────────
+.hk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: start;
+  gap: 8px;
+  width: fit-content;
+  min-height: 42px;
+  padding: 0 18px;
+  border: 0;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.hk-btn--primary {
+  @include hk-cut(var(--hk-cut-sm));
+  background: var(--hk-ink);
+  color: var(--hk-on-ink);
+
+  // The one coloured glow in the system: an accent halo on the primary action.
+  &:hover {
+    background: color-mix(in srgb, var(--hk-ink) 86%, var(--hk-accent));
+    filter: drop-shadow(0 0 10px var(--hk-glow));
+  }
+}
+
+// Small controls clip the notch but keep a real border; the diagonal edge is
+// intentionally left open (flat HUD read), cards use the bordered panel mixin.
+// Secondary action: transparent fill, 1px hairline, accent wash only on hover.
+.hk-btn--ghost {
+  @include hk-cut(var(--hk-cut-sm));
+  border: var(--hk-hair) solid var(--hk-line);
+  background: transparent;
+  color: var(--hk-fg);
+
+  &:hover {
+    border-color: var(--hk-accent-line);
+    background: var(--hk-accent-soft);
+  }
+}
+
+.hk-btn--bare {
+  min-height: 0;
+  padding: 4px 0;
+  background: none;
+  color: var(--hk-fg-2);
+  font-size: 0.6875rem;
+
+  &:hover {
+    color: var(--hk-link);
+  }
+}
+
+.hk-btn__arrow {
+  transition: transform var(--duration-short) var(--ease-standard);
+
+  .hk-btn:hover & {
+    transform: translateX(2px);
+  }
+}
+
+// ── Chip / tag ─────────────────────────────────────────────────────────
+// Chips are outline controls by default; hover inverts to the solid ink.
+.hk-chip {
+  @include hk-cut(var(--hk-cut-sm));
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 0 10px;
+  border: var(--hk-hair) solid var(--hk-line);
+  background: transparent;
+  color: var(--hk-fg-2);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+
+  &:hover {
+    border-color: transparent;
+    background: var(--hk-ink);
+    color: var(--hk-on-ink);
+  }
+}
+
+.hk-chip--solid {
+  @include hk-cut(var(--hk-cut-sm));
+  border-color: transparent;
+  background: var(--hk-ink);
+  color: var(--hk-on-ink);
+
+  &:hover {
+    background: color-mix(in srgb, var(--hk-ink) 86%, var(--hk-accent));
+    color: var(--hk-on-ink);
+  }
+}
+
+.hk-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border: var(--hk-hair) solid var(--hk-accent-line);
+  border-radius: 2px;
+  background: var(--hk-accent-soft);
+  color: var(--hk-link);
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+
+  &:hover {
+    background: var(--hk-accent-line);
+  }
+}
+
+// ── Readout ────────────────────────────────────────────────────────────
+.hk-dataline {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+}
+
+.hk-dataline__k {
+  color: var(--hk-fg-3);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.hk-dataline__v {
+  @include hk-readout;
+  color: var(--hk-fg-2);
+  font-size: 0.75rem;
+}
+
+// ── Rules / diamonds / ticks ───────────────────────────────────────────
+.hk-rule {
+  display: block;
+  height: 2px;
+  margin: 0;
+  border: 0;
+  background-image: linear-gradient(var(--hk-accent), var(--hk-accent)), linear-gradient(var(--hk-line), var(--hk-line)), linear-gradient(var(--hk-accent), var(--hk-accent));
+  background-repeat: no-repeat;
+  background-size: 20px 2px, 100% 1px, 20px 2px;
+  background-position: left center, center, right center;
+}
+
+.hk-rule--vert {
+  display: inline-block;
+  width: 1px;
+  height: 40px;
+  background-image: linear-gradient(to bottom, var(--hk-accent), var(--hk-line));
+  background-size: 1px 100%;
+}
+
+.hk-rule--diamond {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 12px;
+  background: none;
+
+  &::before {
+    content: "\25C6";
+    color: var(--hk-accent);
+    font-size: 0.375rem;
+    line-height: 1;
+  }
+}
+
+.hk-diamond {
+  display: inline-block;
+  vertical-align: middle;
+  width: 6px;
+  height: 6px;
+  flex: none;
+  background: var(--hk-accent);
+  transform: rotate(45deg);
+}
+
+.hk-tick {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  flex: none;
+  background-image: linear-gradient(var(--hk-line-strong), var(--hk-line-strong)), linear-gradient(var(--hk-line-strong), var(--hk-line-strong));
+  background-repeat: no-repeat;
+  background-size: 100% 1px, 1px 100%;
+  background-position: center;
+}
+
+// ── Panels / frames / stamps / meters ──────────────────────────────────
+.hk-cut {
+  @include hk-cut;
+}
+
+// Four corner brackets drawn just outside the box: containers can carry
+// .hk-frame without the marks eating their padding or overlapping text.
+.hk-frame {
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -7px;
+    pointer-events: none;
+    @include hk-brackets(18px, 1px, var(--hk-accent-line));
+  }
+}
+
+.hk-stamp {
+  display: inline-block;
+  padding: 3px 9px;
+  border: 2px solid var(--hk-warn);
+  background: rgb(var(--color-surface) / 82%);
+  color: var(--hk-warn);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  transform: rotate(-6deg);
+}
+
+.hk-hazard {
+  display: block;
+  height: 4px;
+  background: repeating-linear-gradient(-45deg, var(--hk-warn) 0 5px, transparent 5px 10px);
+  opacity: 0.6;
+}
+
+.hk-meter {
+  position: relative;
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  border: var(--hk-hair) solid var(--hk-line);
+  background: var(--hk-sunken);
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--v, 0%);
+    background: var(--hk-accent);
+  }
+}

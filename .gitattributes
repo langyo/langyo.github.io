@@ -1,0 +1,32 @@
+# hikari-zola personal site — repository attributes.
+
+# The site is a content product: prose, templates, SCSS and theme JS are
+# documentation from GitHub's point of view, not application source.
+content/** linguist-documentation
+static/** linguist-documentation
+themes/**/templates/** linguist-documentation
+themes/**/sass/** linguist-documentation
+themes/**/static/** linguist-documentation
+
+# Vendored hikari design tokens are byte-identical upstream copies. Never diff
+# or merge them; re-sync with scripts/sync-hikari-tokens.py instead.
+themes/hikari-zola/sass/vendor/** -text -diff
+
+# Generated/artifact trees (public/, _build/) are gitignored — nothing to
+# declare here; listing them only ever produced "Bin" rows in diffs.
+
+# Binary artwork.
+*.webp binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.woff2 binary
+
+# Shell/Just recipes keep LF even on Windows checkouts.
+justfile text eol=lf
+*.just text eol=lf
+.editorconfig text eol=lf
+
+# GitHub Actions workflows are pinned LF as well.
+.github/workflows/*.yml text eol=lf

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<main id="main" class="hk-main">
+  <header class="hk-pagehead hk-frame">
+    <p class="hk-label"><span class="hk-tick" aria-hidden="true"></span>// TAXONOMY</p>
+    <h1 class="hk-pagehead__title">{{ taxonomy.name | default(value="") | upper }}</h1>
+    <p class="hk-pagehead__count">{{ terms | length }} TAGS <span class="hk-diamond" aria-hidden="true"></span> INDEX</p>
+  </header>
+  <ul class="hk-taglist hk-frame">
+    {% for t in terms %}
+    <li class="hk-tagrow hk-reveal" data-hk-reveal style="--i: {{ loop.index0 }}">
+      <a class="hk-tagrow__link" href="{{ t.permalink | safe }}">
+        <span class="hk-tagrow__name">{{ t.name }}</span>
+        <span class="hk-tagrow__count">{{ t.pages | length }}</span>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+</main>
+{% endblock content %}

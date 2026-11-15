@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% import "partials/icons.html" as icons %}
+{% block content %}
+{% set date_str = "" %}{% if page.date %}{% set date_str = page.date | date(format="%Y-%m-%d") %}{% endif %}
+<main id="main" class="hk-main hk-main--article">
+  <article class="hk-article hk-frame">
+    <header class="hk-article__head">
+      <div class="hk-hazard" aria-hidden="true"></div>
+      <p class="hk-label"><span class="hk-tick" aria-hidden="true"></span>// FILE {{ page.slug | upper }}</p>
+      <h1 class="hk-article__title">{{ page.title | default(value="") }}</h1>
+      <ul class="hk-article__meta">
+        {% if date_str %}<li class="hk-dataline"><span class="hk-dataline__k">DATE</span><span class="hk-dataline__v">{{ date_str }}</span></li>{% endif %}
+        <li class="hk-dataline"><span class="hk-dataline__k">WORDS</span><span class="hk-dataline__v">{{ page.word_count }}</span></li>
+        <li class="hk-dataline"><span class="hk-dataline__k">READ</span><span class="hk-dataline__v">{{ page.reading_time }} MIN</span></li>
+      </ul>
+    </header>
+    <div class="hk-article__body hk-prose" data-hk-article>{{ page.content | safe }}</div>
+    <footer class="hk-article__foot">
+      {% if page.taxonomies.tags %}
+      <ul class="hk-tags">
+        {% for tag in page.taxonomies.tags %}<li><a class="hk-tag" href="{{ get_taxonomy_url(kind="tags", name=tag) }}">{{ tag }}</a></li>{% endfor %}
+      </ul>
+      {% endif %}
+      <div class="hk-rule hk-rule--diamond" aria-hidden="true"></div>
+      {% if page.lower or page.higher %}
+      <nav class="hk-pager" aria-label="上下篇导航">
+        {% if page.higher %}
+        <a class="hk-pager__item hk-pager__item--prev" href="{{ page.higher.permalink | safe }}">
+          <span class="hk-pager__dir">{{ icons::arrow_left(size=14) }} PREV</span>
+          <span class="hk-pager__title">{{ page.higher.title }}</span>
+        </a>
+        {% endif %}
+        {% if page.lower %}
+        <a class="hk-pager__item hk-pager__item--next" href="{{ page.lower.permalink | safe }}">
+          <span class="hk-pager__dir">NEXT {{ icons::arrow_right(size=14) }}</span>
+          <span class="hk-pager__title">{{ page.lower.title }}</span>
+        </a>
+        {% endif %}
+      </nav>
+      {% endif %}
+    </footer>
+  </article>
+  {% if page.extra.toc | default(value=true) %}{% include "partials/toc.html" %}{% endif %}
+</main>
+{% endblock content %}

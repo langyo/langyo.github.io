@@ -1,0 +1,30 @@
+{% import "macros.html" as m %}
+<section class="hk-hero" data-hk-hero>
+  <div class="hk-hero__grid" aria-hidden="true"></div>
+  <div class="hk-hero__body">
+    <p class="hk-label">// {{ config.extra.hero.kicker | default(value="OPERATOR FILE") }}</p>
+    <h1 class="hk-hero__title">{{ config.title }}<span class="hk-hero__caret" aria-hidden="true"></span></h1>
+    <p class="hk-hero__sub">{{ config.extra.hero.subtitle | default(value=config.description) }}</p>
+    {% if config.extra.hero.lede %}<p class="hk-hero__lede">{{ config.extra.hero.lede }}</p>{% endif %}
+    <ul class="hk-hero__meta">
+      {% for d in config.extra.hero.datalines | default(value=[]) %}{{ m::dataline(k=d.k, v=d.v) }}{% endfor %}
+    </ul>
+    <div class="hk-hero__cta">
+      {% if config.extra.hero.cta %}
+      {% for c in config.extra.hero.cta %}
+      <a class="hk-btn {% if loop.first %}hk-btn--primary{% else %}hk-btn--ghost{% endif %}" href="{{ c.url | safe }}">{{ c.label }}{% if loop.first %}<span class="hk-btn__arrow" aria-hidden="true">→</span>{% endif %}</a>
+      {% endfor %}
+      {% else %}
+      <a class="hk-btn hk-btn--primary" href="/posts/">进入记录<span class="hk-btn__arrow" aria-hidden="true">→</span></a>
+      <a class="hk-btn hk-btn--ghost" href="/about/">操作员档案</a>
+      {% endif %}
+    </div>
+  </div>
+  <div class="hk-hero__figure" aria-hidden="true">
+    <div class="hk-hero__frame"></div>
+    <img class="hk-hero__silhouette" src="{{ get_url(path='img/alice-hero.webp') }}" alt="" width="900" height="1120" decoding="async">
+    <div class="hk-hero__ticks"></div>
+  </div>
+  <div class="hk-hero__side" aria-hidden="true">SYS.STATUS: ONLINE / NODE: {{ config.base_url | replace(from="https://", to="") | replace(from="http://", to="") }} / BUILD: {{ now() | date(format="%Y.%m.%d") }}</div>
+  <div class="hk-hero__scroll" aria-hidden="true"><span>SCROLL</span><i class="hk-rule hk-rule--vert"></i></div>
+</section>

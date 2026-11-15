@@ -1,0 +1,16 @@
+{% if page.toc %}
+<aside class="hk-toc" data-hk-toc aria-label="本页目录">
+  <p class="hk-toc__title">// CONTENTS</p>
+  <ul class="hk-toc__list">
+    {% for h1 in page.toc %}
+    <li><a class="hk-toc__link" href="{{ h1.permalink | safe }}">{{ h1.title }}</a>
+      {% if h1.children %}
+      <ul class="hk-toc__list">
+        {% for h2 in h1.children %}<li><a class="hk-toc__link" href="{{ h2.permalink | safe }}">{{ h2.title }}</a></li>{% endfor %}
+      </ul>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</aside>
+{% endif %}

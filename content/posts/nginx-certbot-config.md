@@ -2,6 +2,14 @@
 title="以 Nginx 为反代服务端时以 Certbot 自动申请 HTTPS 证书的流程"
 date=2024-03-15
 draft=false
+description="Nginx 反代场景下用 Certbot 自动申请与续期 HTTPS 证书的完整配置流程。"
+
+[taxonomies]
+tags = ["nginx", "https", "deploy"]
+
+[extra]
+summary = "从手动 Certbot 到 Nginx 内建 ACME 模块：反代场景下的 HTTPS 证书申领与续期。"
+toc = true
 +++
 
 小时候，我对 HTTPS 证书的印象还停留在“我自己只要 80 端口开着，其余就给平台处理吧”的阶段。随着阅历的提升，我越发意识到完全由自己网站掌握 HTTPS 通信链路的重要性，不然诸如 CDN 或者反代之类的优化手段就无法使用了。
@@ -40,7 +48,7 @@ Certbot 会在申请证书时，通过让对面的鉴权服务器访问 `http://
 
 我们先在 `/etc/nginx/conf.d/` 下新建一个专门只开 80 端口的配置文件，例如 `site.conf`：
 
-```nginx
+```conf
 server {
     listen 80;
     server_name xxx.com;
@@ -91,7 +99,7 @@ docker run -d -p 3000:80 --name wordpress wordpress:latest
 
 在 `/etc/nginx/conf.d/` 下新增一个专门开 443 端口的配置文件，例如 `site-ssl.conf`：
 
-```nginx
+```conf
 server {
     listen 443 ssl;
     server_name xxx.com;
@@ -155,7 +163,7 @@ crontab -e
 
 还是在 `/etc/nginx/conf.d` 下创建或修改已有配置：
 
-```nginx
+```conf
 # 这里需要先定义提供商，也就是 certbot 默认的提供商 Let's Encrypt
 acme_issuer letsencrypt {
     uri         https://acme-v02.api.letsencrypt.org/directory;

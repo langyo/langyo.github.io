@@ -1,0 +1,13 @@
+{%- set bd_enable = config.extra.backdrop.enable | default(value=true) -%}
+{%- set bd_variant = config.extra.backdrop.variant | default(value="hero") -%}
+{%- set bd_density = config.extra.backdrop.density | default(value="auto") -%}
+{%- set bd_parallax = config.extra.backdrop.parallax | default(value=true) -%}
+{%- set here = current_path | default(value="/") -%}
+{%- if bd_enable and bd_variant == "hero" and here != "/" -%}{% set bd_variant = "ambient" %}{%- endif -%}
+{% if bd_enable and bd_variant != "off" %}
+<div class="hk-backdrop" data-hk-backdrop data-variant="{{ bd_variant }}" data-density="{{ bd_density }}" data-parallax="{{ bd_parallax }}" aria-hidden="true">
+  <div class="hk-grid-bg"></div>
+  <canvas class="hk-backdrop__canvas"></canvas>
+  <div class="hk-noise"></div>
+</div>
+{% endif %}

@@ -1,0 +1,12 @@
+package = @celestia-island/hikari
+version = 0.55.255
+source = local checkout D:\源代码\工程项目\celestia\hikari\packages\vue
+synced_by = scripts/sync-hikari-tokens.py
+
+file _channels.scss from=src/styles/theme/channels.scss sha256=c4556c0a696a71684985bacfc7f18cb202f0b1f8b236d798fea09e3b6e7a9a9f
+file _scale.scss from=src/styles/theme/scale.scss sha256=1789a80b838303f30acecc8667efba3fb0d092b8cedc868f8491da8c81d53331
+file _scrollbar.scss from=src/styles/theme/scrollbar.scss sha256=a78fdb7b295ab8852a795556a13e69dc578473ed69343c1ed02bac6d9909d983
+file _highlight.scss from=src/styles/theme/highlight.scss sha256=374c0048f21e28498795702f402f4ad2651ec4242b73d8f62773a1478d919768
+file _reset.scss from=src/styles/reset.scss sha256=9110d9b7daa2e910e86ae783d844592acfe731b390594b58d1853439c655c344
+file _selection.scss from=src/styles/selection.scss sha256=ff096c10fc7a2030975129d481a4429f3f11f5fab1094ea9a094da9ab51544fb
+file _polyfill.scss from=src/styles/polyfill.scss sha256=98f3a8086d08833e6ac545615dad31ff9d925dea7a992ab73b15f66624975f91

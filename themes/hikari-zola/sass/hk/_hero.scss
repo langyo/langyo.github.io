@@ -1,0 +1,232 @@
+// hikari-zola — hero: the Millennium operator-file opening block — kicker
+// label, oversized title with a blinking HUD caret, readouts, CTAs and the
+// alice silhouette bay (bracketed frame + ruler ticks + vertical readout).
+@use "./mixins" as *;
+
+.hk-hero {
+  position: relative;
+  display: grid;
+  gap: clamp(20px, 3vw, 36px);
+  align-items: center;
+  margin-inline: calc(var(--hk-gutter) * -1);
+  padding: clamp(24px, 5vw, 54px) var(--hk-gutter) clamp(32px, 5vw, 58px);
+  overflow: hidden;
+
+  @media (min-width: 1024px) {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 0.76fr);
+    min-height: min(calc(100vh - var(--hk-topbar-h) - 96px), 700px);
+  }
+}
+
+// Decorative dot-grid ground, faded toward the edges.
+.hk-hero__grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgb(var(--color-border) / 55%) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(var(--color-border) / 55%) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(ellipse at 30% 10%, #000 20%, transparent 72%);
+  mask-image: radial-gradient(ellipse at 30% 10%, #000 20%, transparent 72%);
+}
+
+// Faint CRT scanlines over the whole hero — the one place the HUD gets its
+// screen texture; it fades out toward the headline so text stays crisp.
+.hk-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(to bottom, rgb(var(--color-border) / 30%) 0 1px, transparent 1px 4px);
+  opacity: 0.45;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 30%, #000 100%);
+  mask-image: linear-gradient(to bottom, transparent 30%, #000 100%);
+}
+
+.hk-hero__body {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: clamp(12px, 1.8vw, 18px);
+  max-width: 580px;
+}
+
+.hk-hero__title {
+  margin: 0;
+  font-size: clamp(2.6rem, 6vw, 4.2rem);
+  line-height: 1.02;
+}
+
+.hk-hero__caret {
+  display: inline-block;
+  width: 4px;
+  height: 0.78em;
+  margin-left: 0.14em;
+  vertical-align: -0.02em;
+  background: var(--hk-accent);
+  animation: hk-blink 1.25s steps(1, end) infinite;
+}
+
+@keyframes hk-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.hk-hero__sub {
+  margin: 0;
+  font-size: clamp(1rem, 1.6vw, 1.125rem);
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.hk-hero__lede {
+  max-width: 46ch;
+  margin: 0;
+  color: var(--hk-fg-2);
+  font-size: 0.9375rem;
+  line-height: 1.8;
+}
+
+.hk-hero__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 26px;
+  margin: 4px 0 0;
+  padding: 12px 0;
+  border-top: var(--hk-hair) solid var(--hk-line);
+  border-bottom: var(--hk-hair) solid var(--hk-line);
+  list-style: none;
+}
+
+.hk-hero__cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+// ── Silhouette bay ─────────────────────────────────────────────────────
+.hk-hero__figure {
+  position: relative;
+  z-index: 1;
+  display: none;
+  align-self: stretch;
+  min-height: 340px;
+  padding: 10px;
+  overflow: hidden;
+
+  // Fade the artwork into the page at its very top so the frame never shows a
+  // hard, dark crop edge above the portrait.
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 10px;
+    pointer-events: none;
+    background: linear-gradient(to bottom, var(--hk-bg), transparent 15%);
+  }
+
+  @media (min-width: 1024px) {
+    display: block;
+  }
+}
+
+.hk-hero__frame {
+  position: absolute;
+  inset: 0;
+  border: var(--hk-hair) solid var(--hk-line);
+  pointer-events: none;
+  @include hk-brackets(26px, 2px, var(--hk-accent-line));
+}
+
+// Inset inside the frame, same notch as the cards, feathered on all four sides
+// with one radial mask so no edge reads as a pasted rectangle.
+.hk-hero__silhouette {
+  position: absolute;
+  inset: 10px;
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
+  object-fit: cover;
+  object-position: 50% 14%;
+  opacity: 0.95;
+  filter: saturate(0.92) contrast(1.02);
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  -webkit-mask-image: radial-gradient(closest-side at 50% 42%, #000 68%, transparent 100%);
+  mask-image: radial-gradient(closest-side at 50% 42%, #000 68%, transparent 100%);
+}
+
+// Ruler ticks hugging the right edge of the frame.
+.hk-hero__ticks {
+  position: absolute;
+  top: 8%;
+  right: -14px;
+  bottom: 8%;
+  width: 10px;
+  background-image:
+    repeating-linear-gradient(to bottom, var(--hk-line-strong) 0 1px, transparent 1px 12px),
+    repeating-linear-gradient(to bottom, var(--hk-accent-line) 0 1px, transparent 1px 60px);
+  background-repeat: repeat-y, repeat-y;
+  background-position: right top, right top;
+  background-size: 6px 100%, 10px 100%;
+}
+
+// Vertical SYS readout, kept inside the gutter so no glyph is clipped by the
+// hero's overflow box.
+.hk-hero__side {
+  position: absolute;
+  right: 8px;
+  bottom: 42px;
+  max-height: calc(100% - 120px);
+  padding-block: 4px;
+  overflow: hidden;
+  color: var(--hk-fg-3);
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  line-height: 1.6;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+
+  @media (max-width: 1023px) {
+    display: none;
+  }
+}
+
+.hk-hero__scroll {
+  display: none;
+  position: absolute;
+  bottom: 14px;
+  left: var(--hk-gutter);
+  z-index: 1;
+  align-items: center;
+  gap: 10px;
+  color: var(--hk-fg-3);
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+
+  @media (min-width: 768px) {
+    display: flex;
+  }
+}
+
+// Narrow screens: the readout row becomes a two-up grid (values are allowed to
+// wrap) so no dataline can be clipped by the hero's overflow box.
+@media (max-width: 600px) {
+  .hk-hero__meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 14px;
+  }
+
+  .hk-hero__meta .hk-dataline {
+    flex-wrap: wrap;
+    gap: 2px 8px;
+  }
+
+  .hk-hero__meta .hk-dataline__v {
+    overflow-wrap: anywhere;
+  }
+}

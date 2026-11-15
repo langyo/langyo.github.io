@@ -2,6 +2,14 @@
 title="让本地 Docker CLI 连上别处服务器的 Dockerd 服务的方法"
 date=2025-08-11
 draft=false
+description="让本地 Docker CLI 连上别处服务器的 dockerd：ESXi 虚拟机、TLS 证书与防火墙配置。"
+
+[taxonomies]
+tags = ["docker", "esxi", "windows"]
+
+[extra]
+summary = "ESXi 嵌套虚拟化限制下的折中方案：本机 CLI 经 TLS 直连 Debian 虚拟机里的 Docker 服务。"
+toc = true
 +++
 
 前段时间，我实验室的工作站原装的 Win11 出了点问题，尝试开启多用户同时登录的能力，但却被登录认证服务锁门外进不去了，索性只能联系供货商给我发了一份 esxi7 的系统装了上去。

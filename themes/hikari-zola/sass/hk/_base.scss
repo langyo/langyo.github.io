@@ -1,0 +1,107 @@
+// hikari-zola — base layer: document feel on top of the vendor reset, the
+// global focus contract, the skip link and native scrollbar tuning.
+@use "./mixins" as *;
+
+html {
+  -webkit-text-size-adjust: 100%;
+  overflow-x: clip;
+  background: var(--hk-bg);
+  color: var(--hk-fg);
+  scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--hk-topbar-h) + 16px);
+  scrollbar-color: var(--hk-line-strong) transparent;
+  scrollbar-width: thin;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow-x: clip;
+  background: var(--hk-bg);
+  color: var(--hk-fg);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.75;
+  // vendor _selection.scss denies selection at html; hosts re-enable it on
+  // their own root (documented escape hatch). Chrome opts back out in utils.
+  user-select: text;
+}
+
+// One transition contract for every interactive surface (150ms, spec 2.4).
+a,
+button,
+.hk-btn,
+.hk-chip,
+.hk-tag,
+.hk-iconbtn,
+.hk-postcard__link {
+  transition: color var(--duration-short) var(--ease-standard), background-color var(--duration-short) var(--ease-standard), border-color var(--duration-short) var(--ease-standard);
+}
+
+// Page shell class carried by <body> (spec §4.1).
+.hk-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow-x: clip;
+}
+
+::selection {
+  background: rgb(var(--color-selected-bg));
+  color: rgb(var(--color-text));
+}
+
+:focus-visible {
+  @include hk-focus;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+// Skip link: invisible until focused, then a mono HUD capsule over the chrome.
+.hk-skip {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 300;
+  transform: translateY(-240%);
+  padding: 8px 14px;
+  border: var(--hk-hair) solid var(--hk-accent-line);
+  background: var(--hk-surface);
+  color: var(--hk-fg);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  box-shadow: var(--hk-shadow-1);
+
+  &:focus {
+    transform: none;
+  }
+}
+
+// Thin flat native scrollbar; accent only under the cursor.
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--hk-line-strong);
+  border: 3px solid transparent;
+  background-clip: content-box;
+
+  &:hover {
+    background: var(--hk-accent);
+    background-clip: content-box;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

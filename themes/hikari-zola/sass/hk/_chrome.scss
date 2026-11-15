@@ -1,0 +1,392 @@
+// hikari-zola — chrome: HUD topbar (brand / nav / actions / scroll progress),
+// the mobile drawer and the SYS readout footer.
+@use "./mixins" as *;
+
+.hk-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--hk-surface);
+  border-bottom: var(--hk-hair) solid var(--hk-line);
+}
+
+.hk-topbar__inner {
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 2.2vw, 26px);
+  max-width: var(--hk-page-max);
+  height: var(--hk-topbar-h);
+  margin-inline: auto;
+  padding-inline: var(--hk-gutter);
+}
+
+.hk-brand {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--hk-fg);
+  white-space: nowrap;
+}
+
+.hk-brand__mark {
+  color: var(--hk-accent);
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.hk-brand__name {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.hk-brand__tag {
+  color: var(--hk-fg-3);
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+
+  @media (max-width: 1023px) {
+    display: none;
+  }
+}
+
+.hk-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+
+  // Tablet/mobile: the drawer owns navigation below the desktop tier.
+  @media (max-width: 900px) {
+    display: none;
+  }
+}
+
+.hk-nav__link {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 8px 11px;
+  color: var(--hk-fg-2);
+  font-size: 0.875rem;
+
+  &:hover {
+    color: var(--hk-fg);
+    background: var(--hk-accent-soft);
+  }
+
+  &.is-active {
+    color: var(--hk-fg);
+
+    &::after {
+      content: "";
+      position: absolute;
+      right: 11px;
+      bottom: 2px;
+      left: 11px;
+      height: 2px;
+      background: var(--hk-accent);
+    }
+  }
+}
+
+.hk-nav__idx {
+  color: var(--hk-fg-3);
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.06em;
+}
+
+.hk-topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.hk-iconbtn {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: var(--hk-hair) solid var(--hk-line);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--hk-fg-2);
+  cursor: pointer;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    color: var(--hk-fg);
+    border-color: var(--hk-accent-line);
+    background: var(--hk-accent-soft);
+  }
+
+  &[aria-pressed="true"] {
+    color: var(--hk-accent);
+    border-color: var(--hk-accent-line);
+  }
+}
+
+.hk-topbar__burger {
+  display: none;
+
+  @media (max-width: 900px) {
+    display: inline-grid;
+  }
+}
+
+// Scroll progress: --hk-progress (percent) or an inline width from nav.js.
+.hk-progress {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hk-progress__bar {
+  display: block;
+  width: var(--hk-progress, 0%);
+  height: 100%;
+  background: linear-gradient(90deg, var(--hk-accent), rgb(var(--hk-cyanish)));
+}
+
+// ── Drawer ─────────────────────────────────────────────────────────────
+.hk-drawer {
+  position: fixed;
+  top: var(--hk-topbar-h);
+  right: 0;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  width: min(320px, 84vw);
+  max-height: calc(100vh - var(--hk-topbar-h));
+  overflow-y: auto;
+  padding-top: 10px;
+  border-bottom: var(--hk-hair) solid var(--hk-line);
+  border-left: var(--hk-hair) solid var(--hk-line);
+  background: var(--hk-surface);
+  box-shadow: var(--hk-shadow-2);
+  transform: translateX(105%);
+  visibility: hidden;
+  transition: transform var(--duration-normal) var(--ease-standard), visibility var(--duration-normal) var(--ease-standard);
+
+  &.is-open,
+  &[aria-hidden="false"] {
+    transform: none;
+    visibility: visible;
+  }
+
+  @media (min-width: 901px) {
+    display: none;
+  }
+
+  // Mobile: the sheet covers the whole viewport below the topbar (scroll
+  // locked by nav.js), links get a touch-sized rhythm.
+  @media (max-width: 900px) {
+    right: 0;
+    left: 0;
+    width: auto;
+    height: calc(100dvh - var(--hk-topbar-h));
+    max-height: none;
+    padding-bottom: 18px;
+    border-left: 0;
+    overscroll-behavior: contain;
+
+    .hk-drawer__link {
+      padding: 14px 12px;
+      font-size: 1rem;
+    }
+  }
+}
+
+.hk-drawer__list {
+  display: grid;
+  gap: 2px;
+  padding: 0 10px;
+}
+
+.hk-drawer__link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-left: 2px solid transparent;
+  color: var(--hk-fg-2);
+  font-size: 0.9375rem;
+
+  &::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    flex: none;
+    background: currentColor;
+    opacity: 0.5;
+    transform: rotate(45deg);
+  }
+
+  &:hover,
+  &.is-active {
+    color: var(--hk-fg);
+    background: var(--hk-accent-soft);
+  }
+
+  &.is-active {
+    border-left-color: var(--hk-accent);
+  }
+}
+
+.hk-drawer__meta {
+  margin-top: 10px;
+  padding: 12px 22px;
+  border-top: var(--hk-hair) solid var(--hk-line);
+  color: var(--hk-fg-3);
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+// No-JS: no burger target, so the inline nav carries mobile instead.
+html:not(.js) {
+  .hk-topbar__burger {
+    display: none;
+  }
+
+  // No script -> no drawer: keep the inline links, even on small screens.
+  .hk-nav {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .hk-nav__idx {
+    display: none;
+  }
+
+  .hk-nav__link {
+    padding: 6px 7px;
+    font-size: 0.8125rem;
+  }
+}
+
+// ── Footer ─────────────────────────────────────────────────────────────
+.hk-footer {
+  position: relative;
+  z-index: 1;
+  padding: clamp(22px, 3.6vw, 34px) var(--hk-gutter) 26px;
+  border-top: var(--hk-hair) solid var(--hk-line);
+  background: var(--hk-sunken);
+  color: var(--hk-fg-2);
+  font-size: 0.8125rem;
+
+  // Children share the same content column as .hk-main (page-max minus the
+  // gutters). Longhands only below — a margin shorthand would cancel the
+  // inline centering here.
+  > * {
+    max-width: calc(var(--hk-page-max) - var(--hk-gutter) * 2);
+    margin-inline: auto;
+  }
+}
+
+.hk-footer__status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+  border-bottom: var(--hk-hair) solid var(--hk-line);
+  color: var(--hk-fg-3);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+
+  b {
+    margin-right: 4px;
+    color: var(--hk-fg-2);
+  }
+}
+
+// One SYS readout cell: key + value on a single baseline.
+.hk-footer__stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.hk-footer__main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.hk-footer__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+
+  a {
+    color: var(--hk-fg-2);
+
+    &:hover {
+      color: var(--hk-link);
+    }
+  }
+}
+
+.hk-footer__social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hk-footer__copy {
+  margin-block: 0 8px;
+  color: var(--hk-fg-3);
+  font-size: 0.75rem;
+}
+
+.hk-footer__beian {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-block: 0 12px;
+  padding: 0;
+  list-style: none;
+  color: var(--hk-fg-3);
+  font-size: 0.6875rem;
+
+  a {
+    color: var(--hk-fg-3);
+
+    &:hover {
+      color: var(--hk-link);
+    }
+  }
+}
+
+.hk-footer__tech {
+  margin-block: 0;
+  color: var(--hk-muted);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}

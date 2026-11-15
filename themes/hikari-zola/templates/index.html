@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% import "partials/icons.html" as icons %}
+{% block content %}
+{% set posts = get_section(path="posts/_index.md") %}
+{% set tags_tax = get_taxonomy(kind="tags") %}
+{% set entry_count = posts.pages | length %}
+{% set tag_count = tags_tax.items | length %}
+{% set latest_date = "" %}
+{% if posts.pages %}{% set latest_date = posts.pages | first | get(key="date") | date(format="%Y.%m.%d") %}{% endif %}
+<main id="main" class="hk-main">
+  {% include "partials/hero.html" %}
+
+  <section class="hk-section hk-section--latest">
+    <header class="hk-section__head">
+      <p class="hk-section__label">// RECENT LOGS</p>
+      <h2 class="hk-section__title">最近记录</h2>
+      <a class="hk-section__more" href="/posts/">全部记录 {{ icons::arrow_right(size=14) }}</a>
+    </header>
+    {% if posts.pages %}
+    <ul class="hk-cardgrid">
+      {% for p in posts.pages | slice(end=3) %}{{ m::postcard(p=p, idx=loop.index) }}{% endfor %}
+    </ul>
+    {% else %}
+    <p class="hk-label">// NO ENTRIES</p>
+    {% endif %}
+  </section>
+
+  <section class="hk-section hk-section--about">
+    <header class="hk-section__head">
+      <p class="hk-section__label">// OPERATOR</p>
+      <h2 class="hk-section__title">关于</h2>
+      <a class="hk-section__more" href="/about/">完整档案 {{ icons::arrow_right(size=14) }}</a>
+    </header>
+    <div class="hk-aboutteaser">
+      <div>
+        <ul class="hk-dossier__attrs">
+          {% for a in config.extra.profile.attributes | default(value=[]) | slice(end=4) %}
+          <li class="hk-attr"><span class="hk-attr__k">{{ a.k }}</span><span class="hk-attr__bar"><i class="hk-attr__fill" style="--v: {{ a.v }}%"></i></span><span class="hk-attr__v">{{ a.v }}</span></li>
+          {% endfor %}
+        </ul>
+        <ul class="hk-tags">
+          {% for r in config.extra.profile.roles | default(value=[]) %}<li class="hk-tag">{{ r }}</li>{% endfor %}
+        </ul>
+      </div>
+      <div>
+        <p class="hk-dossier__handle">{{ config.extra.profile.name | default(value="") }}{% if config.extra.profile.location %} / {{ config.extra.profile.location }}{% endif %}</p>
+        {% if config.extra.hero.lede %}<p>{{ config.extra.hero.lede }}</p>{% endif %}
+        <a class="hk-btn hk-btn--ghost" href="/about/">操作员档案</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="hk-section hk-section--status">
+    <header class="hk-section__head">
+      <p class="hk-section__label">// SYSTEM</p>
+      <h2 class="hk-section__title">状态读数</h2>
+    </header>
+    <ul class="hk-status">
+      {{ m::status_item(k="ENTRIES", v=entry_count) }}
+      {{ m::status_item(k="TAGS", v=tag_count) }}
+      {% if latest_date %}{{ m::status_item(k="LAST", v=latest_date) }}{% endif %}
+      {{ m::status_item(k="BUILD", v=now() | date(format="%Y.%m.%d")) }}
+      {{ m::status_item(k="NODE", v=config.base_url | replace(from="https://", to="") | replace(from="http://", to="")) }}
+    </ul>
+  </section>
+
+  {% if section.content %}
+  <section class="hk-section">
+    <div class="hk-prose">{{ section.content | safe }}</div>
+  </section>
+  {% endif %}
+</main>
+{% endblock content %}

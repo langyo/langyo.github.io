@@ -1,0 +1,27 @@
+# Zola build output
+/public/
+# Scratch build trees (one per work group: zola build -o _build/<group>)
+/_build/
+
+# celestia-devtools: staged-on-demand shared justfile recipes (celestia-devtools init / just fetch)
+/.just/
+/celestia-devtools.just
+
+# Logs / OS / editor noise
+*.log
+.DS_Store
+Thumbs.db
+Desktop.ini
+*~
+*.swp
+*.swo
+
+# Python
+__pycache__/
+/scripts/__pycache__/
+*.pyc
+.venv/
+
+# Tool caches / local scratch
+/target/
+.cache/

@@ -1,0 +1,17 @@
+{% import "partials/icons.html" as icons %}<!DOCTYPE html>
+<html lang="{{ lang | default(value=config.default_language) }}" class="no-js" data-theme="light">
+<head>
+{% include "partials/head.html" %}
+</head>
+<body class="hk-page{% block body_class %}{% endblock body_class %}">
+  <a class="hk-skip" href="#main">跳到主内容</a>
+  {% include "partials/backdrop.html" %}
+  {% include "partials/nav.html" %}
+  <div class="hk-shell">
+    {% block content %}{% endblock content %}
+  </div>
+  {% include "partials/footer.html" %}
+  <script type="module" src="{{ get_url(path='js/main.js') }}"></script>
+  {% block scripts %}{% endblock scripts %}
+</body>
+</html>

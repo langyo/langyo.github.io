@@ -1,0 +1,168 @@
+// hikari-zola — layout: shell, container, page mains, the article/TOC
+// two-column grid and the decorative grid/noise grounds. 360 / 768 / 1280.
+@use "./mixins" as *;
+
+.hk-shell {
+  position: relative;
+  z-index: 1;
+  flex: 1 0 auto;
+  width: 100%;
+}
+
+.hk-container {
+  width: 100%;
+  max-width: var(--hk-page-max);
+  margin-inline: auto;
+  padding-inline: var(--hk-gutter);
+}
+
+.hk-main {
+  width: 100%;
+  max-width: var(--hk-page-max);
+  margin-inline: auto;
+  padding: clamp(22px, 3.4vw, 46px) var(--hk-gutter) clamp(56px, 8vw, 96px);
+}
+
+// Article page: single column until there is room for the sticky TOC rail.
+.hk-main--article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(28px, 4vw, 56px);
+  align-items: start;
+
+  @media (min-width: 1100px) {
+    grid-template-columns: minmax(0, 1fr) 232px;
+  }
+}
+
+// Dossier page: the operator card is sticky, so the page keeps its own rhythm.
+.hk-main--dossier {
+  padding-bottom: clamp(56px, 8vw, 96px);
+}
+
+.hk-main--404 {
+  display: grid;
+  place-items: center;
+  min-height: min(68vh, 560px);
+}
+
+// Decorative grounds reused by hero / backdrop partials.
+.hk-grid-bg,
+.hk-noise {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hk-grid-bg {
+  background-image:
+    linear-gradient(to right, rgb(var(--color-border) / 60%) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(var(--color-border) / 60%) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 0%, #000 25%, transparent 78%);
+  mask-image: radial-gradient(ellipse at 50% 0%, #000 25%, transparent 78%);
+}
+
+.hk-noise {
+  opacity: 0.5;
+  background-image: radial-gradient(circle at center, rgb(var(--color-border) / 70%) 0.5px, transparent 1px);
+  background-size: 3px 3px;
+}
+
+// ── Article ────────────────────────────────────────────────────────────
+.hk-article {
+  min-width: 0;
+  max-width: var(--hk-article-max);
+}
+
+.hk-article__body {
+  min-width: 0;
+}
+
+.hk-article__head {
+  padding-bottom: 20px;
+  margin-bottom: clamp(22px, 3vw, 34px);
+  border-bottom: var(--hk-hair) solid var(--hk-line);
+}
+
+.hk-article__title {
+  margin: 10px 0 0;
+  font-size: clamp(1.75rem, 3.4vw, 2.45rem);
+  line-height: 1.16;
+}
+
+.hk-article__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hk-article__foot {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  gap: 18px;
+  margin-top: clamp(30px, 4vw, 46px);
+  padding-top: 20px;
+  border-top: var(--hk-hair) solid var(--hk-line);
+}
+
+// Sticky TOC — only where the two-column grid exists (desktop 1280 tier).
+.hk-toc {
+  display: none;
+
+  @media (min-width: 1100px) {
+    position: sticky;
+    top: calc(var(--hk-topbar-h) + 24px);
+    display: block;
+    align-self: start;
+    max-height: calc(100vh - var(--hk-topbar-h) - 48px);
+    overflow-y: auto;
+    padding-left: 16px;
+    border-left: var(--hk-hair) solid var(--hk-line);
+  }
+}
+
+.hk-toc__title {
+  margin: 0 0 12px;
+  @include hk-label;
+}
+
+.hk-toc__list {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  & & {
+    margin-top: 2px;
+    padding-left: 10px;
+  }
+}
+
+.hk-toc__link {
+  display: block;
+  padding: 5px 0 5px 10px;
+  margin-left: -1px;
+  border-left: 2px solid transparent;
+  color: var(--hk-fg-3);
+  font-size: 0.75rem;
+  line-height: 1.5;
+
+  &:hover,
+  &.is-active {
+    color: var(--hk-fg);
+    border-left-color: var(--hk-accent);
+  }
+}
+
+@media (max-width: 767px) {
+  .hk-main {
+    padding-top: 20px;
+    padding-bottom: 56px;
+  }
+}
