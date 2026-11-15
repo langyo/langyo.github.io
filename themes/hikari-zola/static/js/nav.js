@@ -25,8 +25,20 @@ function setDrawer(next, restoreFocus) {
   document.body.style.overflow = next ? "hidden" : "";
   setIcons(next);
   if (next) {
+    // The drawer flips from visibility:hidden through a CSS transition, so a
+    // focus() issued in the same task (or the very next frame) is ignored and
+    // activeElement stays on the burger. Poll once per frame until the element
+    // actually accepts focus, with a bounded budget.
     const first = drawer.querySelector("a, button");
-    if (first) first.focus({ preventScroll: true });
+    if (first) {
+      const focusWhenReady = (tries) => {
+        if (!open) return;
+        first.focus({ preventScroll: true });
+        if (document.activeElement === first || tries <= 0) return;
+        requestAnimationFrame(() => focusWhenReady(tries - 1));
+      };
+      requestAnimationFrame(() => focusWhenReady(12));
+    }
   } else if (restoreFocus && toggles[0]) {
     toggles[0].focus({ preventScroll: true });
   }

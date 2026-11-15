@@ -459,7 +459,7 @@
 
 .hk-404__code {
   margin: 0;
-  color: rgb(var(--color-primary) / 12%);
+  color: var(--hk-fg-3);
   font-family: var(--font-mono);
   font-size: clamp(4.5rem, 16vw, 9rem);
   font-weight: 700;

@@ -12,7 +12,7 @@
 }
 
 .hk-label--warn {
-  color: var(--hk-warn);
+  color: var(--hk-warn-ink);
 }
 
 // ── Buttons ────────────────────────────────────────────────────────────
@@ -125,7 +125,7 @@
   border: var(--hk-hair) solid var(--hk-accent-line);
   border-radius: 2px;
   background: var(--hk-accent-soft);
-  color: var(--hk-link);
+  color: var(--hk-fg);
   font-family: var(--font-mono);
   font-size: 0.5625rem;
   letter-spacing: 0.1em;
@@ -133,6 +133,7 @@
 
   &:hover {
     background: var(--hk-accent-line);
+    color: var(--hk-fg);
   }
 }
 
@@ -238,7 +239,7 @@
   padding: 3px 9px;
   border: 2px solid var(--hk-warn);
   background: rgb(var(--color-surface) / 82%);
-  color: var(--hk-warn);
+  color: var(--hk-warn-ink);
   font-family: var(--font-mono);
   font-size: 0.625rem;
   font-weight: 700;

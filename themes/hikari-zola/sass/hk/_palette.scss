@@ -45,7 +45,9 @@
   --hk-elev: color-mix(in srgb, rgb(var(--color-surface)) 94%, rgb(var(--color-primary)));
   --hk-fg: rgb(var(--color-text));
   --hk-fg-2: rgb(var(--color-text-secondary));
-  --hk-fg-3: rgb(var(--color-text-tertiary));
+  // Informative micro copy needs >=4.5:1: the channel tertiary (3.8:1) is too
+  // light for dates/handles/TOC, so the site ink is deepened one step.
+  --hk-fg-3: rgb(84 106 128);
   --hk-muted: rgb(var(--color-muted));
   --hk-line: rgb(var(--color-border));
   --hk-line-strong: color-mix(in srgb, rgb(var(--color-border)) 70%, rgb(var(--color-text-tertiary)));
@@ -55,6 +57,9 @@
   --hk-accent-soft: rgb(var(--color-primary) / 8%);
   --hk-accent-line: rgb(var(--color-primary) / 40%);
   --hk-warn: rgb(var(--color-accent));
+  // Amber stays decorative (rules/stripes/borders); any amber TEXT uses this
+  // ink instead — light amber on paper is 1.8:1 and unreadable.
+  --hk-warn-ink: rgb(138 90 0);
   // Body links must clear 4.5:1; the accent channel itself is too light in the
   // light theme, so the contract pins these two values.
   --hk-link: rgb(31 111 208);
@@ -103,6 +108,8 @@
   --code-type: 229 192 123;
   --code-variable: 224 108 117;
   --hk-link: rgb(140 209 255);
+  --hk-fg-3: rgb(var(--color-text-tertiary));
+  --hk-warn-ink: rgb(var(--color-accent));
   color-scheme: dark;
 }
 

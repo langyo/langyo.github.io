@@ -183,8 +183,10 @@ just sync-hikari-tokens      # scripts/sync-hikari-tokens.py
 
 * 每页恰好一个 h1；`a.hk-skip[href="#main"]` 跳转链接；`html.no-js` 首行替换为 `js`。
 * 全局 `:focus-visible { outline: 2px solid var(--hk-accent); outline-offset: 2px }`。
-* 对比度（实测，见审计）：正文 15.4:1 / 次要 6.0:1 / 链接 4.7:1（亮）、16.5/…/11.4（暗）；
-  HUD 微标签用 `--hk-fg-3`（亮 3.8:1、暗 6.1:1）——满足 ≥3:1，`--hk-muted` 只做装饰。
+* 对比度（实测，见审计）：正文 15.4:1 / 次要 6.2:1 / 链接 4.7:1（亮）、16.5/8.3/11.4（暗）；
+  HUD 微标签与日期/编号/目录等**信息性**小字统一用 `--hk-fg-3`（亮 rgb(84 106 128)=5.35~5.6:1、暗 6.1:1）；
+  `--hk-muted` 只做装饰、不承载文字。琥珀 `--hk-warn` 只做线/底/描边，琥珀**文字**一律用
+  `--hk-warn-ink`（亮 rgb(138 90 0)=5.67:1 / 暗 255 194 75=11.75:1）。
 * 代码 token 全部落在 `--code-*` 上，明暗两套均 ≥4.5:1（comment 亮 4.6:1 / 暗 5.5:1）。
 * `prefers-reduced-motion: reduce` 关闭全部动画/过渡与点云动画；hero 光标停顿。
 * icon-only 按钮均有 `aria-label`；drawer 有 `aria-expanded/aria-hidden`，打开时锁背景滚动、Esc/点外部关闭。
@@ -194,7 +196,7 @@ just sync-hikari-tokens      # scripts/sync-hikari-tokens.py
 
 | 项 | 上限 | 主题实测 |
 |---|---|---|
-| `style.css` | 64 KB（gzip 12 KB） | **54,790 B / gzip 10,909 B** |
+| `style.css` | 64 KB（gzip 12 KB） | **54,978 B / gzip 10,925 B** |
 | `main.js` + 模块（不含 backdrop） | 14 KB | 12,217 B |
 | backdrop JS | 22 KB | 21,991 B |
 
