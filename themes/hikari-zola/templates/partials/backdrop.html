@@ -5,7 +5,7 @@
 {%- set here = current_path | default(value="/") -%}
 {%- if bd_enable and bd_variant == "hero" and here != "/" -%}{% set bd_variant = "ambient" %}{%- endif -%}
 {% if bd_enable and bd_variant != "off" %}
-<div class="hk-backdrop" data-hk-backdrop data-variant="{{ bd_variant }}" data-density="{{ bd_density }}" data-parallax="{{ bd_parallax }}" aria-hidden="true">
+<div class="hk-backdrop" data-hk-backdrop data-variant="{{ bd_variant }}" data-density="{{ bd_density }}" data-parallax="{{ bd_parallax }}"{% if bd_variant == "hero" %} data-hk-anchor=".hk-hero__figure"{% endif %} aria-hidden="true">
   <div class="hk-grid-bg"></div>
   <canvas class="hk-backdrop__canvas"></canvas>
   <div class="hk-noise"></div>

@@ -20,9 +20,10 @@
       {% endif %}
     </div>
   </div>
-  <div class="hk-hero__figure" aria-hidden="true">
+  <div class="hk-hero__figure" data-hk-anchor aria-hidden="true">
     <div class="hk-hero__frame"></div>
-    <img class="hk-hero__silhouette" src="{{ get_url(path='img/alice-hero.webp') }}" alt="" width="900" height="1120" decoding="async">
+    <p class="hk-hero__holo-label">// HOLO-PROJ · RG-04 SUPERNOVA</p>
+    <p class="hk-hero__holo-status">RAILS ALIGNED · CHARGE 100%</p>
     <div class="hk-hero__ticks"></div>
   </div>
   <div class="hk-hero__side" aria-hidden="true">SYS.STATUS: ONLINE / NODE: {{ config.base_url | replace(from="https://", to="") | replace(from="http://", to="") }} / BUILD: {{ now() | date(format="%Y.%m.%d") }}</div>

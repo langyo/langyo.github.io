@@ -6,7 +6,7 @@
 ## 1. 定位
 
 - 站点 `langyo.xyz`：Zola 0.21 静态站 + 自研主题 `themes/hikari-zola`（Tera + SCSS + 原生 ES module，零外部运行时依赖）。
-- 设计语言：明日方舟式扁平 HUD × 蔚蓝档案千禧年（白 + 浅蓝）；主角天童爱丽丝（浅蓝主色、剪影、3D 点云光之剑背景）。
+- 设计语言：明日方舟式扁平 HUD × 蔚蓝档案千禧年（白 + 浅蓝）；主角天童爱丽丝（浅蓝主色），hero 右侧是全息投影舱里缓慢旋转的自研 WebGL2 点云电磁炮 RG·SUPERNOVA。
 - 一切页面/样式/脚本由 `zola build` 产出到 `public/`；页面运行时不得请求任何外部资源（CDN/webfont/图标库/统计脚本除外，见 §6）。
 
 ## 2. 目录结构
@@ -34,7 +34,7 @@ themes/hikari-zola/
     hk/             站点层：_palette / _base / 组件样式（可改）
     vendor/hikari/  hikari 官方 token 逐字副本（禁止手改，见 §6）
   static/js/        原生 ES module：main.js + prefs/nav/reveal/toc/copy
-    backdrop/       WebGL2 点云光之剑（独立预算）
+    backdrop/       WebGL2 全息点云电磁炮 RG·SUPERNOVA（独立预算 28KB）
   static/img/       主题装饰图（内容组产出，其它组只读）
 ```
 
@@ -86,7 +86,7 @@ just verify                       # build + check_site --ci + internal link chec
 - 颜色只走 `--hk-*` / `--color-*` 变量，禁止硬编码色值、禁止引入新品牌色。
 - 不引 CDN / webfont / 图标库 / CSS 框架；字体只用系统栈；阴影只用于浮层。
 - 动效使用 `--duration-*` / `--ease-*` token，必须尊重 `prefers-reduced-motion`；暗色走 `html[data-theme="dark"]`。
-- 预算：`style.css` <= 64KB（gzip <= 12KB）、JS（不含 backdrop）<= 14KB、backdrop <= 22KB、单图 <= 300KB。
+- 预算：`style.css` <= 64KB（gzip <= 12KB）、JS（不含 backdrop）<= 14KB、backdrop <= 28KB、单图 <= 300KB。
   常量集中在 `scripts/check_site.py` 头部（`BUDGET_*`），每次运行打印实测值（含 gzip 与图片总重/最大单图）；
   发布产物里任何 >300KB 的图片文件都算 error。
 
@@ -109,7 +109,8 @@ just verify                       # build + check_site --ci + internal link chec
 - 分层：`assets/source/` 放原始素材（大图、裁切前原图、设计稿），**不参与构建、不发布**；
   `static/img/` 只放发布用派生图（webp）；主题装饰图放 `themes/hikari-zola/static/img/`。不放 js/css。
 - 派生图由 `scripts/assets/prepare_art.py` 从 `assets/source/` 生成到 `static/img/`：
-  `alice-hero.webp`（900×1120 竖构图）、`alice-badge.webp`（400×400）、`arona-side.webp` 及自绘 svg 记号。
+  `alice-badge.webp`（400×400，dossier 头像）、`arona-side.webp`（about/404 装饰）及自绘 svg 记号。
+  hero 不再生成人像图：右侧由全息点云电磁炮承担；原始 `alice_0`/`alice_1`/`arona_0` 仍留在 `assets/source/`，不发布。
 - 一律 webp、单图 <= 300KB（`check_site.py` 扫描发布产物，超限即 error）；模板必须写死 `width`/`height`；
   装饰图 `alt=""`，信息图配可读 alt。
 - 迁移素材/改图后重跑 `just art` + `just verify`；迁移必须同步模板引用，死链由 `check_site.py` 抓；

@@ -5,7 +5,8 @@
 
 站点用 Tera 模板、SCSS 与原生 ES module 构建，**零外部运行时依赖**：没有 CDN、没有
 webfont、没有前端框架。页面的视觉参考明日方舟的扁平 HUD 界面与蔚蓝档案千禧年的
-白 + 浅蓝科技感，主角是天童爱丽丝；背景是一柄自研 WebGL2 点云「光之剑」。
+白 + 浅蓝科技感，主角是天童爱丽丝；hero 右侧的全息投影舱里悬浮着一台缓慢旋转的自研
+WebGL2 点云电磁炮 —— RG·SUPERNOVA。
 
 ## 设计
 
@@ -16,8 +17,10 @@ webfont、没有前端框架。页面的视觉参考明日方舟的扁平 HUD �
   [`@celestia-island/hikari`](https://github.com/celestia-island/hikari)，逐字 vendored 到
   `themes/hikari-zola/sass/vendor/hikari/` 并带 provenance 头；站点色板只在其上覆盖，
   不引入第二个设计体系。
-- **3D 点云光之剑**：纯 WebGL2 + 程序化点云（无 three.js），支持鼠标/滚动视差与明暗两套
-  配色，`prefers-reduced-motion` 下只渲染首帧，无 WebGL2 时静默降级为 CSS 底纹。
+- **全息点云电磁炮 RG·SUPERNOVA**：纯 WebGL2 + 程序化点云（无 three.js），青色线框 + 稀疏
+  面点 + 琥珀电容器，像全息投影/扫描仪而不是实心模型；绕 Y 轴缓慢 360° 旋转，叠加固定倾斜
+  与鼠标/滚动视差，明暗两套配色，`prefers-reduced-motion` 下只渲染首帧，无 WebGL2 时静默
+  降级为 CSS 底纹。hero 不再放人像，右侧由全息电磁炮承担。
 
 ## 技术栈
 
@@ -26,7 +29,7 @@ webfont、没有前端框架。页面的视觉参考明日方舟的扁平 HUD �
 | 站点生成 | Zola 0.21（Tera 模板、内置 Sass 编译、Atom/RSS、sitemap） |
 | 样式 | SCSS：hikari token 层 + 站点 `hk-` 组件层 |
 | 脚本 | 原生 ES module（无构建、无依赖、ES2020） |
-| 背景 | 自研 WebGL2 点云渲染器 |
+| 背景 | 自研 WebGL2 点云全息渲染器（电磁炮 RG·SUPERNOVA） |
 | CI/CD | GitHub Actions（Pages 部署 + PR 静态门禁） |
 | 容器 | 多阶段 dockerfile：Zola 构建 + static-web-server 托管 `public/` |
 
@@ -76,7 +79,9 @@ just sync-hikari-tokens --check                      # 只检查是否漂移，�
 ### 图片与资产
 
 - `assets/source/`：原始素材（大图、裁切前原图、设计稿），**不参与构建、不发布**。
-- `static/img/`：发布用派生图（webp）；主题装饰图在 `themes/hikari-zola/static/img/`。
+- `static/img/`：发布用派生图（webp）：`alice-badge.webp`（400×400 dossier 头像）、
+  `arona-side.webp`（about/404 装饰）及自绘 svg 记号；主题装饰图在 `themes/hikari-zola/static/img/`。
+  hero 不再生成人像图，右侧由全息点云电磁炮承担。
 - `scripts/assets/prepare_art.py` 从 `assets/source/` 生成派生图（`just art`）；单图 <= 300 KB，
   模板写死 `width`/`height`。`check_site.py` 扫描发布产物：单张 >300 KiB 记 error，
   并在汇总里打印图片总重与最大单图。

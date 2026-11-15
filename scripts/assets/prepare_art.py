@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """Derive the hikari-zola site artwork from the original Blue Archive sources.
 
+Hero background note: since v2 the hero right-hand figure is the WebGL2 holographic
+point-cloud railgun RG-SUPERNOVA rendered by the theme backdrop, so no raster hero
+figure is derived here.
+
 Inputs (read-only, never published; kept in the repo as original assets):
-    assets/source/alice_0.webp   Alice, eyes open  (2274x1608)
     assets/source/alice_1.webp   Alice, winking    (2274x1608)
     assets/source/arona_0.webp   Arona + Plana     (1920x1200)
 
 Outputs (all under static/img/ -- the only raster assets that ship with the site):
-    alice-hero.webp       900x1120  vertical duotone crop + 12% transparent blend padding
     alice-badge.webp      400x400   square avatar for the operator dossier
     arona-side.webp       800x500   side decoration for /about/ and 404
     sword-mark.svg        "light sword" symbol (currentColor)
@@ -15,7 +17,7 @@ Outputs (all under static/img/ -- the only raster assets that ship with the site
     silhouette-alice.svg  abstract Alice silhouette (currentColor)
 
 Design rules (see _dsh_scratch/hikari-zola-spec.md section 8):
-* light-blue duotone, white-friendly feathered edges, <= 300 KB per raster image;
+* light-blue duotone, <= 300 KB per raster image;
 * the SVGs are single-colour (currentColor) hand written minimal vectors;
 * deterministic and idempotent: the same sources always produce byte-identical
   outputs, so re-running the script is a no-op for git.
@@ -33,7 +35,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from PIL import Image, ImageChops, ImageOps
+from PIL import Image, ImageOps
 
 ROOT = Path(__file__).resolve().parents[2]
 #: Original artwork lives outside static/ so zola never publishes it.
@@ -44,9 +46,7 @@ MAX_BYTES = 300 * 1024
 QUALITY_STEPS = (84, 80, 76, 72, 68, 64)
 
 # Duotone ramp: shadow -> highlight.  Kept inside the hikari light-blue family
-# so the hero figure blends with the near-white page and --color-primary glow.
-HERO_SHADOW = (38, 96, 158)
-HERO_HIGHLIGHT = (247, 251, 255)
+# so the derived figures blend with the near-white page and --color-primary glow.
 BADGE_SHADOW = (44, 104, 168)
 BADGE_HIGHLIGHT = (250, 253, 255)
 ARONA_SHADOW = (58, 122, 187)
@@ -84,34 +84,6 @@ def ramp_to_rgb(im: Image.Image, shadow: tuple[int, int, int], highlight: tuple[
     )
 
 
-def _smoothstep(v: float) -> float:
-    return v * v * (3.0 - 2.0 * v)
-
-
-def edge_mask(size: tuple[int, int], left: float, right: float, top: float, bottom: float) -> Image.Image:
-    """Soft rectangular mask: 255 in the middle, smoothly 0 at the borders."""
-    w, h = size
-    lw = max(1, int(w * left))
-    rw = max(1, int(w * right))
-    th = max(1, int(h * top))
-    bh = max(1, int(h * bottom))
-
-    horizontal = Image.new("L", (w, 1))
-    hp = horizontal.load()
-    for x in range(w):
-        near = min(x / lw, (w - 1 - x) / rw, 1.0)
-        hp[x, 0] = round(255 * _smoothstep(max(0.0, near)))
-    mask_h = horizontal.resize((w, h), Image.Resampling.NEAREST)
-
-    vertical = Image.new("L", (1, h))
-    vp = vertical.load()
-    for y in range(h):
-        near = min(y / th, (h - 1 - y) / bh, 1.0)
-        vp[0, y] = round(255 * _smoothstep(max(0.0, near)))
-    mask_v = vertical.resize((w, h), Image.Resampling.NEAREST)
-    return ImageChops.multiply(mask_h, mask_v)
-
-
 def save_webp(im: Image.Image, out: Path) -> int:
     """Save with the highest quality step that stays within the size budget."""
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -124,25 +96,6 @@ def save_webp(im: Image.Image, out: Path) -> int:
                   + "  " + format(last_size / 1024, ".1f") + " KB  q=" + str(quality))
             return last_size
     raise SystemExit(str(out) + " is " + format(last_size / 1024, ".1f") + " KB at the lowest quality step")
-
-
-HERO_SIZE = (900, 1120)
-#: Transparent blend margin around the figure (6% per side) so the crop never
-#: touches the frame edge and can fade into the page / 3D backdrop.
-HERO_PAD = 0.12
-
-
-def make_alice_hero() -> None:
-    src = _load(SOURCE / "alice_0.webp")
-    # 900:1120 vertical crop around the face and both raised hands.
-    crop = crop_source(src, (414, 0, 1706, 1608))
-    width, height = HERO_SIZE
-    inner = (round(width * (1.0 - HERO_PAD)), round(height * (1.0 - HERO_PAD)))
-    figure = ramp_to_rgb(crop, HERO_SHADOW, HERO_HIGHLIGHT).resize(inner, Image.Resampling.LANCZOS)
-    canvas = Image.new("RGBA", HERO_SIZE, (0, 0, 0, 0))
-    canvas.paste(figure, ((width - inner[0]) // 2, (height - inner[1]) // 2))
-    canvas.putalpha(edge_mask(HERO_SIZE, 0.12, 0.12, 0.08, 0.20))
-    save_webp(canvas, DST / "alice-hero.webp")
 
 
 def make_alice_badge() -> None:
@@ -213,7 +166,6 @@ def write_svgs() -> None:
 
 def expected_outputs() -> list[Path]:
     return [
-        DST / "alice-hero.webp",
         DST / "alice-badge.webp",
         DST / "arona-side.webp",
         DST / "sword-mark.svg",
@@ -237,7 +189,6 @@ def main(argv: list[str]) -> int:
         return 0
 
     print("deriving site artwork -> " + str(DST.relative_to(ROOT)))
-    make_alice_hero()
     make_alice_badge()
     make_arona_side()
     write_svgs()

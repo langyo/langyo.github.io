@@ -1,7 +1,7 @@
 # hikari-zola
 
 Zola 自研主题：**hikari 设计 token + 明日方舟式扁平 HUD × 蔚蓝档案千禧年（白 + 浅蓝）**。
-主角是天童爱丽丝——浅蓝主色、hero 剪影框、3D 点云「光之剑」背景。
+主角是天童爱丽丝（浅蓝主色）；hero 右侧是**全息投影舱**，舱内缓慢旋转自研 WebGL2 点云电磁炮 **RG·SUPERNOVA**（无 three.js，可降级）。
 零外部运行时依赖：系统字体、原生 ES module、无 CDN。
 
 ~~~
@@ -24,6 +24,8 @@ themes/hikari-zola/
   逐字 vendor 在 `sass/vendor/hikari/`，同步方式见下方「vendor 同步」。
 * **视觉**：明日方舟式扁平 HUD（发丝线、切角、四角括号、mono 微标签、编号、读数）+ 千禧年
   （白 + 浅蓝 + 干净科技感）。层级靠线/切角/留白/字号反差，不靠阴影；阴影只用于 drawer 等浮层。
+  hero 右侧是**全息投影舱**：发丝外框 + 四角括号 + 内层虚线投影场 + 地面椭圆辉光 + 极淡扫描线，
+  舱内由 `data-hk-anchor` 锚定画布绘制点云电磁炮；小屏时退化为正文 CTA 下方的全宽横幅。
 * **符号**：`//` mono 标签、`FILE 0xNN` 编号、`◆` 菱形、四角括号 `.hk-frame`、切角
   `.hk-cut`/`hk-panel`、端点加粗分隔线、hazard 斜纹、网格/点阵底纹、十字 `.hk-tick`、
   属性条 `.hk-attr`、`SYS.STATUS` 读数、hero 扫描线。
@@ -196,9 +198,9 @@ just sync-hikari-tokens      # scripts/sync-hikari-tokens.py
 
 | 项 | 上限 | 主题实测 |
 |---|---|---|
-| `style.css` | 64 KB（gzip 12 KB） | **54,978 B / gzip 10,925 B** |
+| `style.css` | 64 KB（gzip 12 KB） | **56,214 B / gzip 11,113 B** |
 | `main.js` + 模块（不含 backdrop） | 14 KB | 12,217 B |
-| backdrop JS | 22 KB | 21,991 B |
+| backdrop JS | 28 KB | 由 backdrop 组自测 |
 
 ## 许可
 

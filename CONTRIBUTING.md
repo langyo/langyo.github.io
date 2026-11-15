@@ -40,7 +40,7 @@ the theme.
 3. For a visual change, attach screenshots at 360 px, 768 px and 1280 px, light and
    dark, and state which design tokens moved.
 4. Keep the static budgets: `style.css` <= 64 KiB (gzip <= 12 KiB), theme JS
-   <= 14 KiB (backdrop <= 22 KiB), one `<h1>` per page, every `<img>` with
+   <= 14 KiB (backdrop <= 28 KiB), one `<h1>` per page, every `<img>` with
    `width` and `height`, every published image <= 300 KiB, no CDN request
    anywhere.
 5. Sign off every commit (`git commit -s`): the sign-off is a
