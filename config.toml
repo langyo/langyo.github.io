@@ -56,7 +56,7 @@ footer_recordation_text_moe = "萌ICP备20255233号"
 [extra.hero]
 kicker = "MILLENNIUM · OPERATOR FILE"
 subtitle = "全栈工程师 × 氢能科研民工 × 十年折腾记录"
-lede = "从 Web 前端到 MCU 固件，从网关部署到实验室上位机——把能重写的东西都用 Rust 重写一遍。这里是伊欧的操作员档案：技术版图、游戏与创作，以及仍在靠近的科幻。"
+lede = "从 Web 前端到 MCU 固件，从网关部署到实验室上位机——把能重写的东西都用 Rust 重写一遍。这里是伊欧的操作员档案：技术版图、游戏与创作，以及仍在靠近的科幻。右侧那门全息点云电磁炮 RG·SUPERNOVA，是工程部给爱丽丝的超大型电磁炮。"
 datalines = [
   { k = "CLASS", v = "FULL-STACK" },
   { k = "REGION", v = "SHANGHAI · CN" },
@@ -112,7 +112,7 @@ k = "RESEARCH"
 v = 72
 
 # --------------------------------------------------------------------------
-# BACKDROP / 3D 点云光之剑
+# BACKDROP / 3D 点云全息电磁炮 RG·SUPERNOVA
 # --------------------------------------------------------------------------
 [extra.backdrop]
 enable = true

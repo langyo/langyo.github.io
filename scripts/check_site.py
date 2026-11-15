@@ -26,7 +26,7 @@ What it checks
    wherever the author needs them to.
 4. Budgets (constants below). style.css <= 64 KiB uncompressed and <= 12 KiB
    gzipped, JS modules other than js/backdrop/ <= 14 KiB, backdrop JS <=
-   22 KiB. Measured values are printed on every run.
+   28 KiB. Measured values are printed on every run.
 5. Theme discipline. style.css keeps a prefers-reduced-motion block and a
    [data-theme="dark"] selector.
 6. Image budget. Every image published into the output tree (.webp/.png/.jpg/
@@ -60,7 +60,7 @@ DEFAULT_CONFIG = "config.toml"
 BUDGET_STYLE = 64 * 1024      # public/style.css, uncompressed
 BUDGET_STYLE_GZ = 12 * 1024   # public/style.css, gzip -9 (what actually ships)
 BUDGET_JS = 14 * 1024         # theme JS, public/js/backdrop/ excluded
-BUDGET_BACKDROP = 22 * 1024   # WebGL2 backdrop JS
+BUDGET_BACKDROP = 28 * 1024   # WebGL2 hologram backdrop JS (railgun RG-SUPERNOVA)
 BUDGET_IMAGE = 300 * 1024     # per published image file
 
 #: Image extensions counted against BUDGET_IMAGE.
