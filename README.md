@@ -68,13 +68,27 @@ just sync-hikari-tokens --from ../hikari/packages/vue # 离线：从本地 hikar
 just sync-hikari-tokens --check                      # 只检查是否漂移，不写文件
 ```
 
+> **base_url 提示**：`check_site.py` 用 `config.toml` 的 `base_url` 判断本站 host，
+> 所以 `zola build --base-url http://127.0.0.1:PORT` 的本地产物直接跑会报大量假死链。
+> 要么对使用默认 `base_url` 的“基准构建”跑检查，要么把 `--config` 指向仅改
+> `base_url` 的副本（`python scripts/check_site.py --config /tmp/config.local.toml`）。
+
+### 图片与资产
+
+- `assets/source/`：原始素材（大图、裁切前原图、设计稿），**不参与构建、不发布**。
+- `static/img/`：发布用派生图（webp）；主题装饰图在 `themes/hikari-zola/static/img/`。
+- `scripts/assets/prepare_art.py` 从 `assets/source/` 生成派生图（`just art`）；单图 <= 300 KB，
+  模板写死 `width`/`height`。`check_site.py` 扫描发布产物：单张 >300 KiB 记 error，
+  并在汇总里打印图片总重与最大单图。
+
 ## 目录结构
 
 ```text
 langyo.github.io/
 ├── config.toml              Zola 站点配置（theme = "hikari-zola"）
 ├── content/                 内容：首页、关于页、posts/*.md
-├── static/                  原样拷贝的资源（图片 / favicon）
+├── assets/source/           原始素材（大图 / 裁切前原图），不参与构建、不发布
+├── static/                  发布用资源：static/img/ 派生图 + favicon（原样拷贝）
 ├── scripts/                 零第三方依赖的 Python 工具
 │   ├── check_site.py        构建产物静态门禁
 │   ├── sync-hikari-tokens.py hikari token vendoring 同步

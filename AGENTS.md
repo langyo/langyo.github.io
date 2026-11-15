@@ -14,7 +14,8 @@
 ```text
 config.toml         站点配置（theme = "hikari-zola"）
 content/            _index.md、about.md、posts/*.md
-static/             原样拷贝的资源（图片/favicon；不放 js/css）
+assets/source/      原始素材（大图/裁切前原图），不参与构建、不发布
+static/             发布用资源：static/img/ 派生图 + favicon（不放 js/css）
 scripts/            零第三方依赖的 Python 工具（检查/同步/资产）
 themes/hikari-zola/ 主题本体（templates/sass/static）
 .just/              celestia-devtools 暂存文件，gitignored，不入库
@@ -67,12 +68,14 @@ toc = true
 ```console
 just build                        # zola build -> public/
 just serve                        # 本地预览（zola serve）
-python scripts/check_site.py      # 静态门禁：死链/结构/预算/外链/CDN
+python scripts/check_site.py      # 静态门禁：死链/结构/预算/外链/CDN/图片重量
 python scripts/check_site.py --ci # 严格模式：warning 也判失败
 just verify                       # build + check_site --ci + internal link check + devtools init --check
 ```
 
 - 并行作业用独立输出目录：`zola build -o _build/<组名> --force`（`_build/` 已 gitignore）。
+- check_site 用 `config.toml` 的 `base_url` 判本站 host：`zola build --base-url http://127.0.0.1:PORT`
+  的产物直接跑会满屏假死链。要么用默认 base_url 的“基准构建”，要么 `--config` 指向仅改 base_url 的副本。
 - 链接检查只跑内链：`zola check --skip-external-links`（正文引用外网，403/超时不可控，不因此失败）。
 - 验收线：`zola build` 0 error / 0 warning、内链检查通过、`check_site --ci` 通过。
 
@@ -84,7 +87,8 @@ just verify                       # build + check_site --ci + internal link chec
 - 不引 CDN / webfont / 图标库 / CSS 框架；字体只用系统栈；阴影只用于浮层。
 - 动效使用 `--duration-*` / `--ease-*` token，必须尊重 `prefers-reduced-motion`；暗色走 `html[data-theme="dark"]`。
 - 预算：`style.css` <= 64KB（gzip <= 12KB）、JS（不含 backdrop）<= 14KB、backdrop <= 22KB、单图 <= 300KB。
-  常量集中在 `scripts/check_site.py` 头部（`BUDGET_*`），每次运行都会打印实测值（含 gzip 体积）。
+  常量集中在 `scripts/check_site.py` 头部（`BUDGET_*`），每次运行打印实测值（含 gzip 与图片总重/最大单图）；
+  发布产物里任何 >300KB 的图片文件都算 error。
 
 ## 7. 分支与提交
 
@@ -102,10 +106,14 @@ just verify                       # build + check_site --ci + internal link chec
 
 ## 9. 资产流程
 
-- 图片产物由 `scripts/assets/prepare_art.py` 生成：`alice-hero.webp`（900×1120 竖构图）、`alice-badge.webp`（400×400）、`arona-side.webp` 及自绘 svg 记号。
-- 一律 webp、单图 <= 300KB；模板必须写死 `width`/`height`；装饰图 `alt=""`，信息图配可读 alt。
-- 图片只放 `static/img/`（主题装饰放 `themes/hikari-zola/static/img/`），不放 js/css；迁移必须同步模板引用，死链由 `check_site.py` 抓。
-- 改图后重跑 `just art` + `just verify`；PR 描述附前后对比与体积。
+- 分层：`assets/source/` 放原始素材（大图、裁切前原图、设计稿），**不参与构建、不发布**；
+  `static/img/` 只放发布用派生图（webp）；主题装饰图放 `themes/hikari-zola/static/img/`。不放 js/css。
+- 派生图由 `scripts/assets/prepare_art.py` 从 `assets/source/` 生成到 `static/img/`：
+  `alice-hero.webp`（900×1120 竖构图）、`alice-badge.webp`（400×400）、`arona-side.webp` 及自绘 svg 记号。
+- 一律 webp、单图 <= 300KB（`check_site.py` 扫描发布产物，超限即 error）；模板必须写死 `width`/`height`；
+  装饰图 `alt=""`，信息图配可读 alt。
+- 迁移素材/改图后重跑 `just art` + `just verify`；迁移必须同步模板引用，死链由 `check_site.py` 抓；
+  PR 描述附前后对比与体积。
 
 ## 10. 协作红线（给 agent）
 

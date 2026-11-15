@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Derive the hikari-zola site artwork from the original Blue Archive sources.
 
-Inputs (read-only, never modified):
-    static/alice_0.webp   Alice, eyes open  (2274x1608)
-    static/alice_1.webp   Alice, winking    (2274x1608)
-    static/arona_0.webp   Arona + Plana     (1920x1200)
+Inputs (read-only, never published; kept in the repo as original assets):
+    assets/source/alice_0.webp   Alice, eyes open  (2274x1608)
+    assets/source/alice_1.webp   Alice, winking    (2274x1608)
+    assets/source/arona_0.webp   Arona + Plana     (1920x1200)
 
-Outputs (all under static/img/):
+Outputs (all under static/img/ -- the only raster assets that ship with the site):
     alice-hero.webp       900x1120  vertical duotone crop + 12% transparent blend padding
     alice-badge.webp      400x400   square avatar for the operator dossier
     arona-side.webp       800x500   side decoration for /about/ and 404
@@ -36,8 +36,9 @@ from pathlib import Path
 from PIL import Image, ImageChops, ImageOps
 
 ROOT = Path(__file__).resolve().parents[2]
-SRC = ROOT / "static"
-DST = SRC / "img"
+#: Original artwork lives outside static/ so zola never publishes it.
+SOURCE = ROOT / "assets" / "source"
+DST = ROOT / "static" / "img"
 
 MAX_BYTES = 300 * 1024
 QUALITY_STEPS = (84, 80, 76, 72, 68, 64)
@@ -132,7 +133,7 @@ HERO_PAD = 0.12
 
 
 def make_alice_hero() -> None:
-    src = _load(SRC / "alice_0.webp")
+    src = _load(SOURCE / "alice_0.webp")
     # 900:1120 vertical crop around the face and both raised hands.
     crop = crop_source(src, (414, 0, 1706, 1608))
     width, height = HERO_SIZE
@@ -145,7 +146,7 @@ def make_alice_hero() -> None:
 
 
 def make_alice_badge() -> None:
-    src = _load(SRC / "alice_1.webp")
+    src = _load(SOURCE / "alice_1.webp")
     # Square crop: head, winking eyes and hands, then downscale to 400x400.
     crop = crop_source(src, (540, 120, 1740, 1320))
     badge = ramp_to_rgb(crop, BADGE_SHADOW, BADGE_HIGHLIGHT).resize((400, 400), Image.Resampling.LANCZOS)
@@ -153,7 +154,7 @@ def make_alice_badge() -> None:
 
 
 def make_arona_side() -> None:
-    src = _load(SRC / "arona_0.webp")
+    src = _load(SOURCE / "arona_0.webp")
     # Right-hand Arona with a hint of Plana on the left edge, 8:5.
     crop = crop_source(src, (640, 200, 1920, 1000))
     side = ramp_to_rgb(crop, ARONA_SHADOW, ARONA_HIGHLIGHT).resize((800, 500), Image.Resampling.LANCZOS)

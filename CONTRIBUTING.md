@@ -41,10 +41,18 @@ the theme.
    dark, and state which design tokens moved.
 4. Keep the static budgets: `style.css` <= 64 KiB (gzip <= 12 KiB), theme JS
    <= 14 KiB (backdrop <= 22 KiB), one `<h1>` per page, every `<img>` with
-   `width` and `height`, no CDN request anywhere.
+   `width` and `height`, every published image <= 300 KiB, no CDN request
+   anywhere.
 5. Sign off every commit (`git commit -s`): the sign-off is a
    [Developer Certificate of Origin](https://developercertificate.org/) statement.
    There is no separate CLA to sign.
+
+> **Base URL note.** `check_site.py` derives the site host from `base_url` in
+> `config.toml`, so a scratch build made with
+> `zola build --base-url http://127.0.0.1:PORT` sees every internal link as dead.
+> Either gate a *baseline build* that used the default `base_url`, or point
+> `--config` at a copy of `config.toml` whose `base_url` matches the scratch URL:
+> `python scripts/check_site.py --config /tmp/config.local.toml`.
 
 ## Commit messages and merge model
 

@@ -29,6 +29,9 @@ What it checks
    22 KiB. Measured values are printed on every run.
 5. Theme discipline. style.css keeps a prefers-reduced-motion block and a
    [data-theme="dark"] selector.
+6. Image budget. Every image published into the output tree (.webp/.png/.jpg/
+   .jpeg/.gif/.svg) is at most 300 KiB. The summary always prints the total
+   image weight and the largest single file.
 
 Exit codes
 ----------
@@ -58,7 +61,10 @@ BUDGET_STYLE = 64 * 1024      # public/style.css, uncompressed
 BUDGET_STYLE_GZ = 12 * 1024   # public/style.css, gzip -9 (what actually ships)
 BUDGET_JS = 14 * 1024         # theme JS, public/js/backdrop/ excluded
 BUDGET_BACKDROP = 22 * 1024   # WebGL2 backdrop JS
-BUDGET_IMAGE = 300 * 1024     # per image; enforced by the asset pipeline
+BUDGET_IMAGE = 300 * 1024     # per published image file
+
+#: Image extensions counted against BUDGET_IMAGE.
+IMAGE_SUFFIXES = (".webp", ".png", ".jpg", ".jpeg", ".gif", ".svg")
 
 #: External hosts a *resource* (script/style/font/frame/media/preconnect) may
 #: load from. Anything else is an error; the theme is deliberately offline.
@@ -150,6 +156,10 @@ class Report:
     style_gz_bytes: int = 0
     js_bytes: int = 0
     backdrop_bytes: int = 0
+    image_count: int = 0
+    image_bytes: int = 0
+    image_max_bytes: int = 0
+    image_max_path: str = ""
 
     def error(self, path: str, line: int, message: str) -> None:
         self.errors.append(Finding("error", path, line, message))
@@ -535,6 +545,27 @@ def check_style_css(out_dir: Path, report: Report) -> None:
             )
 
 
+def check_images(out_dir: Path, report: Report) -> None:
+    """Enforce the per-image budget over everything published as an image."""
+
+    for path in sorted(out_dir.rglob("*")):
+        if not path.is_file() or path.suffix.lower() not in IMAGE_SUFFIXES:
+            continue
+
+        size = path.stat().st_size
+        display = display_path(path, out_dir)
+
+        report.image_count += 1
+        report.image_bytes += size
+
+        if size > report.image_max_bytes:
+            report.image_max_bytes = size
+            report.image_max_path = display
+
+        if size > BUDGET_IMAGE:
+            report.error(display, 0, f"image is {size / 1024:.1f} KiB > {BUDGET_IMAGE // 1024} KiB budget")
+
+
 def run(out_dir: Path, config_path: Path, ci: bool) -> Report:
     report = Report()
 
@@ -553,6 +584,7 @@ def run(out_dir: Path, config_path: Path, ci: bool) -> Report:
         check_page(out_dir, page, site_host, report)
 
     check_style_css(out_dir, report)
+    check_images(out_dir, report)
     return report
 
 
@@ -576,6 +608,11 @@ def emit(report: Report, out_dir: Path, ci: bool) -> int:
         f"(gzip {report.style_gz_bytes / 1024:.1f}/{BUDGET_STYLE_GZ // 1024} KiB), "
         f"js {report.js_bytes / 1024:.1f}/{BUDGET_JS // 1024} KiB, "
         f"backdrop {report.backdrop_bytes / 1024:.1f}/{BUDGET_BACKDROP // 1024} KiB"
+    )
+    print(
+        "  images     "
+        f"{report.image_count} file(s), {report.image_bytes / 1024 / 1024:.1f} MiB total, "
+        f"max {report.image_max_bytes / 1024:.1f} KiB ({report.image_max_path or '-'})"
     )
 
     if report.errors or report.warnings:
