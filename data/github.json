@@ -145,7 +145,7 @@
       "d": "2025-12-20"
     },
     {
-      "c": 84,
+      "c": 83,
       "d": "2025-12-21"
     },
     {
@@ -153,7 +153,7 @@
       "d": "2025-12-22"
     },
     {
-      "c": 108,
+      "c": 107,
       "d": "2025-12-23"
     },
     {
@@ -677,11 +677,11 @@
       "d": "2026-05-02"
     },
     {
-      "c": 13,
+      "c": 12,
       "d": "2026-05-03"
     },
     {
-      "c": 39,
+      "c": 40,
       "d": "2026-05-04"
     },
     {
@@ -761,11 +761,11 @@
       "d": "2026-05-23"
     },
     {
-      "c": 6,
+      "c": 5,
       "d": "2026-05-24"
     },
     {
-      "c": 1,
+      "c": 2,
       "d": "2026-05-25"
     },
     {
@@ -1061,11 +1061,11 @@
       "d": "2026-08-06"
     },
     {
-      "c": 78,
+      "c": 77,
       "d": "2026-08-07"
     },
     {
-      "c": 216,
+      "c": 217,
       "d": "2026-08-08"
     },
     {
@@ -1297,11 +1297,11 @@
       "d": "2026-10-04"
     },
     {
-      "c": 222,
+      "c": 221,
       "d": "2026-10-05"
     },
     {
-      "c": 327,
+      "c": 328,
       "d": "2026-10-06"
     },
     {
@@ -1361,11 +1361,11 @@
       "d": "2026-10-20"
     },
     {
-      "c": 175,
+      "c": 174,
       "d": "2026-10-21"
     },
     {
-      "c": 173,
+      "c": 174,
       "d": "2026-10-22"
     },
     {
@@ -1465,11 +1465,11 @@
       "d": "2026-11-15"
     },
     {
-      "c": 139,
+      "c": 140,
       "d": "2026-11-16"
     }
   ],
-  "fetched_at": "2026-11-16T07:56:16Z",
+  "fetched_at": "2026-11-16T08:28:08Z",
   "langs": [
     {
       "l": "Rust",
@@ -1481,7 +1481,7 @@
     },
     {
       "l": "TypeScript",
-      "n": 21
+      "n": 23
     },
     {
       "l": "C++",
@@ -1489,7 +1489,7 @@
     },
     {
       "l": "Java",
-      "n": 5
+      "n": 6
     },
     {
       "l": "Python",
@@ -1544,8 +1544,7 @@
   "profile": {
     "created_at": "2016-10-27T16:18:42Z",
     "followers": 390,
-    "following": 36,
-    "public_repos": 162
+    "following": 36
   },
   "recent28": [
     {
@@ -1553,11 +1552,11 @@
       "d": "2026-10-20"
     },
     {
-      "c": 175,
+      "c": 174,
       "d": "2026-10-21"
     },
     {
-      "c": 173,
+      "c": 174,
       "d": "2026-10-22"
     },
     {
@@ -1657,50 +1656,47 @@
       "d": "2026-11-15"
     },
     {
-      "c": 139,
+      "c": 140,
       "d": "2026-11-16"
     }
   ],
+  "repos": {
+    "private": 52,
+    "public": 159,
+    "total": 211
+  },
+  "schema": 3,
+  "scope": "all",
   "streak": {
     "current": 141,
     "longest": 141
   },
   "top_repos": [
     {
-      "desc": "我的世界中文论坛（MCBBS）客户端项目（已停止开发）",
-      "full": "langyo/MCBBS-Client",
       "lang": "",
       "name": "MCBBS-Client",
       "stars": 44,
       "url": "https://github.com/langyo/MCBBS-Client"
     },
     {
-      "desc": "Multi-Version, Multi-Modloader Minecraft MCP (Model Context Protocol) Mod for building mods",
-      "full": "langyo/minecraft-mod-mcp",
       "lang": "Python",
       "name": "minecraft-mod-mcp",
       "stars": 43,
       "url": "https://github.com/langyo/minecraft-mod-mcp"
     },
     {
-      "desc": "[WIP]《这是 C++ 的世界！》电子书仓库",
-      "full": "langyo/cppworld",
       "lang": "",
       "name": "cppworld",
       "stars": 32,
       "url": "https://github.com/langyo/cppworld"
     },
     {
-      "desc": "[WIP] 我的世界（Minecraft）红石电路计算机资料集索引",
-      "full": "langyo/redstone-computer-technology",
       "lang": "",
       "name": "redstone-computer-technology",
       "stars": 19,
       "url": "https://github.com/langyo/redstone-computer-technology"
     },
     {
-      "desc": "World of WarShip Panel — replay review & in-game overlay",
-      "full": "langyo/wowsp",
       "lang": "Rust",
       "name": "wowsp",
       "stars": 17,
@@ -1708,9 +1704,9 @@
     }
   ],
   "totals": {
-    "contributions_year": 33242,
-    "repos_scanned": 162,
-    "stars": 308
+    "contributions_private_year": 15563,
+    "contributions_year": 33241,
+    "stars": 307
   },
   "types": {
     "ISSUE": 9,
@@ -1764,7 +1760,7 @@
       "w": "2026-11-08"
     },
     {
-      "c": 376,
+      "c": 377,
       "w": "2026-11-15"
     }
   ]

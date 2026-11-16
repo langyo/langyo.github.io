@@ -415,71 +415,56 @@
   line-height: 1.45;
 }
 
-// ── GitHub activity panel (index) ─────────────────────────────────────
-// Three-bay HUD panel: readout cells · 28-day contribution bars · top repos.
-// Everything is token-driven so light/dark (and the accent gradient) follow the
-// palette; numbers use tabular figures so columns never jitter.
+// ── Activity panel (index) — sci-fi HUD console ───────────────────────
+// Three framed modules on one cut-corner panel: telemetry readouts · signal
+// bars/trend · archive ranking + streak ring. Faint grid ground, corner
+// brackets and hairline sub-frames; every colour rides --hk-* tokens.
 .hk-gh {
-  @include hk-panel;
+  position: relative;
+  isolation: isolate;
   display: grid;
-  gap: clamp(16px, 2.2vw, 26px);
-  padding: clamp(16px, 2.2vw, 24px);
+  gap: clamp(10px, 1.4vw, 16px);
+  padding: clamp(12px, 1.8vw, 20px);
+  background: var(--hk-line);
+  @include hk-cut;
 
-  @media (min-width: 900px) {
-    // The left bay carries four readouts, so it gets the extra width; the chart
-    // keeps the largest share.
-    grid-template-columns: minmax(300px, 1.16fr) minmax(0, 1.34fr) minmax(200px, 0.82fr);
+  // Interior: surface + faint engineering grid.
+  &::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: var(--hk-hair);
+    background-color: var(--hk-surface);
+    background-image:
+      linear-gradient(to right, rgb(var(--color-border) / 42%) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(var(--color-border) / 42%) 1px, transparent 1px);
+    background-size: 22px 22px;
+    @include hk-cut;
+  }
+
+  // Four corner brackets on top of the frame.
+  &::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: -1px;
+    pointer-events: none;
+    @include hk-brackets(20px, 2px, var(--hk-accent-line));
+  }
+
+  @media (min-width: 980px) {
+    grid-template-columns: minmax(300px, 350px) minmax(0, 1fr) minmax(226px, 260px);
     align-items: start;
   }
 }
 
-// Four readouts: 4-up inside the left bay on desktop, 2x2 once stacked.
-.hk-gh__stats {
+.hk-gh__module {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-
-  @media (min-width: 900px) {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
-.hk-gh__stat {
-  display: grid;
-  gap: 2px;
+  align-content: start;
   min-width: 0;
-  padding: 7px 8px;
+  padding: clamp(10px, 1.4vw, 14px);
   border: var(--hk-hair) solid var(--hk-line);
-  background: var(--hk-sunken);
-}
-
-.hk-gh__stat-k {
-  overflow-wrap: anywhere;
-  color: var(--hk-fg-3);
-  font-family: var(--font-mono);
-  font-size: 0.5rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.hk-gh__stat-v {
-  overflow: hidden;
-  color: var(--hk-fg);
-  font-family: var(--font-mono);
-  font-size: 0.875rem;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.25;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.hk-gh__chart {
-  display: grid;
-  gap: 8px;
-  min-width: 0;
 }
 
 .hk-gh__meta {
@@ -492,20 +477,126 @@
   text-transform: uppercase;
 }
 
-// 28 slim bars on a fixed-height baseline; each height comes from --v.
-// (The template emits a <ul>, so the list defaults are reset here.)
-.hk-gh__bars {
+// ── TELEMETRY: readout cells ──────────────────────────────────────────
+.hk-gh__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--hk-hair);
   margin: 0;
   padding: 0;
   list-style: none;
+  background: var(--hk-line);
+  border: var(--hk-hair) solid var(--hk-line);
+}
+
+.hk-gh__stat {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 9px 11px;
+  background: var(--hk-sunken);
+  transition: background-color var(--duration-short) var(--ease-standard);
+
+  &:hover {
+    background: var(--hk-elev);
+  }
+}
+
+.hk-gh__stat-k {
+  overflow-wrap: anywhere;
+  color: var(--hk-fg-3);
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.hk-gh__stat-v {
+  overflow: hidden;
+  color: var(--hk-fg);
+  font-family: var(--font-mono);
+  font-size: clamp(1.6rem, 2.6vw, 2rem);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-gh__stat-sub {
+  color: var(--hk-fg-3);
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.1em;
+
+  b,
+  strong {
+    color: var(--hk-warn-ink);
+    font-weight: 600;
+  }
+}
+
+// ── SIGNAL: main bars + secondary trend ───────────────────────────────
+.hk-gh__module--telemetry .hk-gh__stats {
+  // The module already carries the frame; drop the stats' own outer border.
+  border: 0;
+}
+
+.hk-gh__module--archive {
+  // Ranking on top, streak ring pinned to the module's bottom edge.
+  align-content: space-between;
+}
+
+.hk-gh__module--signal {
+  position: relative;
+
+  // Extremely faint scanlines over the module (text sits above them).
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: repeating-linear-gradient(to bottom, rgb(var(--color-primary) / 9%) 0 1px, transparent 1px 4px);
+    opacity: 0.5;
+  }
+}
+
+.hk-gh__bars {
+  position: relative;
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: minmax(2px, 1fr);
   align-items: end;
   gap: 3px;
-  height: 104px;
-  padding-bottom: 2px;
+  height: 96px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
   border-bottom: var(--hk-hair) solid var(--hk-line);
+  overflow: hidden;
+
+  // Scanning highlight band (disabled under reduced-motion).
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 42%;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgb(var(--hk-cyanish) / 16%), transparent);
+    animation: hk-gh-scan 2.1s linear infinite;
+  }
+}
+
+@keyframes hk-gh-scan {
+  from {
+    transform: translateX(-120%);
+  }
+
+  to {
+    transform: translateX(260%);
+  }
 }
 
 .hk-gh__bar {
@@ -514,7 +605,6 @@
   height: 100%;
   min-width: 0;
 
-  // Always leaves a 2px mark on the baseline, so zero days still read.
   &::after {
     content: "";
     position: absolute;
@@ -523,32 +613,75 @@
     left: 0;
     height: max(var(--v, 0%), 2px);
     border-radius: 1px 1px 0 0;
-    background: linear-gradient(to top, rgb(var(--color-primary) / 55%), rgb(var(--hk-cyanish) / 85%));
+    background: linear-gradient(to top, rgb(var(--color-primary) / 60%), rgb(var(--hk-cyanish) / 90%));
+    box-shadow: 0 0 6px rgb(var(--color-primary) / 22%);
     transition: filter var(--duration-short) var(--ease-standard);
   }
 
+  // Week tick every 7th day, sitting on the baseline.
+  &:nth-child(7n + 1)::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -3px;
+    z-index: 1;
+    width: 1px;
+    height: 3px;
+    background: var(--hk-line-strong);
+  }
+
   &:hover::after {
-    filter: brightness(1.18);
+    filter: brightness(1.15);
   }
 }
 
-.hk-gh__side {
+.hk-gh__trend {
   display: grid;
-  gap: 8px;
-  align-content: start;
-  min-width: 0;
+  grid-auto-flow: column;
+  grid-auto-columns: 3px;
+  justify-content: space-between;
+  align-items: end;
+  gap: 3px;
+  height: 26px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
 }
 
+// Weekly secondary bars: --v comes from the template, kept faint (40%) and slim.
+.hk-gh__trend-bar {
+  display: block;
+  height: max(var(--v, 0%), 2px);
+  min-height: 2px;
+  border-radius: 1px;
+  background: linear-gradient(to top, rgb(var(--color-primary) / 70%), rgb(var(--hk-cyanish) / 70%));
+  opacity: 0.4;
+}
+
+// ── ARCHIVE: numbered ranking + streak ring ───────────────────────────
 .hk-gh__repos {
   display: grid;
+  counter-reset: gh-repo;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .hk-gh__repo {
+  display: grid;
+  grid-template-columns: 1.7rem minmax(0, 1fr);
+  align-items: center;
   min-width: 0;
-  border-bottom: var(--hk-hair) solid var(--hk-line);
+  border-bottom: 1px dashed var(--hk-line);
+  counter-increment: gh-repo;
+
+  &::before {
+    content: counter(gh-repo, decimal-leading-zero);
+    color: var(--hk-fg-3);
+    font-family: var(--font-mono);
+    font-size: 0.5rem;
+    letter-spacing: 0.08em;
+  }
 }
 
 .hk-gh__link {
@@ -556,16 +689,16 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
-  padding: 7px 0;
+  padding: 7px 0 7px 8px;
+  border-left: 2px solid transparent;
   color: var(--hk-fg-2);
   text-decoration: none;
+  transition: color var(--duration-short) var(--ease-standard), background-color var(--duration-short) var(--ease-standard), border-color var(--duration-short) var(--ease-standard);
 
   &:hover {
+    border-left-color: var(--hk-accent);
+    background: var(--hk-accent-soft);
     color: var(--hk-fg);
-
-    .hk-gh__repo-name {
-      color: var(--hk-link);
-    }
   }
 }
 
@@ -583,19 +716,91 @@
   font-family: var(--font-mono);
   font-size: 0.625rem;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.04em;
 }
 
-@media (max-width: 899px) {
-  .hk-gh__bars {
-    height: 88px;
+// Streak ring: SVG circles, arc length driven by --p (pathLength=100).
+.hk-gh__streak {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: var(--hk-hair) solid var(--hk-line);
+}
+
+.hk-gh__ring {
+  width: 54px;
+  height: 54px;
+  flex: none;
+  transform: rotate(-90deg);
+}
+
+.hk-gh__ring-track {
+  fill: none;
+  stroke: var(--hk-line);
+  stroke-width: 2;
+}
+
+.hk-gh__ring-arc {
+  fill: none;
+  // Solid cyan-ink stroke with a primary glow reads as a primary-to-cyanish arc
+  // without depending on an SVG paint server (a missing url() paints nothing).
+  // If the template ships <linearGradient id="hk-gh-ring-grad">, switching this
+  // to stroke: url(#hk-gh-ring-grad) is the only change needed.
+  stroke: rgb(var(--hk-cyanish));
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-dasharray: calc(var(--p, 0) * 1) 100;
+  filter: drop-shadow(0 0 3px var(--hk-glow));
+  animation: hk-gh-ring-grow 1.1s var(--ease-out-expo) both;
+}
+
+@keyframes hk-gh-ring-grow {
+  from {
+    stroke-dasharray: 0 100;
   }
 }
 
-// The template prints a "SYNCED … · @langyo" footer line right after the panel;
-// give it breathing room without adding markup.
+.hk-gh__streak-v {
+  color: var(--hk-fg);
+  font-family: var(--font-mono);
+  font-size: clamp(1.25rem, 2vw, 1.55rem);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.hk-gh__streak-u {
+  margin-left: 2px;
+  color: var(--hk-fg-3);
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+}
+
+.hk-gh__streak-k {
+  margin-left: auto;
+  color: var(--hk-fg-3);
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+html[data-theme="dark"] .hk-gh__ring-arc {
+  filter: drop-shadow(0 0 6px var(--hk-glow));
+}
+
+// The template prints a SYNCED footer line after the panel.
 .hk-gh + .hk-gh__meta {
   margin-top: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-gh__bars::after {
+    display: none;
+  }
+
+  .hk-gh__ring-arc {
+    animation: none;
+  }
 }
 
 // ── 404 ────────────────────────────────────────────────────────────────

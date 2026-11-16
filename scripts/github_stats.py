@@ -1,36 +1,51 @@
 #!/usr/bin/env python3
-"""Fetch and snapshot GitHub activity for the homepage status panel.
+"""Fetch and snapshot GitHub activity for the homepage status panel (schema v3).
 
 The site never talks to GitHub at runtime: this script writes a data snapshot
 that Zola loads at build time via load_data(path="data/github.json").
 Standard library only (urllib + json + re); no third-party dependencies.
 
-Data sources
-------------
-* GitHub REST API:
-    /users/langyo                 -> login, public_repos, followers, following, created_at
-    /users/langyo/repos?per_page=100&page=N   (paginated until empty)
-                                  -> stars total, language distribution, top 5 by stars
-    /users/langyo/events/public   (optional, first 3 pages only)
-                                  -> PUSH / PR / ISSUE / REVIEW counts in the last 90 days
-* Public contributions calendar HTML:
-    https://github.com/users/langyo/contributions
-                                  -> 366 (date, count) pairs used for the heatmap,
-                                     recent 28 days, last 12 weeks, streaks and best day.
+Two sources, two scopes
+-----------------------
+all    Preferred path. Requires GITHUB_TOKEN or GH_TOKEN. Uses the GraphQL
+       viewer query for: public/private/total repository counts, followers,
+       following, createdAt, and contributionsCollection (total contributions,
+       restricted/private contributions, and the 366-day calendar). This scope
+       includes private repository counts and private contribution totals, but
+       names/descriptions of private repositories are never fetched or stored.
+public Fallback path without a usable token: REST API plus the public
+       contributions HTML. Private counts are 0 and scope is "public".
 
-Snapshot schema (stable; consumed by templates, do not rename keys)
--------------------------------------------------------------------
-    login, fetched_at,
-    profile   {public_repos, followers, following, created_at}
-    totals    {stars, repos_scanned, contributions_year}
-    days      [{d, c}, ...]     one entry per calendar day, ascending by date
-    recent28  [{d, c}, ...]     last 28 calendar days
-    weeks     [{w, c}, ...]     last 12 calendar weeks (w = ISO date of that week's Sunday)
-    streak    {current, longest}
-    best_day  {d, c}
-    types     {PUSH, PR, ISSUE, REVIEW}
-    top_repos [{name, full, stars, lang, desc, url}, ...]
-    langs     [{l, n}, ...]
+Snapshot schema v3 (consumed by templates; keep key names stable)
+-----------------------------------------------------------------
+    schema, login, fetched_at, scope: "all" | "public",
+    profile  {followers, following, created_at}
+    repos    {total, public, private}
+    totals   {stars, contributions_year, contributions_private_year}
+    days     [{d, c}, ...]       366 contribution-calendar days, ascending
+    recent28 [{d, c}, ...]      last 28 calendar days
+    weeks    [{w, c}, ...]      last 12 calendar weeks (w = that week's Sunday ISO date)
+    streak   {current, longest}
+    best_day {d, c}
+    types    {PUSH, PR, ISSUE, REVIEW}
+    top_repos[{name, stars, lang, url}, ...]   public repositories only
+    langs    [{l, n}, ...]                     public repositories only
+
+Repos口径 (privacy grouping)
+----------------------------
+total/public/private come from GraphQL viewer.repositories(ownerAffiliations:
+[OWNER]) grouped by the visibility field; totalCount is authoritative for
+total. stars, top_repos and langs are computed from PUBLIC repositories only.
+The REST /users/{user}/repos listing can surface a few public entries that the
+GraphQL owner-affiliation set no longer resolves (renamed/deleted/disabled
+repositories); the snapshot deliberately follows the GraphQL privacy grouping.
+
+Downgrade guard
+---------------
+If data/github.json already holds an all-scope snapshot, a run that can only
+produce public scope refuses to overwrite it: it prints an explanation and
+exits 0 without touching the file (override with --allow-public-only). CI
+without a PAT therefore cannot silently degrade the committed snapshot.
 
 Definitions
 -----------
@@ -43,19 +58,20 @@ Definitions
 
 Usage
 -----
-    python scripts/github_stats.py            # fetch and write data/github.json
-    python scripts/github_stats.py --check    # fetch, compare with the snapshot, never write
+    python scripts/github_stats.py                     # write data/github.json
+    python scripts/github_stats.py --check             # compare, never write
+    python scripts/github_stats.py --allow-public-only # permit a public-scope downgrade
 
 Environment
 -----------
-GITHUB_TOKEN or GH_TOKEN is optional. Without a token the REST API is limited
-to 60 requests per hour, which is enough for a handful of runs. Network hiccups
-are retried 3 times (4 attempts total) with a short backoff. Nothing is written
-unless the whole fetch succeeds, so a failed run keeps the previous snapshot.
+GITHUB_TOKEN or GH_TOKEN. Without a token the public fallback needs no auth but
+is rate limited to 60 REST requests per hour. Network hiccups are retried 3
+times (4 attempts total) with a short backoff. Nothing is written unless the
+whole fetch succeeds, so a failed run keeps the previous snapshot.
 
 Exit codes
 ----------
-0 success / --check found the snapshot up to date
+0 success, refused downgrade, or --check found the snapshot up to date
 1 fetch or parse failure, missing snapshot for --check, or --check mismatch
 """
 
@@ -77,8 +93,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SNAPSHOT = ROOT / "data" / "github.json"
 
+SCHEMA_VERSION = 3
 USER = "langyo"
 API = "https://api.github.com"
+GRAPHQL_URL = API + "/graphql"
 CONTRIBUTIONS_URL = "https://github.com/users/" + USER + "/contributions"
 
 UA_API = "hikari-zola-stats/1.0 (+https://langyo.xyz)"
@@ -110,6 +128,36 @@ EVENT_BUCKETS = {
     "PullRequestReviewEvent": "REVIEW",
 }
 
+PROFILE_QUERY = """
+query {
+  viewer {
+    login
+    followers { totalCount }
+    following { totalCount }
+    createdAt
+    contributionsCollection {
+      restrictedContributionsCount
+      contributionCalendar {
+        totalContributions
+        weeks { contributionDays { date contributionCount } }
+      }
+    }
+  }
+}
+"""
+
+REPOS_QUERY = """
+query($cursor: String) {
+  viewer {
+    repositories(first: 100, ownerAffiliations: [OWNER], after: $cursor) {
+      totalCount
+      pageInfo { hasNextPage endCursor }
+      nodes { name stargazerCount url visibility primaryLanguage { name } }
+    }
+  }
+}
+"""
+
 
 # --------------------------------------------------------------------------- #
 # HTTP
@@ -118,56 +166,231 @@ def _token() -> str:
     return (os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN") or "").strip()
 
 
-def fetch_bytes(url: str, *, accept: str, user_agent: str) -> bytes:
-    """GET url with retries; raises RuntimeError with a readable message."""
-    headers = {"User-Agent": user_agent, "Accept": accept}
-    token = _token()
-    if token:
-        headers["Authorization"] = "Bearer " + token
+def _request_bytes(
+    url: str,
+    *,
+    headers: dict,
+    method: str = "GET",
+    body: bytes | None = None,
+) -> bytes:
+    """HTTP request with retries; raises RuntimeError with a readable message."""
     last_error = "unknown error"
     for attempt in range(RETRIES + 1):
-        request = urllib.request.Request(url, headers=headers)
+        request = urllib.request.Request(url, headers=headers, data=body, method=method)
         try:
             with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
                 return response.read()
         except urllib.error.HTTPError as exc:
             last_error = "HTTP " + str(exc.code) + " " + str(exc.reason)
             if exc.code not in RETRYABLE_HTTP:
-                raise RuntimeError("GET " + url + " failed: " + last_error) from exc
+                raise RuntimeError("request to " + url + " failed: " + last_error) from exc
         except (urllib.error.URLError, TimeoutError, ssl.SSLError, ConnectionError, OSError) as exc:
             last_error = type(exc).__name__ + ": " + str(exc)
         if attempt < RETRIES:
             time.sleep(1.5 * (attempt + 1))
     raise RuntimeError(
-        "GET " + url + " failed after " + str(RETRIES + 1) + " attempts: " + last_error
+        "request to " + url + " failed after " + str(RETRIES + 1) + " attempts: " + last_error
     )
 
 
+def _auth_headers(accept: str, user_agent: str = UA_API) -> dict:
+    headers = {"User-Agent": user_agent, "Accept": accept}
+    token = _token()
+    if token:
+        headers["Authorization"] = "Bearer " + token
+    return headers
+
+
+def fetch_bytes(url: str, *, accept: str, user_agent: str = UA_API) -> bytes:
+    return _request_bytes(url, headers=_auth_headers(accept, user_agent))
+
+
 def fetch_json(url: str):
-    raw = fetch_bytes(url, accept="application/vnd.github+json", user_agent=UA_API)
+    raw = fetch_bytes(url, accept="application/vnd.github+json")
     try:
         return json.loads(raw.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise RuntimeError("invalid JSON from " + url + ": " + str(exc)) from exc
 
 
+def graphql(query: str, variables: dict | None = None) -> dict:
+    """Run a GitHub GraphQL query; requires a token."""
+    if not _token():
+        raise RuntimeError("GitHub GraphQL needs GITHUB_TOKEN or GH_TOKEN")
+    headers = _auth_headers("application/json")
+    headers["Content-Type"] = "application/json"
+    payload = json.dumps({"query": query, "variables": variables or {}}).encode("utf-8")
+    raw = _request_bytes(GRAPHQL_URL, headers=headers, method="POST", body=payload)
+    try:
+        data = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise RuntimeError("invalid GraphQL JSON: " + str(exc)) from exc
+    errors = data.get("errors") or []
+    if errors:
+        message = str(errors[0].get("message") or "unknown GraphQL error")
+        raise RuntimeError("GraphQL error: " + message)
+    payload_data = data.get("data")
+    if not isinstance(payload_data, dict):
+        raise RuntimeError("GraphQL response has no data")
+    return payload_data
+
+
 # --------------------------------------------------------------------------- #
-# Sources
+# GraphQL scope: all (public + private counts / contributions)
 # --------------------------------------------------------------------------- #
-def fetch_profile() -> dict:
+def graphql_profile() -> dict:
+    viewer = graphql(PROFILE_QUERY).get("viewer")
+    if not isinstance(viewer, dict) or not viewer.get("login"):
+        raise RuntimeError("unexpected GraphQL profile payload")
+
+    collection = viewer.get("contributionsCollection") or {}
+    calendar = collection.get("contributionCalendar") or {}
+    days = []
+    for week in calendar.get("weeks") or []:
+        for day in week.get("contributionDays") or []:
+            days.append(
+                {"d": str(day.get("date") or ""), "c": int(day.get("contributionCount") or 0)}
+            )
+    days = [day for day in days if day["d"]]
+    days.sort(key=lambda day: day["d"])
+    days = _dedupe_days(days)
+    if len(days) < 300:
+        raise RuntimeError(
+            "GraphQL contribution calendar returned only " + str(len(days)) + " days"
+        )
+
+    return {
+        "login": str(viewer.get("login") or USER),
+        "followers": int((viewer.get("followers") or {}).get("totalCount") or 0),
+        "following": int((viewer.get("following") or {}).get("totalCount") or 0),
+        "created_at": str(viewer.get("createdAt") or ""),
+        "contributions_year": int(calendar.get("totalContributions") or 0),
+        "contributions_private_year": int(collection.get("restrictedContributionsCount") or 0),
+        "days": days,
+    }
+
+
+def graphql_repos() -> dict:
+    first = graphql(REPOS_QUERY, {"cursor": None}).get("viewer", {}).get("repositories")
+    if not isinstance(first, dict):
+        raise RuntimeError("unexpected GraphQL repositories payload")
+
+    total = int(first.get("totalCount") or 0)
+    nodes = list(first.get("nodes") or [])
+    page_info = first.get("pageInfo") or {}
+    pages = 1
+    while page_info.get("hasNextPage"):
+        if pages >= MAX_REPO_PAGES:
+            break
+        next_page = graphql(REPOS_QUERY, {"cursor": page_info.get("endCursor")})
+        page = next_page.get("viewer", {}).get("repositories") or {}
+        nodes.extend(page.get("nodes") or [])
+        page_info = page.get("pageInfo") or {}
+        pages += 1
+
+    seen = set()
+    unique = []
+    for node in nodes:
+        name = str(node.get("name") or "")
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        unique.append(node)
+    if total and len(unique) != total:
+        print(
+            "warning: GraphQL returned " + str(len(unique)) + " repo nodes but totalCount is " + str(total),
+            file=sys.stderr,
+        )
+
+    public_nodes = [node for node in unique if str(node.get("visibility") or "") == "PUBLIC"]
+    private_count = sum(1 for node in unique if str(node.get("visibility") or "") == "PRIVATE")
+    language_counts = Counter(
+        str((node.get("primaryLanguage") or {}).get("name"))
+        for node in public_nodes
+        if (node.get("primaryLanguage") or {}).get("name")
+    )
+    ranked = sorted(
+        public_nodes,
+        key=lambda node: (-int(node.get("stargazerCount") or 0), str(node.get("name") or "")),
+    )
+
+    return {
+        "total": total or len(unique),
+        "public": len(public_nodes),
+        "private": private_count,
+        "stars": sum(int(node.get("stargazerCount") or 0) for node in public_nodes),
+        "top_repos": [
+            {
+                "name": str(node.get("name") or ""),
+                "stars": int(node.get("stargazerCount") or 0),
+                "lang": str((node.get("primaryLanguage") or {}).get("name") or ""),
+                "url": str(node.get("url") or ""),
+            }
+            for node in ranked[:5]
+        ],
+        "langs": [
+            {"l": language, "n": count}
+            for language, count in sorted(language_counts.items(), key=lambda item: (-item[1], item[0]))
+        ],
+    }
+
+
+def build_all_snapshot() -> dict:
+    profile = graphql_profile()
+    repos = graphql_repos()
+    metrics = compute_metrics(profile["days"])
+    calendar_sum = sum(day["c"] for day in profile["days"])
+    if calendar_sum != profile["contributions_year"]:
+        print(
+            "warning: calendar day sum " + str(calendar_sum) + " differs from totalContributions "
+            + str(profile["contributions_year"]),
+            file=sys.stderr,
+        )
+    fetched_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return {
+        "schema": SCHEMA_VERSION,
+        "login": profile["login"],
+        "fetched_at": fetched_at,
+        "scope": "all",
+        "profile": {
+            "followers": profile["followers"],
+            "following": profile["following"],
+            "created_at": profile["created_at"],
+        },
+        "repos": {"total": repos["total"], "public": repos["public"], "private": repos["private"]},
+        "totals": {
+            "stars": repos["stars"],
+            "contributions_year": profile["contributions_year"],
+            "contributions_private_year": profile["contributions_private_year"],
+        },
+        "days": profile["days"],
+        "recent28": metrics["recent28"],
+        "weeks": metrics["weeks"],
+        "streak": metrics["streak"],
+        "best_day": metrics["best_day"],
+        "types": fetch_activity_types(),
+        "top_repos": repos["top_repos"],
+        "langs": repos["langs"],
+    }
+
+
+# --------------------------------------------------------------------------- #
+# REST/HTML scope: public fallback
+# --------------------------------------------------------------------------- #
+def fetch_public_profile() -> dict:
     data = fetch_json(API + "/users/" + USER)
     if not isinstance(data, dict) or not data.get("login"):
         raise RuntimeError("unexpected profile payload from the GitHub API")
     return {
         "login": str(data.get("login") or USER),
-        "public_repos": int(data.get("public_repos") or 0),
+        "repos": int(data.get("public_repos") or 0),
         "followers": int(data.get("followers") or 0),
         "following": int(data.get("following") or 0),
         "created_at": str(data.get("created_at") or ""),
     }
 
 
-def fetch_repos() -> list:
+def fetch_public_repos() -> list:
     repos = []
     seen = set()
     for page in range(1, MAX_REPO_PAGES + 1):
@@ -188,7 +411,7 @@ def fetch_repos() -> list:
     return repos
 
 
-def parse_contributions(html: str) -> list:
+def parse_contributions_html(html: str) -> list:
     """Return [{'d': 'YYYY-MM-DD', 'c': n}] parsed from the contribution calendar."""
     counts_by_id = {}
     for match in TIP_RE.finditer(html):
@@ -210,11 +433,77 @@ def parse_contributions(html: str) -> list:
         by_date[date_text] = counts_by_id.get(cell_id, 0)
 
     days = [{"d": date_text, "c": by_date[date_text]} for date_text in sorted(by_date)]
+    days = _dedupe_days(days)
     if len(days) < 300:
         raise RuntimeError(
             "contribution calendar parsed only " + str(len(days)) + " days; refusing to write a truncated snapshot"
         )
     return days
+
+
+def build_public_snapshot() -> dict:
+    profile = fetch_public_profile()
+    repos_raw = fetch_public_repos()
+    html = fetch_bytes(CONTRIBUTIONS_URL, accept="text/html", user_agent=UA_HTML).decode(
+        "utf-8", "replace"
+    )
+    days = parse_contributions_html(html)
+    metrics = compute_metrics(days)
+
+    language_counts = Counter(
+        str(repo["language"]) for repo in repos_raw if repo.get("language")
+    )
+    ranked = sorted(
+        repos_raw,
+        key=lambda repo: (-int(repo.get("stargazers_count") or 0), str(repo.get("full_name") or "")),
+    )
+    fetched_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return {
+        "schema": SCHEMA_VERSION,
+        "login": profile["login"],
+        "fetched_at": fetched_at,
+        "scope": "public",
+        "profile": {
+            "followers": profile["followers"],
+            "following": profile["following"],
+            "created_at": profile["created_at"],
+        },
+        "repos": {"total": len(repos_raw), "public": len(repos_raw), "private": 0},
+        "totals": {
+            "stars": sum(int(repo.get("stargazers_count") or 0) for repo in repos_raw),
+            "contributions_year": metrics["total"],
+            "contributions_private_year": 0,
+        },
+        "days": days,
+        "recent28": metrics["recent28"],
+        "weeks": metrics["weeks"],
+        "streak": metrics["streak"],
+        "best_day": metrics["best_day"],
+        "types": fetch_activity_types(),
+        "top_repos": [
+            {
+                "name": str(repo.get("name") or ""),
+                "stars": int(repo.get("stargazers_count") or 0),
+                "lang": str(repo.get("language") or ""),
+                "url": str(repo.get("html_url") or ""),
+            }
+            for repo in ranked[:5]
+        ],
+        "langs": [
+            {"l": language, "n": count}
+            for language, count in sorted(language_counts.items(), key=lambda item: (-item[1], item[0]))
+        ],
+    }
+
+
+# --------------------------------------------------------------------------- #
+# Shared helpers
+# --------------------------------------------------------------------------- #
+def _dedupe_days(days: list) -> list:
+    by_date = {}
+    for day in days:
+        by_date[str(day["d"])] = int(day["c"])
+    return [{"d": date_text, "c": by_date[date_text]} for date_text in sorted(by_date)]
 
 
 def fetch_activity_types() -> dict:
@@ -251,9 +540,6 @@ def fetch_activity_types() -> dict:
         return zeros
 
 
-# --------------------------------------------------------------------------- #
-# Metrics
-# --------------------------------------------------------------------------- #
 def week_start(day: date) -> date:
     """Sunday that starts the calendar week containing day."""
     return day - timedelta(days=(day.weekday() + 1) % 7)
@@ -292,80 +578,34 @@ def compute_metrics(days: list) -> dict:
     }
 
 
-# --------------------------------------------------------------------------- #
-# Snapshot assembly
-# --------------------------------------------------------------------------- #
 def build_snapshot() -> dict:
-    profile = fetch_profile()
-    repos = fetch_repos()
-
-    stars = sum(int(repo.get("stargazers_count") or 0) for repo in repos)
-    language_counts = Counter(
-        str(repo["language"]) for repo in repos if repo.get("language")
-    )
-    langs = [
-        {"l": language, "n": count}
-        for language, count in sorted(language_counts.items(), key=lambda item: (-item[1], item[0]))
-    ]
-
-    ranked = sorted(
-        repos,
-        key=lambda repo: (-int(repo.get("stargazers_count") or 0), str(repo.get("full_name") or "")),
-    )
-    top_repos = [
-        {
-            "name": str(repo.get("name") or ""),
-            "full": str(repo.get("full_name") or ""),
-            "stars": int(repo.get("stargazers_count") or 0),
-            "lang": str(repo.get("language") or ""),
-            "desc": str(repo.get("description") or ""),
-            "url": str(repo.get("html_url") or ""),
-        }
-        for repo in ranked[:5]
-    ]
-
-    html = fetch_bytes(CONTRIBUTIONS_URL, accept="text/html", user_agent=UA_HTML).decode(
-        "utf-8", "replace"
-    )
-    days = parse_contributions(html)
-    metrics = compute_metrics(days)
-
-    fetched_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    return {
-        "login": profile["login"],
-        "fetched_at": fetched_at,
-        "profile": {
-            "public_repos": profile["public_repos"],
-            "followers": profile["followers"],
-            "following": profile["following"],
-            "created_at": profile["created_at"],
-        },
-        "totals": {
-            "stars": stars,
-            "repos_scanned": len(repos),
-            "contributions_year": metrics["total"],
-        },
-        "days": days,
-        "recent28": metrics["recent28"],
-        "weeks": metrics["weeks"],
-        "streak": metrics["streak"],
-        "best_day": metrics["best_day"],
-        "types": fetch_activity_types(),
-        "top_repos": top_repos,
-        "langs": langs,
-    }
+    if _token():
+        try:
+            return build_all_snapshot()
+        except RuntimeError as exc:
+            print(
+                "warning: GraphQL stats unavailable (" + str(exc) + "); falling back to public scope",
+                file=sys.stderr,
+            )
+    else:
+        print("note: no GITHUB_TOKEN/GH_TOKEN; using the public-scope fallback", file=sys.stderr)
+    return build_public_snapshot()
 
 
 # --------------------------------------------------------------------------- #
-# --check
+# Snapshot IO / --check
 # --------------------------------------------------------------------------- #
-def load_snapshot(path: Path) -> dict:
+def load_snapshot(path: Path) -> dict | None:
+    if not path.is_file():
+        return None
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
     except OSError as exc:
         raise RuntimeError("cannot read " + str(path) + ": " + str(exc)) from exc
     except json.JSONDecodeError as exc:
-        raise RuntimeError("snapshot is not valid JSON: " + str(exc)) from exc
+        print("warning: existing snapshot is not valid JSON; it will be replaced (" + str(exc) + ")", file=sys.stderr)
+        return None
+    return data if isinstance(data, dict) else None
 
 
 def changed_keys(stored: dict, fresh: dict) -> list:
@@ -392,35 +632,32 @@ def _prepare_console() -> None:
 
 
 def print_summary(snapshot: dict) -> None:
-    profile = snapshot["profile"]
+    repos = snapshot["repos"]
     totals = snapshot["totals"]
     streak = snapshot["streak"]
-    print("github stats snapshot")
+    print("github stats snapshot (schema " + str(snapshot["schema"]) + ", scope " + snapshot["scope"] + ")")
     print("  login        : " + snapshot["login"])
     print("  fetched_at   : " + snapshot["fetched_at"])
     print(
-        "  repos/stars  : "
-        + str(totals["repos_scanned"])
-        + " scanned, "
-        + str(totals["stars"])
-        + " stars"
+        "  repos        : total="
+        + str(repos["total"])
+        + " public="
+        + str(repos["public"])
+        + " private="
+        + str(repos["private"])
     )
-    print(
-        "  profile      : public_repos="
-        + str(profile["public_repos"])
-        + " followers="
-        + str(profile["followers"])
-        + " following="
-        + str(profile["following"])
-        + " created="
-        + profile["created_at"]
-    )
+    print("  stars (public): " + str(totals["stars"]))
     print(
         "  contributions: "
         + str(totals["contributions_year"])
-        + " in "
+        + " total / "
+        + str(totals["contributions_private_year"])
+        + " private, "
         + str(len(snapshot["days"]))
-        + " days | streak current="
+        + " days"
+    )
+    print(
+        "  streak       : current="
         + str(streak["current"])
         + " longest="
         + str(streak["longest"])
@@ -442,7 +679,7 @@ def print_summary(snapshot: dict) -> None:
     )
     for repo in snapshot["top_repos"][:3]:
         language = repo["lang"] or "n/a"
-        print("  top repo     : " + repo["full"] + " stars=" + str(repo["stars"]) + " [" + language + "]")
+        print("  top repo     : " + repo["name"] + " stars=" + str(repo["stars"]) + " [" + language + "]")
 
 
 def main(argv: list) -> int:
@@ -450,10 +687,11 @@ def main(argv: list) -> int:
     parser = argparse.ArgumentParser(
         description="Fetch the GitHub activity snapshot consumed by the homepage status panel."
     )
+    parser.add_argument("--check", action="store_true", help="fetch and compare with data/github.json, never writing it")
     parser.add_argument(
-        "--check",
+        "--allow-public-only",
         action="store_true",
-        help="fetch and compare with data/github.json, never writing it",
+        help="allow overwriting an all-scope snapshot with a public-scope fallback",
     )
     args = parser.parse_args(argv)
 
@@ -464,13 +702,13 @@ def main(argv: list) -> int:
         return 1
 
     if args.check:
-        if not SNAPSHOT.is_file():
-            print("error: snapshot not found: " + str(SNAPSHOT.relative_to(ROOT)), file=sys.stderr)
-            return 1
         try:
             stored = load_snapshot(SNAPSHOT)
         except RuntimeError as exc:
             print("error: " + str(exc), file=sys.stderr)
+            return 1
+        if stored is None:
+            print("error: snapshot not found: " + str(SNAPSHOT.relative_to(ROOT)), file=sys.stderr)
             return 1
         differing = changed_keys(stored, snapshot)
         if differing:
@@ -478,8 +716,38 @@ def main(argv: list) -> int:
                 "snapshot is stale: differing top-level keys: " + ", ".join(differing),
                 file=sys.stderr,
             )
+            if stored.get("scope") == "all" and snapshot.get("scope") != "all":
+                print(
+                    "hint: a token is required to compare against the all-scope snapshot;"
+                    " this run could only produce public scope.",
+                    file=sys.stderr,
+                )
             return 1
         print("snapshot in sync: " + str(SNAPSHOT.relative_to(ROOT)) + " (fetched_at ignored)")
+        return 0
+
+    try:
+        stored = load_snapshot(SNAPSHOT)
+    except RuntimeError as exc:
+        print("error: " + str(exc), file=sys.stderr)
+        return 1
+    if (
+        stored is not None
+        and stored.get("scope") == "all"
+        and snapshot.get("scope") != "all"
+        and not args.allow_public_only
+    ):
+        print(
+            "refusing to overwrite the all-scope snapshot at "
+            + str(SNAPSHOT.relative_to(ROOT))
+            + " with public-scope data.",
+            file=sys.stderr,
+        )
+        print(
+            "hint: set GITHUB_TOKEN/GH_TOKEN for the private-inclusive scope,"
+            " or pass --allow-public-only to downgrade deliberately.",
+            file=sys.stderr,
+        )
         return 0
 
     text = json.dumps(snapshot, ensure_ascii=False, indent=2, sort_keys=True) + "\n"

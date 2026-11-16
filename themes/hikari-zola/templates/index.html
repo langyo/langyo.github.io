@@ -4,35 +4,81 @@
 {% block content %}
 {% set posts = get_section(path="posts/_index.md") %}
 {% set gh = load_data(path="data/github.json", required=false) %}
-{% set gh_login = "langyo" %}
-{% set gh_repos = "—" %}
-{% set gh_stars = "—" %}
-{% set gh_followers = "—" %}
-{% set gh_contrib = "—" %}
-{% set gh_recent = [] %}
-{% set gh_top = [] %}
-{% set gh_streak_current = "—" %}
-{% set gh_streak_longest = "—" %}
+{#- ── activity panel: resilient snapshot reads (missing file/fields never break the build) ── -#}
+{% set gh_scope = "" %}
 {% set gh_synced = "—" %}
+{% set gh_repos_v = "—" %}
+{% set gh_stars_v = "—" %}
+{% set gh_followers_v = "—" %}
+{% set gh_contrib_v = "—" %}
+{% set gh_repos_sub = "" %}
+{% set gh_stars_sub = "" %}
+{% set gh_recent = [] %}
+{% set gh_weeks = [] %}
+{% set gh_top = [] %}
+{% set gh_cur_n = 0 %}
+{% set gh_best_n = 0 %}
+{% set gh_cur_v = "—" %}
+{% set gh_best_v = "—" %}
+{% set gh_pub = 0 %}
+{% set gh_pri = 0 %}
 {% if gh %}
-  {% set gh_login = gh.login | default(value=gh_login) %}
-  {% set gh_repos = gh.totals.repos_scanned | default(value="—") %}
-  {% set gh_stars = gh.totals.stars | default(value="—") %}
-  {% set gh_followers = gh.profile.followers | default(value="—") %}
-  {% set gh_contrib = gh.totals.contributions_year | default(value="—") %}
-  {% set gh_recent = gh.recent28 | default(value=[]) %}
-  {% set gh_top = gh.top_repos | default(value=[]) %}
-  {% set gh_streak_current = gh.streak.current | default(value="—") %}
-  {% set gh_streak_longest = gh.streak.longest | default(value="—") %}
+  {% set gh_scope = gh.scope | default(value="") | upper %}
   {% if gh.fetched_at %}{% set gh_synced = gh.fetched_at | date(format="%Y.%m.%d") %}{% endif %}
+
+  {#- schema v3 (repos{total,public,private}) first, then the v2 flat fallbacks -#}
+  {% set gh_repos_n = gh.repos.total | default(value=0) %}
+  {% if gh_repos_n == 0 %}{% set gh_repos_n = gh.totals.repos_scanned | default(value=0) %}{% endif %}
+  {% set gh_pub = gh.repos.public | default(value=0) %}
+  {% if gh_pub == 0 %}{% set gh_pub = gh.totals.public_repos | default(value=0) %}{% endif %}
+  {% if gh_pub == 0 %}{% set gh_pub = gh.profile.public_repos | default(value=0) %}{% endif %}
+  {% if gh_pub == 0 %}{% set gh_pub = gh_repos_n %}{% endif %}
+  {% set gh_pri = gh.repos.private | default(value=0) %}
+  {% if gh_pri == 0 %}{% set gh_pri = gh.totals.private_repos | default(value=0) %}{% endif %}
+  {% if gh_pri == 0 and gh_repos_n > gh_pub %}{% set gh_pri = gh_repos_n - gh_pub %}{% endif %}
+  {% if gh_pri < 0 %}{% set gh_pri = 0 %}{% endif %}
+
+  {% set gh_stars_n = gh.totals.stars | default(value=0) %}
+  {% set gh_contrib_n = gh.totals.contributions_year | default(value=0) %}
+  {% set gh_followers_n = gh.profile.followers | default(value=0) %}
+  {% if gh_followers_n == 0 %}{% set gh_followers_n = gh.totals.followers | default(value=0) %}{% endif %}
+  {% if gh_repos_n > 0 %}{% set gh_repos_v = gh_repos_n %}{% endif %}
+  {% if gh_stars_n > 0 %}{% set gh_stars_v = gh_stars_n %}{% endif %}
+  {% if gh_followers_n > 0 %}{% set gh_followers_v = gh_followers_n %}{% endif %}
+  {% if gh_contrib_n > 0 %}{% set gh_contrib_v = gh_contrib_n %}{% endif %}
+  {% if gh_pub > 0 %}{% set gh_repos_sub = gh_pub ~ " PUB · <b>" ~ gh_pri ~ " PRI</b>" %}{% endif %}
+  {% if gh_stars_n > 0 %}{% set gh_stars_sub = "PUB ONLY" %}{% endif %}
+
+  {% set gh_recent = gh.recent28 | default(value=[]) %}
+  {% set gh_weeks = gh.weeks | default(value=[]) %}
+  {% set gh_top = gh.top_repos | default(value=[]) %}
+  {% set gh_cur_n = gh.streak.current | default(value=0) %}
+  {% set gh_best_n = gh.streak.longest | default(value=0) %}
+  {% if gh_cur_n > 0 %}{% set gh_cur_v = gh_cur_n %}{% endif %}
+  {% if gh_best_n > 0 %}{% set gh_best_v = gh_best_n %}{% endif %}
 {% endif %}
-{% set_global gh_recent_total = 0 %}
-{% set_global gh_max = 1 %}
+{% if gh_scope != "ALL" and gh_scope != "PUBLIC" %}
+  {% if gh_pri > 0 %}{% set gh_scope = "ALL" %}{% else %}{% set gh_scope = "PUBLIC" %}{% endif %}
+{% endif %}
+
+{#- maxima for bar normalisation (never divide by zero) -#}
+{% set_global gh_recent_max = 1 %}
 {% for d in gh_recent %}
   {% set_global gh_c = d.c | default(value=0) %}
-  {% set_global gh_recent_total = gh_recent_total + gh_c %}
-  {% if gh_c > gh_max %}{% set_global gh_max = gh_c %}{% endif %}
+  {% if gh_c > gh_recent_max %}{% set_global gh_recent_max = gh_c %}{% endif %}
 {% endfor %}
+{% set_global gh_weeks_max = 1 %}
+{% for w in gh_weeks %}
+  {% set_global gh_w = w.c | default(value=0) %}
+  {% if gh_w > gh_weeks_max %}{% set_global gh_weeks_max = gh_w %}{% endif %}
+{% endfor %}
+{#- streak ring: round(current/longest*100), clamp 0..100, 6% visual baseline -#}
+{% set gh_ring = 0 %}
+{% if gh_best_n > 0 %}
+  {% set gh_ring = ((gh_cur_n * 100) / gh_best_n) | round | int %}
+  {% if gh_ring < 6 %}{% set gh_ring = 6 %}{% endif %}
+  {% if gh_ring > 100 %}{% set gh_ring = 100 %}{% endif %}
+{% endif %}
 <main id="main" class="hk-main">
   {% include "partials/hero.html" %}
 
@@ -53,37 +99,50 @@
 
   <section class="hk-section hk-section--status">
     <header class="hk-section__head">
-      <p class="hk-section__label">// GITHUB · ACTIVITY</p>
+      <p class="hk-section__label">// ACTIVITY</p>
       <h2 class="hk-section__title">代码活动</h2>
-      <a class="hk-section__more" href="https://github.com/langyo" target="_blank" rel="noopener noreferrer">@langyo</a>
     </header>
-    <div class="hk-gh">
-      <ul class="hk-gh__stats">
-        <li class="hk-gh__stat"><span class="hk-gh__stat-k">REPOS</span><span class="hk-gh__stat-v">{{ gh_repos }}</span></li>
-        <li class="hk-gh__stat"><span class="hk-gh__stat-k">STARS</span><span class="hk-gh__stat-v">{{ gh_stars }}</span></li>
-        <li class="hk-gh__stat"><span class="hk-gh__stat-k">FOLLOWERS</span><span class="hk-gh__stat-v">{{ gh_followers }}</span></li>
-        <li class="hk-gh__stat"><span class="hk-gh__stat-k">CONTRIB · 1Y</span><span class="hk-gh__stat-v">{{ gh_contrib }}</span></li>
-      </ul>
-      <div class="hk-gh__chart">
-        <p class="hk-gh__meta">// LAST 28 DAYS · {{ gh_recent_total }}</p>
-        <ul class="hk-gh__bars">
-          {% for d in gh_recent %}{% set gh_c = d.c | default(value=0) %}{% set gh_d = d.d | default(value="") %}{% set gh_pct = ((gh_c * 100) / gh_max) | round(method="floor") | int %}{% if gh_pct < 6 %}{% set gh_pct = 6 %}{% endif %}<li class="hk-gh__bar" style="--v: {{ gh_pct }}%" title="{{ gh_d }} · {{ gh_c }}"></li>{% endfor %}
+    <div class="hk-gh" data-scope="{{ gh_scope }}">
+      <div class="hk-gh__module hk-gh__module--telemetry">
+        <p class="hk-gh__meta">// TELEMETRY</p>
+        <ul class="hk-gh__stats">
+          <li class="hk-gh__stat"><span class="hk-gh__stat-k">REPOS</span><span class="hk-gh__stat-v">{{ gh_repos_v }}</span>{% if gh_repos_sub %}<span class="hk-gh__stat-sub">{{ gh_repos_sub | safe }}</span>{% endif %}</li>
+          <li class="hk-gh__stat"><span class="hk-gh__stat-k">STARS</span><span class="hk-gh__stat-v">{{ gh_stars_v }}</span>{% if gh_stars_sub %}<span class="hk-gh__stat-sub">{{ gh_stars_sub }}</span>{% endif %}</li>
+          <li class="hk-gh__stat"><span class="hk-gh__stat-k">FOLLOWERS</span><span class="hk-gh__stat-v">{{ gh_followers_v }}</span></li>
+          <li class="hk-gh__stat"><span class="hk-gh__stat-k">CONTRIB · 1Y</span><span class="hk-gh__stat-v">{{ gh_contrib_v }}</span></li>
         </ul>
       </div>
-      <div class="hk-gh__side">
-        <p class="hk-gh__meta">// TOP REPOS</p>
+      <div class="hk-gh__module hk-gh__module--signal">
+        <p class="hk-gh__meta">// SIGNAL · 28D</p>
+        <ul class="hk-gh__bars">
+          {% for d in gh_recent %}{% set gh_c = d.c | default(value=0) %}{% set gh_pct = ((gh_c * 100) / gh_recent_max) | round | int %}{% if gh_pct < 6 %}{% set gh_pct = 6 %}{% endif %}{% if gh_pct > 100 %}{% set gh_pct = 100 %}{% endif %}<li class="hk-gh__bar" style="--v: {{ gh_pct }}%" title="{{ d.d | default(value="") }} · {{ gh_c }}"></li>{% endfor %}
+        </ul>
+        <p class="hk-gh__meta">// TREND · 12W</p>
+        <ul class="hk-gh__trend">
+          {% for w in gh_weeks %}{% set gh_w = w.c | default(value=0) %}{% set gh_wpct = ((gh_w * 100) / gh_weeks_max) | round | int %}{% if gh_wpct < 6 %}{% set gh_wpct = 6 %}{% endif %}{% if gh_wpct > 100 %}{% set gh_wpct = 100 %}{% endif %}<li class="hk-gh__trend-bar" style="--v: {{ gh_wpct }}%" title="{{ w.w | default(value="") }} · {{ gh_w }}"></li>{% endfor %}
+        </ul>
+      </div>
+      <div class="hk-gh__module hk-gh__module--archive">
+        <p class="hk-gh__meta">// ARCHIVE</p>
         <ul class="hk-gh__repos">
           {% for r in gh_top %}
           {% set repo_url = r.url | default(value="https://github.com/langyo") %}
           {% set repo_name = r.name | default(value="") %}
           {% set repo_stars = r.stars | default(value=0) %}
-          <li class="hk-gh__repo"><a class="hk-gh__link" href="{{ repo_url | safe }}"><span class="hk-gh__repo-name">{{ repo_name }}</span><span class="hk-gh__repo-stars">{{ repo_stars }}</span></a></li>
+          <li class="hk-gh__repo"><a class="hk-gh__link" href="{{ repo_url | safe }}"><span class="hk-gh__repo-name">{{ repo_name }}</span><span class="hk-gh__repo-stars">★ {{ repo_stars }}</span></a></li>
           {% endfor %}
         </ul>
-        <p class="hk-gh__meta">// STREAK {{ gh_streak_current }}D · BEST {{ gh_streak_longest }}D</p>
+        <div class="hk-gh__streak">
+          <svg class="hk-gh__ring" viewBox="0 0 36 36" aria-hidden="true" focusable="false">
+            <circle class="hk-gh__ring-track" cx="18" cy="18" r="15.5" pathLength="100"/>
+            <circle class="hk-gh__ring-arc" cx="18" cy="18" r="15.5" pathLength="100" style="--p: {{ gh_ring }}"/>
+          </svg>
+          <span class="hk-gh__streak-v">{{ gh_cur_v }}{% if gh_cur_n > 0 %}<span class="hk-gh__streak-u">D</span>{% endif %}</span>
+          <span class="hk-gh__streak-k">STREAK · BEST {{ gh_best_v }}{% if gh_best_n > 0 %}D{% endif %}</span>
+        </div>
       </div>
     </div>
-    <p class="hk-gh__meta">SYNCED {{ gh_synced }} · @{{ gh_login }}</p>
+    <p class="hk-gh__meta">SYNCED {{ gh_synced }} · SCOPE {{ gh_scope }}</p>
   </section>
 </main>
 {% endblock content %}

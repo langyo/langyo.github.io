@@ -20,7 +20,7 @@ merged history is the changelog. No `CHANGELOG.md`, no design docs in the tree.
 - [ ] `celestia-devtools init --check` is clean (`just verify`)
 - [ ] only `hk-` class names in templates; no new CSS class invented
 - [ ] no external runtime dependency (no CDN, web font, icon pack or framework)
-- [ ] budgets: `style.css` <= 64 KiB (gzip <= 12 KiB), theme JS <= 14 KiB, backdrop JS <= 22 KiB
+- [ ] budgets: `style.css` <= 64 KiB (gzip <= 13 KiB), theme JS <= 14 KiB, backdrop JS <= 34 KiB
 - [ ] one `<h1>` per page; every `<img>` has `width` and `height`; icon-only
       buttons have `aria-label`
 - [ ] `prefers-reduced-motion` and dark theme still work

@@ -84,6 +84,7 @@ GitHub 活动快照（首页面板数据）需要手动刷新时：
 
 ```console
 just sync-github     # 抓取并写 data/github.json（需要 GitHub token 与网络）
+GITHUB_TOKEN=$(gh auth token) just sync-github   # 私仓/私有贡献口径（POSIX shell）
 just github-check    # 只检查快照是否存在且最新，不写文件
 ```
 
