@@ -1,3 +1,12 @@
+* 活动面板（年度刻度环）：`hk-gh` `hk-gh__readouts` `hk-gh__readout`
+  `hk-gh__readout-k` `hk-gh__readout-v` `hk-gh__readout-sub`
+  `hk-gh__dial` `hk-gh__dial-svg` `hk-gh__dial-day` `hk-gh__dial-day--peak`
+  `hk-gh__dial-core` `hk-gh__dial-num` `hk-gh__dial-k`
+  `hk-gh__langs` `hk-gh__lang` `hk-gh__lang-name` `hk-gh__lang-dots`
+  `hk-gh__lang-dot` `hk-gh__lang-dot--on` `hk-gh__lang-n`
+  `hk-gh__repos` `hk-gh__repo` `hk-gh__link` `hk-gh__repo-name`
+  `hk-gh__repo-tag` `hk-gh__repo-tag--pub` `hk-gh__repo-tag--pri` `hk-gh__repo-stars` `hk-gh__meta`
+  （v5 的 `hk-gh__module/__scope/__wave*/__beam/__pulse*/__stats*/__streak/__ring*/__sweep/__trend*/__bars*` 已废弃）
 # hikari-zola
 
 Zola 自研主题：**hikari 设计 token + 明日方舟式扁平 HUD × 蔚蓝档案千禧年（白 + 浅蓝）**。
@@ -112,8 +121,7 @@ toc = true                     # false 可关闭文章右侧目录
 * `vendor/hikari/_channels.scss`：`--color-*` 通道色（RGB 三元组，用 `rgb(var(--color-primary))` 消费）与 `--hi-*` 别名。
 * `hk/_palette.scss`：站点覆盖 `--color-*`（浅蓝/白）+ 由通道色派生的站点语义 token：
   `--hk-bg/surface/sunken/elev/fg/fg-2/fg-3/muted/line/line-strong/accent/glow/accent-soft/accent-line/warn/link/ink/on-ink/shadow-1/shadow-2`、
-  `--hk-screen`（示波器深色内衬：亮 rgb(10 26 40) / 暗 rgb(5 15 24)，两套主题都保持暗底）、
-`--hk-page-max:1180px`、`--hk-article-max:780px`、`--hk-gutter`、`--hk-topbar-h:64px`、
+  `--hk-page-max:1180px`、`--hk-article-max:780px`、`--hk-gutter`、`--hk-topbar-h:64px`、
   `--hk-measure:68ch`、`--hk-cut:14px`、`--hk-cut-sm:8px`、`--hk-hair:1px`、`--hk-cyanish`。
 * 亮/暗两套：亮色是 `:root` 默认，暗色是 `html[data-theme="dark"]`，并在
   `@media (prefers-color-scheme: dark)` 下对 `html:not([data-theme="light"])` 再声明一次
@@ -134,22 +142,21 @@ toc = true                     # false 可关闭文章右侧目录
   `hk-tick` `hk-hazard` `hk-meter` `hk-skip`
 * hero：`hk-hero` `hk-hero__grid` `hk-hero__body` `hk-hero__title` `hk-hero__caret`
   `hk-hero__meta` `hk-hero__cta` `hk-hero__figure` `hk-hero__frame`
-  `hk-hero__silhouette` `hk-hero__ticks` `hk-hero__side` `hk-hero__scroll`
+  `hk-hero__ticks` `hk-hero__side` `hk-hero__scroll`
 * 首页区块：`hk-section` `hk-section--latest` `hk-section--about` `hk-section--status`
   `hk-section__head` `hk-section__label` `hk-section__title` `hk-section__more`
   `hk-cardgrid` `hk-postcard` `hk-postcard__link` `hk-postcard__idx` `hk-postcard__date`
   `hk-postcard__title` `hk-postcard__sum` `hk-postcard__tags`
   `hk-status` `hk-status__item` `hk-status__k` `hk-status__v`
-* 代码活动面板（GITS 科幻 HUD）：`hk-gh` `hk-gh__module` `hk-gh__module--telemetry`
-  `hk-gh__module--trace` `hk-gh__module--archive` `hk-gh__meta` `hk-gh__scope`
-  `hk-gh__stats` `hk-gh__stat` `hk-gh__stat-k` `hk-gh__stat-v` `hk-gh__stat-sub`
-  `hk-gh__wave` `hk-gh__wave-line` `hk-gh__wave-glow` `hk-gh__beam`
-  `hk-gh__pulse` `hk-gh__pulse-node`
+* 活动面板（年度刻度环 v6）：`hk-gh` `hk-gh__readouts` `hk-gh__readout`
+  `hk-gh__readout-k` `hk-gh__readout-v` `hk-gh__readout-sub`
+  `hk-gh__dial` `hk-gh__dial-svg` `hk-gh__dial-day` `hk-gh__dial-day--peak`
+  `hk-gh__dial-core` `hk-gh__dial-num` `hk-gh__dial-k`
+  `hk-gh__langs` `hk-gh__lang` `hk-gh__lang-name` `hk-gh__lang-dots`
+  `hk-gh__lang-dot` `hk-gh__lang-dot--on` `hk-gh__lang-n`
   `hk-gh__repos` `hk-gh__repo` `hk-gh__link` `hk-gh__repo-name`
   `hk-gh__repo-tag` `hk-gh__repo-tag--pub` `hk-gh__repo-tag--pri` `hk-gh__repo-stars`
-  `hk-gh__streak` `hk-gh__ring` `hk-gh__ring-track` `hk-gh__ring-arc` `hk-gh__sweep`
-  `hk-gh__streak-v` `hk-gh__streak-u` `hk-gh__streak-k`
-  （templates 目前仍输出 `hk-gh__module--signal`，样式对 `--signal`/`--trace` 两个类都生效）
+  `hk-gh__meta`
 * 列表：`hk-pagehead` `hk-pagehead__title` `hk-pagehead__desc` `hk-pagehead__count`
   `hk-timeline` `hk-year` `hk-year__num` `hk-postlist` `hk-postrow` `hk-postrow__link`
   `hk-postrow__idx` `hk-postrow__title` `hk-postrow__date` `hk-taglist` `hk-tagrow`
@@ -210,7 +217,7 @@ just sync-hikari-tokens      # scripts/sync-hikari-tokens.py
 
 | 项 | 上限 | 主题实测 |
 |---|---|---|
-| `style.css` | 64 KB（gzip 13 KB） | **64,604 B / gzip 12,588 B** |
+| `style.css` | 64 KB（gzip 13 KB） | **62,533 B / gzip 12,060 B** |
 | `main.js` + 模块（不含 backdrop） | 14 KB | 12,217 B |
 | backdrop JS | 34 KB | 由 backdrop 组自测 |
 

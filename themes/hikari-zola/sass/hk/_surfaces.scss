@@ -415,15 +415,14 @@
   line-height: 1.45;
 }
 
-// ── Activity panel (index) — GITS console ─────────────────────────────
-// One cut-corner panel with three framed modules: telemetry readouts · a
-// phosphor oscilloscope with a pulse chain · archive ranking + a radar ring.
-// Everything is token-driven (light/dark follows the palette automatically).
+// ── Activity panel (index) — year dial ────────────────────────────────
+// One cut-corner console: a readout row on top, a 366-tick year dial on the
+// left and the language dot-matrix + repo archive on the right.
 .hk-gh {
   position: relative;
   isolation: isolate;
   display: grid;
-  gap: clamp(10px, 1.4vw, 16px);
+  gap: clamp(10px, 1.4vw, 16px) clamp(18px, 3vw, 32px);
   padding: clamp(12px, 1.8vw, 20px);
   background: var(--hk-line);
   @include hk-cut;
@@ -453,22 +452,14 @@
   }
 
   @media (min-width: 980px) {
-    grid-template-columns: minmax(280px, 330px) minmax(0, 1fr) minmax(240px, 280px);
+    grid-template-columns: minmax(300px, 340px) minmax(0, 1fr);
     align-items: start;
   }
 }
 
-.hk-gh__module {
-  display: grid;
-  gap: 8px;
-  align-content: start;
-  min-width: 0;
-  padding: clamp(10px, 1.4vw, 14px);
-  border: var(--hk-hair) solid var(--hk-line);
-}
-
 .hk-gh__meta {
   margin: 0;
+
   color: var(--hk-fg-3);
   font-family: var(--font-mono);
   font-size: 0.5625rem;
@@ -477,126 +468,8 @@
   text-transform: uppercase;
 }
 
-// The scope line that prints the panel's data scope.
-.hk-gh__scope {
-  position: relative;
-  display: block;
-  height: 132px;
-  overflow: hidden;
-  background-color: var(--hk-screen);
-  background-image:
-    linear-gradient(to right, rgb(var(--hk-cyanish) / 10%) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(var(--hk-cyanish) / 10%) 1px, transparent 1px),
-    repeating-linear-gradient(to bottom, rgb(var(--hk-cyanish) / 7%) 0 1px, transparent 1px 4px);
-  background-size: 14px 14px, 14px 14px, auto;
-  border: var(--hk-hair) solid var(--hk-line);
-}
-
-// ── TRACE: oscilloscope ────────────────────────────────────────────────
-.hk-gh__module--signal,
-.hk-gh__module--trace {
-  position: relative;
-}
-
-.hk-gh__wave {
-  position: absolute;
-  inset: 5px;
-  width: calc(100% - 10px);
-  height: calc(100% - 10px);
-  overflow: visible;
-}
-
-.hk-gh__wave-line,
-.hk-gh__wave-glow {
-  fill: none;
-  vector-effect: non-scaling-stroke;
-  animation: hk-gh-glitch 3.4s steps(1, end) infinite;
-}
-
-.hk-gh__wave-line {
-  stroke: rgb(var(--hk-cyanish));
-  stroke-width: 1.5;
-  filter: drop-shadow(0 0 3px rgb(var(--hk-cyanish) / 75%));
-}
-
-.hk-gh__wave-glow {
-  stroke: rgb(var(--hk-cyanish) / 30%);
-  stroke-width: 5;
-  filter: blur(2px);
-}
-
-// Sub-pixel horizontal jitter that reads as a signal glitch.
-@keyframes hk-gh-glitch {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-
-  18% {
-    transform: translateX(-0.5px);
-  }
-
-  36% {
-    transform: translateX(0.5px);
-  }
-
-  61% {
-    transform: translateX(-0.4px);
-  }
-
-  82% {
-    transform: translateX(0.4px);
-  }
-}
-
-// Vertical scan beam, swept left to right.
-.hk-gh__beam {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(90deg, transparent 0 calc(50% - 1px), rgb(var(--hk-cyanish) / 90%) 50%, transparent calc(50% + 1px) 100%);
-  opacity: 0.8;
-  animation: hk-gh-beam 2.5s linear infinite;
-}
-
-@keyframes hk-gh-beam {
-  from {
-    transform: translateX(-50%);
-  }
-
-  to {
-    transform: translateX(50%);
-  }
-}
-
-// ── PULSE: 12-week pulse chain ─────────────────────────────────────────
-.hk-gh__pulse {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
-  align-items: center;
-  justify-items: center;
-  gap: 2px;
-  margin: 0;
-  padding: 8px 0 9px;
-  list-style: none;
-  border-bottom: var(--hk-hair) solid var(--hk-line);
-}
-
-// Diamonds whose brightness scales with --v; size uses the percentage in
-// font-size (resolved against the 1rem inherited size) so no JS is needed.
-.hk-gh__pulse-node {
-  width: 1em;
-  height: 1em;
-  transform: rotate(45deg);
-  font-size: calc(4px + var(--v, 0%) * 0.4);
-  background: rgb(var(--hk-cyanish));
-  opacity: calc(35% + var(--v, 0%) * 0.65);
-  box-shadow: 0 0 5px rgb(var(--hk-cyanish) / 45%);
-}
-
-// ── TELEMETRY ──────────────────────────────────────────────────────────
-.hk-gh__stats {
+// ── Readout row ────────────────────────────────────────────────────────
+.hk-gh__readouts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--hk-hair);
@@ -605,50 +478,30 @@
   list-style: none;
   background: var(--hk-line);
   border: var(--hk-hair) solid var(--hk-line);
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  @media (min-width: 980px) {
+    grid-column: 1 / -1;
+  }
 }
 
-.hk-gh__module--telemetry .hk-gh__stats {
-  border: 0;
-}
-
-.hk-gh__stat {
+.hk-gh__readout {
   display: grid;
-  gap: 3px;
+  gap: 2px;
   min-width: 0;
-  padding: 9px 11px;
+  padding: 8px 11px;
   background: var(--hk-sunken);
   transition: background-color var(--duration-short) var(--ease-standard);
 
   &:hover {
     background: var(--hk-elev);
   }
-
-  // Digits glitch once when the cell is hovered.
-  &:hover .hk-gh__stat-v {
-    animation: hk-gh-jitter 0.24s steps(4, end) 1;
-  }
 }
 
-@keyframes hk-gh-jitter {
-  0%,
-  100% {
-    transform: translate(0) skewX(0);
-  }
-
-  25% {
-    transform: translate(-1px, 0.5px) skewX(-2deg);
-  }
-
-  50% {
-    transform: translate(0.5px, -0.5px) skewX(1deg);
-  }
-
-  75% {
-    transform: translate(-0.5px, 0) skewX(-1deg);
-  }
-}
-
-.hk-gh__stat-k {
+.hk-gh__readout-k {
   overflow-wrap: anywhere;
   color: var(--hk-fg-3);
   font-family: var(--font-mono);
@@ -657,19 +510,18 @@
   text-transform: uppercase;
 }
 
-.hk-gh__stat-v {
-  display: inline-block;
+.hk-gh__readout-v {
   overflow: hidden;
   color: var(--hk-fg);
   font-family: var(--font-mono);
-  font-size: clamp(1.6rem, 2.6vw, 2rem);
+  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
   font-variant-numeric: tabular-nums;
-  line-height: 1;
+  line-height: 1.05;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.hk-gh__stat-sub {
+.hk-gh__readout-sub {
   color: var(--hk-fg-3);
   font-family: var(--font-mono);
   font-size: 0.5625rem;
@@ -683,17 +535,162 @@
   }
 }
 
-// ── ARCHIVE: ranking + radar ring ──────────────────────────────────────
-.hk-gh__module--archive {
-  align-content: space-between;
+// ── Year dial ──────────────────────────────────────────────────────────
+.hk-gh__dial {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  min-width: 0;
+
+  // Span the whole right-hand stack so the ring owns the left column and the
+  // auto-placed meta/lists flow tightly down column two.
+  @media (min-width: 980px) {
+    grid-column: 1;
+    grid-row: 2 / span 20;
+  }
 }
 
+.hk-gh__dial-svg {
+  display: block;
+  width: 100%;
+  max-width: 340px;
+  height: auto;
+  margin-inline: auto;
+  transform-origin: 50% 50%;
+  animation: hk-gh-spin 60s linear infinite;
+}
+
+@keyframes hk-gh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.hk-gh__dial-day {
+  stroke: var(--hk-accent);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  transition: stroke-width var(--duration-short) var(--ease-standard);
+
+  &:hover {
+    stroke: rgb(var(--hk-cyanish));
+    stroke-width: 1.8;
+  }
+}
+
+.hk-gh__dial-day--peak {
+  stroke: var(--hk-warn);
+}
+
+// Centre readout: an absolutely centred square mirrors the svg box so the
+// numbers stay dead-centre while the ring rotates underneath.
+.hk-gh__dial-core {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  display: grid;
+  place-content: center;
+  width: min(100%, 340px);
+  aspect-ratio: 1;
+  translate: -50% 0;
+  text-align: center;
+  pointer-events: none;
+}
+
+.hk-gh__dial-num {
+  color: var(--hk-fg);
+  font-family: var(--font-mono);
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.hk-gh__dial-k {
+  margin-top: 4px;
+  color: var(--hk-fg-3);
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+// Wide screens: every panel-level meta line sits in the right column. The
+// dial's own meta is expected INSIDE .hk-gh__dial (it then flows under the ring
+// and is unaffected by this rule).
+@media (min-width: 980px) {
+  .hk-gh > .hk-gh__meta {
+    grid-column: 2;
+  }
+}
+
+// ── LANGS: dot-matrix ──────────────────────────────────────────────────
+.hk-gh__langs {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @media (min-width: 980px) {
+    grid-column: 2;
+  }
+}
+
+.hk-gh__lang {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 3.25rem;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 5px 0;
+  border-bottom: var(--hk-hair) solid var(--hk-line);
+}
+
+.hk-gh__lang-name {
+  overflow: hidden;
+  color: var(--hk-fg-2);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-gh__lang-dots {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+
+.hk-gh__lang-dot {
+  width: 3px;
+  height: 3px;
+  background: var(--hk-line);
+}
+
+.hk-gh__lang-dot--on {
+  background: var(--hk-accent);
+}
+
+.hk-gh__lang-n {
+  color: var(--hk-fg-3);
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+// ── ARCHIVE: numbered repo ranking ─────────────────────────────────────
 .hk-gh__repos {
   display: grid;
   counter-reset: gh-repo;
   margin: 0;
   padding: 0;
   list-style: none;
+
+  @media (min-width: 980px) {
+    grid-column: 2;
+  }
 }
 
 .hk-gh__repo {
@@ -744,7 +741,6 @@
   white-space: nowrap;
 }
 
-// PUB / PRI chips: boxed mono micro-labels.
 .hk-gh__repo-tag {
   flex: none;
   padding: 0 4px;
@@ -773,126 +769,13 @@
   font-variant-numeric: tabular-nums;
 }
 
-// ── STREAK: ring + radar sweep ─────────────────────────────────────────
-.hk-gh__streak {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding-top: 10px;
-  border-top: var(--hk-hair) solid var(--hk-line);
-}
-
-.hk-gh__ring {
-  width: 54px;
-  height: 54px;
-  flex: none;
-  overflow: visible;
-  transform: rotate(-90deg);
-}
-
-.hk-gh__ring-track {
-  fill: none;
-  stroke: var(--hk-line);
-  stroke-width: 2;
-}
-
-.hk-gh__ring-arc {
-  fill: none;
-  stroke: rgb(var(--hk-cyanish));
-  stroke-width: 2.4;
-  stroke-linecap: round;
-  stroke-dasharray: calc(var(--p, 0) * 1) 100;
-  filter: drop-shadow(0 0 3px var(--hk-glow));
-  animation: hk-gh-ring-grow 1.1s var(--ease-out-expo) both;
-}
-
-@keyframes hk-gh-ring-grow {
-  from {
-    stroke-dasharray: 0 100;
-  }
-}
-
-// Radar sweep: a thin radius line spinning inside the ring.
-.hk-gh__sweep {
-  stroke: rgb(var(--hk-cyanish) / 85%);
-  stroke-width: 1;
-  transform-box: view-box;
-  transform-origin: 18px 18px;
-  animation: hk-gh-sweep 8s linear infinite;
-}
-
-@keyframes hk-gh-sweep {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.hk-gh__streak-v {
-  color: var(--hk-fg);
-  font-family: var(--font-mono);
-  font-size: clamp(1.25rem, 2vw, 1.55rem);
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-
-.hk-gh__streak-u {
-  margin-left: 2px;
-  color: var(--hk-fg-3);
-  font-family: var(--font-mono);
-  font-size: 0.5625rem;
-}
-
-.hk-gh__streak-k {
-  margin-left: auto;
-  color: var(--hk-fg-3);
-  font-family: var(--font-mono);
-  font-size: 0.5rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-
-// ── Glow calibration ───────────────────────────────────────────────────
-// Dark mode gets one extra step of phosphor bloom.
-html[data-theme="dark"] {
-  .hk-gh__wave-line {
-    filter: drop-shadow(0 0 5px rgb(var(--hk-cyanish) / 90%));
-  }
-
-  .hk-gh__beam {
-    opacity: 1;
-  }
-
-  .hk-gh__pulse-node {
-    box-shadow: 0 0 8px rgb(var(--hk-cyanish) / 65%);
-  }
-
-  .hk-gh__ring-arc {
-    filter: drop-shadow(0 0 6px var(--hk-glow));
-  }
-
-  .hk-gh__sweep {
-    stroke: rgb(var(--hk-cyanish));
-  }
-}
-
 // The template prints a SYNCED footer line after the panel.
 .hk-gh + .hk-gh__meta {
   margin-top: 10px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hk-gh__beam,
-  .hk-gh__sweep,
-  .hk-gh__wave-line,
-  .hk-gh__wave-glow {
-    animation: none;
-  }
-
-  .hk-gh__ring-arc {
-    animation: none;
-  }
-
-  .hk-gh__stat:hover .hk-gh__stat-v {
+  .hk-gh__dial-svg {
     animation: none;
   }
 }
