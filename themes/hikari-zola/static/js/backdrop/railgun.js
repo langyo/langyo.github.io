@@ -3,7 +3,7 @@
  * +X = muzzle, +Y = up, Z = across; ~2.6 x 0.52 x 0.4 units. Faceted shell, twin
  * top rails + dark channel, wedge muzzle block with two barrels, exposed amber
  * capacitor + silver rings, carry handle, rear power pack, slanted stock, brass
- * belly rails, hologram rings, projector beams. 6 floats/point: x,y,z,seed,kind,px.
+ * belly rails, hologram rings. 6 floats/point: x,y,z,seed,kind,px.
  * EDGE frames the silhouette (denser than the PANEL faces).
  */
 export const K_PANEL = 0;   // shell faces (sparse, dim)
@@ -186,14 +186,6 @@ export function buildRailgun(count) {
     }
   }
 
-  /* projector cone beams: from a base point under the gun to both ends */
-  for (const ex of [-1.24, 1.24]) {
-    for (let i = 0; i < f(0.022); i++) {
-      const t = Math.random();
-      add(ex * t, -0.46 + t * 0.5, rnd(-0.05, 0.05), K_RING, 2.6);
-    }
-  }
-
   /* floating motes */
   for (let i = 0; i < f(0.026); i++) add(rnd(-1.32, 1.32), rnd(-0.30, 0.44), rnd(-0.3, 0.3), K_DUST, 3.0);
 
@@ -216,7 +208,6 @@ export function buildRailgun(count) {
     let best = 0, bd = -1e9;
     for (let i = 0; i < P.length; i += 12) {
       if (P[i + 4] > 6.5) continue;                     // dust must not inflate the fit
-      if (P[i + 4] > 5.5 && P[i + 5] < 2.5) continue;   // nor the projector cone
       const v = P[i] * dx + P[i + 1] * dy + P[i + 2] * dz;
       if (v > bd) { bd = v; best = i; }
     }

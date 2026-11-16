@@ -1,24 +1,28 @@
 /**
  * backdrop/index.js — mount controller for the hologram railgun.
- * data-variant hero|ambient|off, data-density auto|low|high|<n>, data-parallax,
- * and (hero) data-hk-anchor=<selector>: the gun is projected into that rect;
- * without it it falls back to the viewport's right 70% / 62% height. Failures
- * hide the canvas silently. reduced-motion = one static frame (yaw 28°); rAF
- * stops on hidden tabs / off-screen anchor; saveData or deviceMemory<=4 halve.
+ * data-variant hero|ambient|off, data-density auto|low|high|<n>, and (hero)
+ * data-hk-anchor=<selector>: the gun is projected into that rect, which is
+ * re-read every frame so the gun stays glued to the booth while scrolling.
+ * Drag the booth to spin it: horizontal = yaw, vertical = pitch (±10°), with
+ * inertia; ~1.2 s after release the slow auto spin eases back in. Failures hide
+ * the canvas silently. reduced-motion: manual drag only (one frame per input);
+ * rAF stops on hidden tabs / off-screen anchor; saveData / deviceMemory<=4 halve.
  */
 import { buildRailgun } from './railgun.js';
 import { createRenderer } from './gl.js';
 
 const DEG = Math.PI / 180;
-const PITCH = 16 * DEG;         // fixed tilt (contract)
-const ROLL = 40 * DEG;          // base tilt: gun rises left→right (screen roll -40°)
-
-const SPIN = 0.12;              // rad/s, ~52 s per revolution
-const REST_YAW = 28 * DEG;      // reduced-motion pose
-const BOB = 0.9;                // vertical float, rad/s (~7 s period)
-const PARALLAX = 5 * DEG;
+const PITCH = 16 * DEG;          // base tilt
+const ROLL = 24 * DEG;           // booth tilt (turntable, not a slanted stick)
+const PR = 10 * DEG;             // drag pitch range
+const DPX = 0.6 * DEG;           // yaw per dragged px
+const PPX = 0.5 * DEG;           // pitch per dragged px
+const SPIN = 0.11;               // auto rotation, rad/s
+const IDLE = 1200;               // ms without input before the auto spin returns
+const REST_YAW = 28 * DEG;       // start / reduced-motion pose
+const BOB = 0.9;                 // vertical float, rad/s
 const DPR_CAP = 2;
-const DESKTOP_AREA = 1296000;   // 1440x900 = full budget
+const DESKTOP_AREA = 1296000;    // 1440x900 = full budget
 const MAX_POINTS = 16000;
 const MIN_POINTS = 5600;
 
@@ -81,7 +85,6 @@ export function mountBackdrop(el, opts = {}) {
       && parseFloat(getComputedStyle(el).opacity) * parseFloat(getComputedStyle(canvas).opacity) >= 1) {
     canvas.style.opacity = '0.25';
   }
-  const parallaxOn = String(get('parallax', 'true')) !== 'false';
   const reduced = reduceMQ().matches;
   const t0 = performance.now();
 
@@ -100,13 +103,13 @@ export function mountBackdrop(el, opts = {}) {
   el.__hkBackdrop = ctrl;
 
   const st = {
-    yawP: 0, pitchP: 0, yawT: 0, pitchT: 0,   // pointer parallax, smoothed
-    scroll: 0, scrollT: 0,                    // scroll parallax, smoothed
+    yaw: REST_YAW, pitchD: 0, vel: SPIN,
     w: 0, h: 0, dpr: 0, last: 0, raf: 0, running: false,
-    fit: { cx: 0, cy: 0, w: 1, h: 1 }, gunOn: true,
+    fitW: 0, fitH: 0, gunOn: true, idle: 0,
   };
+  let drag = null;
 
-  /** projection box in CSS px: anchor rect, or the contract fallbacks */
+  /** projection box in CSS px; the anchor rect is re-read on every call */
   const box = () => {
     const vw = st.w || innerWidth, vh = st.h || innerHeight;
     if (anchor) {
@@ -121,30 +124,39 @@ export function mountBackdrop(el, opts = {}) {
       : { cx: vw * 0.7, cy: vh * 0.5, w: vw * 0.46, h: vh * 0.62, on: true };
   };
 
-  /** hand the projection box to the renderer in NDC; it fits the gun's bbox */
+  /** refit only when the booth *size* changes; otherwise just move the centre */
   const place = () => {
-    const b = box();
     const vw = st.w || innerWidth, vh = st.h || innerHeight;
-    st.fit = { cx: (2 * b.cx) / vw - 1, cy: 1 - (2 * b.cy) / vh, w: (2 * b.w) / vw, h: (2 * b.h) / vh };
+    const b = box();
+    const cx = (2 * b.cx) / vw - 1, cy = 1 - (2 * b.cy) / vh;
+    const bw = (2 * b.w) / vw, bh = (2 * b.h) / vh;
+    if (Math.abs(bw - st.fitW) > 0.002 || Math.abs(bh - st.fitH) > 0.002) {
+      st.fitW = bw; st.fitH = bh;
+      renderer.setFit({ cx, cy, w: bw, h: bh, roll: ROLL, p0: PITCH - PR, p1: PITCH + PR });
+    } else {
+      renderer.setCenter(cx, cy);
+    }
     st.gunOn = b.on;
   };
 
   const draw = (now, first) => {
+    if (!st.w) return;
     const t = now / 1000;
     const dt = st.last ? Math.min(0.05, t - st.last) : 0.016;
     st.last = t;
-    const k = Math.min(1, dt * 6);
-    st.yawP += (st.yawT - st.yawP) * k;
-    st.pitchP += (st.pitchT - st.pitchP) * k;
-    st.scroll += (st.scrollT - st.scroll) * Math.min(1, dt * 8);
+    place();                                   // per-frame: glued to the booth
+    if (!reduced && !drag) {
+      if (now - st.idle > IDLE) st.vel += (SPIN - st.vel) * Math.min(1, dt * 2.2);
+      else st.vel *= Math.pow(0.92, dt * 60);
+      st.yaw += st.vel * dt;
+    }
     renderer.draw({
       time: reduced ? 0 : t,
       dark: isDark(),
-      yaw: (reduced ? REST_YAW : t * SPIN) + st.yawP,
-      pitch: PITCH + st.pitchP,
+      yaw: st.yaw,
+      pitch: PITCH + st.pitchD,
       roll: ROLL,
-      fit: st.fit,
-      bob: reduced ? 0 : Math.sin(t * BOB) * 0.015 * st.fit.h + st.scroll,
+      bob: reduced ? 0 : Math.sin(t * BOB) * 0.0075 * (st.fitH || 1),
       dim: st.w < 560 ? 0.85 : 1,
       breathe: !reduced,
     });
@@ -166,6 +178,7 @@ export function mountBackdrop(el, opts = {}) {
     const dpr = Math.min(window.devicePixelRatio || 1, lowPower() ? 1.5 : DPR_CAP);
     if (w === st.w && h === st.h && dpr === st.dpr) { place(); return; }
     st.w = w; st.h = h; st.dpr = dpr;
+    st.fitW = st.fitH = 0;                     // force a refit at the new size
     canvas.style.width = w + 'px';
     canvas.style.height = h + 'px';
     renderer.resize(w, h, dpr);
@@ -196,23 +209,49 @@ export function mountBackdrop(el, opts = {}) {
     if (st.gunOn && !document.hidden) start(); else stop();
   };
 
-  /* input + lifecycle */
-  const onPointer = (e) => {
-    if (!parallaxOn || reduced) return;
-    st.yawT = (e.clientX / Math.max(1, innerWidth) * 2 - 1) * PARALLAX;
-    st.pitchT = (e.clientY / Math.max(1, innerHeight) * 2 - 1) * PARALLAX * 0.6;
+  /* drag to spin (on the anchor), plus scroll / resize / visibility */
+  const endDrag = () => {
+    if (!drag) return;
+    drag = null;
+    if (anchor) anchor.classList.remove('is-dragging');
+    st.idle = performance.now();
+    if (reduced) draw(performance.now(), false);
   };
-  let lastPlace = 0;
-  const onScroll = () => {
-    st.scrollT = -Math.min(1, (window.scrollY || 0) / Math.max(1, st.h)) * 0.035;
+  const onDown = (e) => {
+    if (!anchor || (e.button !== undefined && e.button > 0)) return;
+    drag = { x: e.clientX, y: e.clientY, yaw: st.yaw, pitch: st.pitchD, t: performance.now(), y0: st.yaw };
+    st.vel = 0;
+    st.idle = performance.now();
+    anchor.classList.add('is-dragging');
+    if (anchor.setPointerCapture) { try { anchor.setPointerCapture(e.pointerId); } catch (err) {} }
+    if (e.pointerType === 'mouse' && e.preventDefault) e.preventDefault();   // no text select
+    if (!reduced) start();
+  };
+  const onMove = (e) => {
+    if (!drag) return;
     const now = performance.now();
-    if (now - lastPlace > 90) { lastPlace = now; place(); }   // throttle the rect read
-    sync();
+    st.yaw = drag.yaw + (e.clientX - drag.x) * DPX;
+    st.pitchD = Math.max(-PR, Math.min(PR, drag.pitch - (e.clientY - drag.y) * PPX));
+    const dt = Math.max(8, now - drag.t) / 1000;
+    st.vel = Math.max(-6, Math.min(6, (st.yaw - drag.y0) / dt));
+    drag.y0 = st.yaw;
+    drag.t = now;
+    st.idle = now;
+    if (reduced) draw(now, false);
+  };
+  const onScroll = () => {
+    if (reduced) draw(performance.now(), false);   // no loop, keep it glued
+    else sync();
   };
   const onTheme = () => { if (!st.running) draw(performance.now(), false); };
   const onVis = () => sync();
 
-  addEventListener('pointermove', onPointer, { passive: true });
+  if (anchor) {
+    anchor.addEventListener('pointerdown', onDown);
+    anchor.addEventListener('pointermove', onMove);
+    anchor.addEventListener('pointerup', endDrag);
+    anchor.addEventListener('pointercancel', endDrag);
+  }
   addEventListener('scroll', onScroll, { passive: true });
   addEventListener('resize', resize);
   document.addEventListener('visibilitychange', onVis);
@@ -227,9 +266,15 @@ export function mountBackdrop(el, opts = {}) {
     mo.disconnect();
     if (mqDarkChange.removeEventListener) mqDarkChange.removeEventListener('change', onTheme);
     document.removeEventListener('visibilitychange', onVis);
-    removeEventListener('pointermove', onPointer);
     removeEventListener('scroll', onScroll);
     removeEventListener('resize', resize);
+    if (anchor) {
+      anchor.removeEventListener('pointerdown', onDown);
+      anchor.removeEventListener('pointermove', onMove);
+      anchor.removeEventListener('pointerup', endDrag);
+      anchor.removeEventListener('pointercancel', endDrag);
+      anchor.classList.remove('is-dragging');
+    }
     renderer.dispose();
     el.__hkBackdrop = null;
     canvas.style.display = 'none';

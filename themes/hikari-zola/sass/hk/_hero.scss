@@ -1,7 +1,8 @@
 // hikari-zola — hero: the Millennium operator-file opening block. Kicker label,
 // oversized title with a blinking HUD caret, readouts, CTAs, and the holographic
-// projection chamber on the right that hosts the rotating point-cloud railgun
-// (canvas is drawn by static/js/backdrop against [data-hk-anchor]).
+// projection chamber on the right that hosts the rotating point-cloud railgun.
+// The chamber is also the drag surface: static/js/backdrop anchors its drawing
+// to [data-hk-anchor] (.hk-hero__figure) and toggles .is-dragging while held.
 @use "./mixins" as *;
 
 .hk-hero {
@@ -83,15 +84,43 @@
   line-height: 1.6;
 }
 
+.hk-hero__lede {
+  max-width: 46ch;
+  margin: 0;
+  color: var(--hk-fg-2);
+  font-size: 0.9375rem;
+  line-height: 1.8;
+}
+
+// Fixed column counts (never flex-wrap): every row shares the same tracks so
+// the readout reads as a table, and each cell stacks its key above the value.
 .hk-hero__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 26px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
   margin: 4px 0 0;
   padding: 12px 0;
   border-top: var(--hk-hair) solid var(--hk-line);
   border-bottom: var(--hk-hair) solid var(--hk-line);
   list-style: none;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (min-width: 1200px) {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .hk-dataline {
+    display: grid;
+    gap: 1px;
+    align-content: start;
+  }
+
+  .hk-dataline__v {
+    overflow-wrap: anywhere;
+  }
 }
 
 .hk-hero__cta {
@@ -102,15 +131,22 @@
 }
 
 // ── Holographic projection chamber ────────────────────────────────────
-// The chamber is pure chrome: frame + brackets + inner dashed field + floor
-// glow + scanlines. Its interior stays transparent so the fixed backdrop
-// canvas (anchored to this element's rect) shows the railgun through it.
+// Pure chrome: frame + brackets + inner dashed field + floor glow + scanlines.
+// The interior stays transparent so the fixed backdrop canvas shows the
+// railgun through it. This element is the pointer surface for drag-to-rotate.
 .hk-hero__figure {
   position: relative;
   z-index: 1;
   align-self: stretch;
   min-height: min(46vw, 400px);
-  pointer-events: none;
+  // Interactive stage: the railgun is dragged here. The fixed canvas sits
+  // behind, so this element must accept pointer events — it is also the
+  // [data-hk-anchor] whose rect the backdrop draws into.
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
 
   // Projection floor: an extremely faint ellipse plus a hairline base rail.
   &::before {
@@ -124,6 +160,8 @@
     background-repeat: no-repeat, no-repeat;
     background-size: auto, 100% 1px;
     background-position: center, center bottom;
+    opacity: 0.85;
+    transition: opacity var(--duration-short) var(--ease-standard);
   }
 
   // Holographic scanlines, confined to the chamber and faded at the edges.
@@ -148,6 +186,21 @@
   }
 }
 
+// Held / dragging: the stage says "being operated" without moving anything —
+// grabbing cursor, brackets lift one step, the floor glow comes up a touch.
+.hk-hero__figure.is-dragging {
+  cursor: grabbing;
+
+  .hk-hero__frame {
+    --hk-accent-line: color-mix(in srgb, rgb(var(--color-primary)) 60%, transparent);
+    border-color: var(--hk-accent-line);
+  }
+
+  &::before {
+    opacity: 1;
+  }
+}
+
 // Outer hairline + four corner brackets; the inner dashed field reads as the
 // projection volume boundary.
 .hk-hero__frame {
@@ -165,13 +218,14 @@
   }
 }
 
-// Ruler ticks hugging the right edge, now inside the chamber.
+// Ruler ticks hugging the right edge, inside the chamber.
 .hk-hero__ticks {
   position: absolute;
   top: 15%;
   right: 7px;
   bottom: 15%;
   width: 8px;
+  pointer-events: none;
   background-image:
     repeating-linear-gradient(to bottom, var(--hk-line-strong) 0 1px, transparent 1px 12px),
     repeating-linear-gradient(to bottom, var(--hk-accent-line) 0 1px, transparent 1px 60px);
@@ -181,13 +235,14 @@
   opacity: 0.85;
 }
 
-// Chamber micro readouts: mono HUD labels, tertiary ink (>=5.2:1 on both
-// themes). The template text is one node, so the charge accent is carried by
-// the amber bar; <b>/<strong> inside is coloured amber if markup ever wraps it.
+// Chamber micro readouts: mono HUD labels, tertiary ink (>=5.2:1 both themes).
+// The template text is one node, so the charge accent is the amber bar;
+// <b>/<strong> inside turns amber if markup ever wraps it.
 .hk-hero__holo-label,
 .hk-hero__holo-status {
   position: absolute;
   z-index: 2;
+  max-width: calc(100% - 24px);
   margin: 0;
   color: var(--hk-fg-3);
   font-family: var(--font-mono);
@@ -195,14 +250,17 @@
   line-height: 1.4;
   letter-spacing: 0.16em;
   text-transform: uppercase;
+  white-space: nowrap;
   pointer-events: none;
 }
 
 .hk-hero__holo-label {
   top: 14px;
   left: 16px;
+  overflow: hidden;
   padding-left: 9px;
   border-left: 2px solid var(--hk-accent);
+  text-overflow: ellipsis;
 }
 
 .hk-hero__holo-status {
@@ -224,6 +282,14 @@
   strong {
     color: var(--hk-warn-ink);
   }
+
+  // "DRAG TO ROTATE · CHARGE 100%" must never wrap on phones.
+  @media (max-width: 420px) {
+    right: 12px;
+    bottom: 10px;
+    font-size: 0.5rem;
+    letter-spacing: 0.12em;
+  }
 }
 
 @media (max-width: 1023px) {
@@ -234,11 +300,6 @@
   .hk-hero__holo-label {
     top: 9px;
     left: 12px;
-  }
-
-  .hk-hero__holo-status {
-    right: 12px;
-    bottom: 10px;
   }
 
   .hk-hero__ticks {
@@ -286,24 +347,5 @@
 
   @media (min-width: 1024px) {
     display: flex;
-  }
-}
-
-// Narrow screens: the readout row becomes a two-up grid (values are allowed to
-// wrap) so no dataline can be clipped by the hero's overflow box.
-@media (max-width: 600px) {
-  .hk-hero__meta {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px 14px;
-  }
-
-  .hk-hero__meta .hk-dataline {
-    flex-wrap: wrap;
-    gap: 2px 8px;
-  }
-
-  .hk-hero__meta .hk-dataline__v {
-    overflow-wrap: anywhere;
   }
 }

@@ -91,13 +91,25 @@
   line-height: 1.16;
 }
 
+// DATE / WORDS / READ always share three equal columns (stacked k/v so the
+// values never wrap into a second line on phones).
 .hk-article__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 22px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 18px;
   margin: 16px 0 0;
   padding: 0;
   list-style: none;
+
+  .hk-dataline {
+    display: grid;
+    gap: 1px;
+    align-content: start;
+  }
+
+  .hk-dataline__v {
+    overflow-wrap: anywhere;
+  }
 }
 
 .hk-article__foot {

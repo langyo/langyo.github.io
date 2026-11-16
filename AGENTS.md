@@ -34,7 +34,7 @@ themes/hikari-zola/
     hk/             站点层：_palette / _base / 组件样式（可改）
     vendor/hikari/  hikari 官方 token 逐字副本（禁止手改，见 §6）
   static/js/        原生 ES module：main.js + prefs/nav/reveal/toc/copy
-    backdrop/       WebGL2 全息点云电磁炮 RG·SUPERNOVA（独立预算 28KB）
+    backdrop/       WebGL2 全息点云电磁炮 RG·SUPERNOVA（独立预算 34KB）
   static/img/       主题装饰图（内容组产出，其它组只读）
 ```
 
@@ -88,7 +88,7 @@ just verify                       # build + check_site --ci + internal link chec
 - 颜色只走 `--hk-*` / `--color-*` 变量，禁止硬编码色值、禁止引入新品牌色。
 - 不引 CDN / webfont / 图标库 / CSS 框架；字体只用系统栈；阴影只用于浮层。
 - 动效使用 `--duration-*` / `--ease-*` token，必须尊重 `prefers-reduced-motion`；暗色走 `html[data-theme="dark"]`。
-- 预算：`style.css` <= 64KB（gzip <= 12KB）、JS（不含 backdrop）<= 14KB、backdrop <= 28KB、单图 <= 300KB。
+- 预算：`style.css` <= 64KB（gzip <= 12KB）、JS（不含 backdrop）<= 14KB、backdrop <= 34KB、单图 <= 300KB。
   常量集中在 `scripts/check_site.py` 头部（`BUDGET_*`），每次运行打印实测值（含 gzip 与图片总重/最大单图）；
   发布产物里任何 >300KB 的图片文件都算 error。
 

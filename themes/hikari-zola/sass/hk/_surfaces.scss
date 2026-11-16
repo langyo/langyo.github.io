@@ -280,31 +280,32 @@
 
 // ── Status readout bar ────────────────────────────────────────────────
 .hk-status {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 26px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
   margin: 0;
   padding: 14px 0;
   border-top: var(--hk-hair) solid var(--hk-line);
   border-bottom: var(--hk-hair) solid var(--hk-line);
   list-style: none;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (min-width: 1200px) {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
 }
 
 .hk-status__item {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
+  display: grid;
+  gap: 1px;
+  align-content: start;
+  min-width: 0;
 
-  & + & {
-    padding-left: 26px;
-    border-left: var(--hk-hair) solid var(--hk-line);
-  }
-
-  @media (max-width: 600px) {
-    & + & {
-      padding-left: 0;
-      border-left: 0;
-    }
+  .hk-status__v {
+    overflow-wrap: anywhere;
   }
 }
 
