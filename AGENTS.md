@@ -77,7 +77,7 @@ just verify                       # build + check_site --ci + internal link chec
 - check_site 用 config.toml 的 base_url 判 host；`--base-url` 127.0.0.1 的产物会假死链，改 `--config` 指向仅改 base_url 的副本。
 - 链接检查只跑内链：`zola check --skip-external-links`（正文引用外网，403/超时不可控）。
 - 验收线：`zola build` 0 error / 0 warning、内链检查通过、`check_site --ci` 通过。
-- **Pages 镜像**：`pages.yml` 用 `configure-pages` 的 base_url 构建；生产 `langyo.xyz` 走容器 + config.toml 默认。
+- **Pages 镜像**：`pages.yml` 用 `configure-pages` 的 base_url 构建；生产 `langyo.xyz` 走容器，origin 由 `dockerfile` 的 `ARG SITE_BASE_URL`（默认 `https://langyo.xyz`）决定，镜像名 `homepage`，服务器上 `homepage` 容器监听 3000。
 
 ## 6. 样式纪律
 
