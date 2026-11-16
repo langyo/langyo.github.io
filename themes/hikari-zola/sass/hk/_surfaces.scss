@@ -437,16 +437,6 @@
   @media (min-width: 860px) {
     grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
   }
-
-  p {
-    margin: 0 0 0.8em;
-    color: var(--hk-fg-2);
-    font-size: 0.9375rem;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
 }
 
 // ── 404 ────────────────────────────────────────────────────────────────

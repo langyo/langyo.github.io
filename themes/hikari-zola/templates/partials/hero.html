@@ -5,7 +5,6 @@
     <p class="hk-label">// {{ config.extra.hero.kicker | default(value="OPERATOR FILE") }}</p>
     <h1 class="hk-hero__title">{{ config.title }}<span class="hk-hero__caret" aria-hidden="true"></span></h1>
     <p class="hk-hero__sub">{{ config.extra.hero.subtitle | default(value=config.description) }}</p>
-    {% if config.extra.hero.lede %}<p class="hk-hero__lede">{{ config.extra.hero.lede }}</p>{% endif %}
     <ul class="hk-hero__meta">
       {% for d in config.extra.hero.datalines | default(value=[]) %}{{ m::dataline(k=d.k, v=d.v) }}{% endfor %}
     </ul>
