@@ -133,17 +133,8 @@ langyo.github.io/
 
 ## 部署
 
-**GitHub Pages（生产）**：`.github/workflows/pages.yml` 在 `master` push 或手动
-`workflow_dispatch` 时触发：checkout → 下载 Zola 0.21.0 Linux 二进制 → `zola build` →
-`actions/configure-pages` + `upload-pages-artifact`（`public/`）→ `deploy-pages`。
-仓库 Pages 的 Source 需设为「GitHub Actions」；自定义域名由 Pages 设置管理。
-
-**PR 门禁**：`.github/workflows/checks.yml` 在 pull request 上跑 `zola build` +
-`python3 scripts/check_site.py`，并尝试安装 celestia-devtools 执行 `init --check`
-（装不上或漂移只告警，不阻断）。
-
-**容器（可选）**：`dockerfile` 用 `ghcr.io/getzola/zola:v0.21.0` 构建，产物交给
-`static-web-server` 托管。推送到个人镜像仓库：
+**生产：langyo.xyz（容器）**。`dockerfile` 用 `ghcr.io/getzola/zola:v0.21.0` 构建，
+产物交给 `static-web-server` 托管；镜像推送到个人镜像仓库后，在主页服务器上重建容器：
 
 ```console
 just publish          # 默认 podman
@@ -151,6 +142,26 @@ just publish docker   # 使用 docker
 ```
 
 镜像地址 `crpi-88d7shkt0yo9qvvt.cn-shanghai.personal.cr.aliyuncs.com/langyo_personal/homepage`。
+构建用的 origin 由 `SITE_BASE_URL` 传入（默认 `https://langyo.xyz`，见 `dockerfile` 的 ARG）：
+
+```console
+SITE_BASE_URL=https://langyo.xyz just publish docker
+```
+
+服务器上的容器（`homepage`）监听 `3000`，Cloudflare 回源到它；更新流程是
+`docker pull` → 用同样的参数重建容器 → 本地 `curl` 自检 → 通过后 Cloudflare 即可访问新站。
+
+**GitHub Pages（镜像）**：`.github/workflows/pages.yml` 在 `master` push 或手动
+`workflow_dispatch` 时触发：checkout → 下载 Zola 0.21.0 Linux 二进制 → `zola build` →
+`actions/configure-pages` + `upload-pages-artifact`（`public/`）→ `deploy-pages`。
+镜像用 `configure-pages` 给出的 origin 构建，因此 `langyo.github.io` 自洽。
+
+**PR 门禁**：`.github/workflows/checks.yml` 在 pull request 上跑 `zola build` +
+`python3 scripts/check_site.py`，并尝试安装 celestia-devtools 执行 `init --check`
+（装不上或漂移只告警，不阻断）。
+
+**GitHub 活动快照**：`data/github.json` 由 `scripts/github_stats.py` 抓取、每日 CI 提 PR
+刷新；本地用 `GITHUB_TOKEN=$(gh auth token) just sync-github`（私仓口径需要 token）。
 
 ## 设计来源与致谢
 

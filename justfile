@@ -37,8 +37,9 @@ default:
     @just --list
 
 # Build the site into public/ — the artifact CI and the container image consume.
-build:
-    zola build
+# Extra args pass through: just build --base-url https://example.test
+build *ARGS='':
+    zola build {{ARGS}}
 
 # Serve locally with live reload. Extra args pass through: just serve --port 1111
 serve *ARGS='':
@@ -90,12 +91,12 @@ publish *args="podman":
 
 # Publish with Docker.
 _publish_docker:
-    docker build -t homepage -f ./dockerfile .
+    docker build -t homepage -f ./dockerfile --build-arg SITE_BASE_URL={{env_var_or_default('SITE_BASE_URL', 'https://langyo.xyz')}} .
     docker tag homepage:latest crpi-88d7shkt0yo9qvvt.cn-shanghai.personal.cr.aliyuncs.com/langyo_personal/homepage:latest
     docker push crpi-88d7shkt0yo9qvvt.cn-shanghai.personal.cr.aliyuncs.com/langyo_personal/homepage:latest
 
 # Publish with Podman (default).
 _publish_podman:
-    podman build -t homepage -f ./dockerfile .
+    podman build -t homepage -f ./dockerfile --build-arg SITE_BASE_URL={{env_var_or_default('SITE_BASE_URL', 'https://langyo.xyz')}} .
     podman tag homepage:latest crpi-88d7shkt0yo9qvvt.cn-shanghai.personal.cr.aliyuncs.com/langyo_personal/homepage:latest
     podman push crpi-88d7shkt0yo9qvvt.cn-shanghai.personal.cr.aliyuncs.com/langyo_personal/homepage:latest
