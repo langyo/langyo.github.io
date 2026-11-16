@@ -7,20 +7,24 @@ Standard library only (urllib + json + re); no third-party dependencies.
 
 Two sources, two scopes
 -----------------------
-all    Preferred path. Requires GITHUB_TOKEN or GH_TOKEN. Uses the GraphQL
-       viewer query for: public/private/total repository counts, followers,
-       following, createdAt, and contributionsCollection (total contributions,
-       restricted/private contributions, and the 366-day calendar). This scope
-       includes private repository counts and private contribution totals, but
-       names/descriptions of private repositories are never fetched or stored.
-public Fallback path without a usable token: REST API plus the public
-       contributions HTML. Private counts are 0 and scope is "public".
+all    Preferred path. Requires GITHUB_TOKEN or GH_TOKEN. Repository figures
+       (repos/stars/langs/top_repos) come from the celestia-island GitHub
+       organization via GraphQL; the personal profile (followers/following/
+       createdAt) and the contributions calendar still come from the viewer
+       query, because the personal contribution graph already includes commits
+       to organization repositories. This scope includes private repository
+       counts and private contribution totals (the operator approved showing
+       private repository names; anything beyond the listed fields is never
+       fetched or stored).
+public Fallback path without a usable token: REST API for the personal profile
+       and the organization public repositories, plus the public contributions
+       HTML. Private counts are 0 and scope is "public".
 
 Snapshot schema v4 (consumed by templates; keep key names stable)
 -----------------------------------------------------------------
-    schema, login, fetched_at, scope: "all" | "public",
-    profile  {followers, following, created_at}
-    repos    {total, public, private}
+    schema, login, fetched_at, scope: "all" | "public", org: "celestia-island",
+    profile  {followers, following, created_at}         personal viewer
+    repos    {total, public, private}                   celestia-island org
     totals   {stars, contributions_year, contributions_private_year}
     days     [{d, c}, ...]       366 contribution-calendar days, ascending
     recent28 [{d, c}, ...]      last 28 calendar days
@@ -28,30 +32,29 @@ Snapshot schema v4 (consumed by templates; keep key names stable)
     streak   {current, longest}
     best_day {d, c}
     types    {PUSH, PR, ISSUE, REVIEW}
-    top_repos[{name, stars, lang, url, private}, ...]   6 repos: up to 4 top public + at least 2 private
-    langs    [{l, n}, ...]                     public repositories only
+    top_repos[{name, stars, lang, url, private}, ...]   6 org repos: up to 4 top public + at least 2 private
+    langs    [{l, n}, ...]                     celestia-island org repositories
 
-Repos口径 (privacy grouping)
-----------------------------
-total/public/private come from GraphQL viewer.repositories(ownerAffiliations:
-[OWNER]) grouped by the visibility field; totalCount is authoritative for
-total. totals.stars and langs are computed from PUBLIC repositories only.
-top_repos deliberately mixes visibility so the private repositories are
-visible too (the operator approved publishing private repository names):
-take up to 4 public repositories by stargazerCount, then at least 2 private
-repositories ordered by stargazerCount with pushedAt (newest first) as the
-tie-break, 6 entries total and the private flag marks private ones. The REST
-/users/{user}/repos listing can
-surface a few public entries that the GraphQL owner-affiliation set no longer
-resolves (renamed/deleted/disabled repositories); the snapshot deliberately
-follows the GraphQL privacy grouping.
+Repos口径 (organization celestia-island)
+----------------------------------------
+total/public/private come from GraphQL organization(login:"celestia-island").
+repositories(affiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER]) grouped
+by the visibility field; totalCount is authoritative for total and the private
+flag comes from isPrivate. totals.stars is the sum of stargazerCount over the
+organization repositories and langs is their language distribution. top_repos
+deliberately mixes visibility so private repositories are visible too (the
+operator approved publishing private repository names): take up to 4 public
+repositories by stargazerCount, then at least 2 private repositories ordered
+by stargazerCount with pushedAt (newest first) as the tie-break, 6 entries
+total.
 
 Privacy note
 ------------
 Private repository names and URLs in top_repos are published with the site
 operator's explicit permission. Repository descriptions, file trees and
 per-contribution private details are never queried or stored: the GraphQL
-selection only asks for name, stars, language, url, visibility and isPrivate.
+selection only asks for name, stars, language, url, visibility and isPrivate,
+and the REST fallback only sees public organization repositories.
 
 Downgrade guard
 ---------------
@@ -108,6 +111,7 @@ SNAPSHOT = ROOT / "data" / "github.json"
 
 SCHEMA_VERSION = 4
 USER = "langyo"
+ORG = "celestia-island"
 API = "https://api.github.com"
 GRAPHQL_URL = API + "/graphql"
 CONTRIBUTIONS_URL = "https://github.com/users/" + USER + "/contributions"
@@ -162,10 +166,10 @@ query {
 }
 """
 
-REPOS_QUERY = """
-query($cursor: String) {
-  viewer {
-    repositories(first: 100, ownerAffiliations: [OWNER], after: $cursor) {
+ORG_REPOS_QUERY = """
+query($cursor: String, $org: String!) {
+  organization(login: $org) {
+    repositories(first: 100, affiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER], after: $cursor) {
       totalCount
       pageInfo { hasNextPage endCursor }
       nodes { name stargazerCount url visibility isPrivate pushedAt primaryLanguage { name } }
@@ -295,10 +299,14 @@ def _pushed_sort_key(node: dict) -> int:
         return 0
 
 
-def graphql_repos() -> dict:
-    first = graphql(REPOS_QUERY, {"cursor": None}).get("viewer", {}).get("repositories")
+def graphql_org_repos() -> dict:
+    first = (
+        graphql(ORG_REPOS_QUERY, {"cursor": None, "org": ORG})
+        .get("organization", {})
+        .get("repositories")
+    )
     if not isinstance(first, dict):
-        raise RuntimeError("unexpected GraphQL repositories payload")
+        raise RuntimeError("unexpected GraphQL organization repositories payload")
 
     total = int(first.get("totalCount") or 0)
     nodes = list(first.get("nodes") or [])
@@ -307,8 +315,10 @@ def graphql_repos() -> dict:
     while page_info.get("hasNextPage"):
         if pages >= MAX_REPO_PAGES:
             break
-        next_page = graphql(REPOS_QUERY, {"cursor": page_info.get("endCursor")})
-        page = next_page.get("viewer", {}).get("repositories") or {}
+        next_page = graphql(
+            ORG_REPOS_QUERY, {"cursor": page_info.get("endCursor"), "org": ORG}
+        )
+        page = next_page.get("organization", {}).get("repositories") or {}
         nodes.extend(page.get("nodes") or [])
         page_info = page.get("pageInfo") or {}
         pages += 1
@@ -332,7 +342,7 @@ def graphql_repos() -> dict:
     private_count = len(private_nodes)
     language_counts = Counter(
         str((node.get("primaryLanguage") or {}).get("name"))
-        for node in public_nodes
+        for node in unique
         if (node.get("primaryLanguage") or {}).get("name")
     )
 
@@ -359,7 +369,7 @@ def graphql_repos() -> dict:
         "total": total or len(unique),
         "public": len(public_nodes),
         "private": private_count,
-        "stars": sum(int(node.get("stargazerCount") or 0) for node in public_nodes),
+        "stars": sum(int(node.get("stargazerCount") or 0) for node in unique),
         "top_repos": [
             {
                 "name": str(node.get("name") or ""),
@@ -379,7 +389,7 @@ def graphql_repos() -> dict:
 
 def build_all_snapshot() -> dict:
     profile = graphql_profile()
-    repos = graphql_repos()
+    repos = graphql_org_repos()
     metrics = compute_metrics(profile["days"])
     calendar_sum = sum(day["c"] for day in profile["days"])
     if calendar_sum != profile["contributions_year"]:
@@ -394,6 +404,7 @@ def build_all_snapshot() -> dict:
         "login": profile["login"],
         "fetched_at": fetched_at,
         "scope": "all",
+        "org": ORG,
         "profile": {
             "followers": profile["followers"],
             "following": profile["following"],
@@ -432,11 +443,12 @@ def fetch_public_profile() -> dict:
     }
 
 
-def fetch_public_repos() -> list:
+def fetch_public_org_repos() -> list:
+    """Public repositories of the celestia-island organization (REST fallback)."""
     repos = []
     seen = set()
     for page in range(1, MAX_REPO_PAGES + 1):
-        url = API + "/users/" + USER + "/repos?per_page=100&page=" + str(page)
+        url = API + "/orgs/" + ORG + "/repos?per_page=100&page=" + str(page)
         batch = fetch_json(url)
         if not isinstance(batch, list):
             raise RuntimeError("unexpected repos payload from the GitHub API (page " + str(page) + ")")
@@ -485,7 +497,7 @@ def parse_contributions_html(html: str) -> list:
 
 def build_public_snapshot() -> dict:
     profile = fetch_public_profile()
-    repos_raw = fetch_public_repos()
+    repos_raw = fetch_public_org_repos()
     html = fetch_bytes(CONTRIBUTIONS_URL, accept="text/html", user_agent=UA_HTML).decode(
         "utf-8", "replace"
     )
@@ -497,7 +509,10 @@ def build_public_snapshot() -> dict:
     )
     ranked = sorted(
         repos_raw,
-        key=lambda repo: (-int(repo.get("stargazers_count") or 0), str(repo.get("full_name") or "")),
+        key=lambda repo: (
+            -int(repo.get("stargazers_count") or 0),
+            str(repo.get("full_name") or repo.get("name") or ""),
+        ),
     )
     fetched_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     return {
@@ -505,6 +520,7 @@ def build_public_snapshot() -> dict:
         "login": profile["login"],
         "fetched_at": fetched_at,
         "scope": "public",
+        "org": ORG,
         "profile": {
             "followers": profile["followers"],
             "following": profile["following"],
@@ -680,6 +696,7 @@ def print_summary(snapshot: dict) -> None:
     streak = snapshot["streak"]
     print("github stats snapshot (schema " + str(snapshot["schema"]) + ", scope " + snapshot["scope"] + ")")
     print("  login        : " + snapshot["login"])
+    print("  org          : " + str(snapshot.get("org") or "-"))
     print("  fetched_at   : " + snapshot["fetched_at"])
     print(
         "  repos        : total="
@@ -689,7 +706,7 @@ def print_summary(snapshot: dict) -> None:
         + " private="
         + str(repos["private"])
     )
-    print("  stars (public): " + str(totals["stars"]))
+    print("  stars (org)  : " + str(totals["stars"]))
     print(
         "  contributions: "
         + str(totals["contributions_year"])

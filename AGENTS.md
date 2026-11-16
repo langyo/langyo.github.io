@@ -117,8 +117,10 @@ just verify                       # build + check_site --ci + internal link chec
 ## 10. GitHub 活跃度数据
 
 - `data/github.json`：首页「活动」面板快照（schema v4），`scripts/github_stats.py` 生成，**禁止手改**；`top_repos[]` 仅存 `{name,stars,lang,url,private}`。
+- **统计口径**：仓库类数据（repos/stars/langs/top_repos）取 **celestia-island 组织**；
+  profile 与贡献日历（contributions/days/streak）取个人 viewer（个人贡献已含对组织仓库的提交）。
 - 隐私：私仓名已获批准，可在「仓库」列表展示（带 PRI 标签）；禁止写私仓描述、私有贡献明细、star 以外的私仓元数据。
-- 本地：`GITHUB_TOKEN=$(gh auth token) just sync-github`；`just github-check` 只校验不写。私仓口径需 secret `GH_STATS_TOKEN`（classic `repo`+`read:user`；fine-grained All repositories + Metadata/Contents read + Profile read）；未配置回退 `github.token`、降级 public 且不覆盖已有 all 快照（脚本拒绝降级；workflow 透传退出码，summary 打 `private scope: yes/no`）。
+- 本地：`GITHUB_TOKEN=$(gh auth token) just sync-github`；`just github-check` 只校验不写。私仓口径需 secret `GH_STATS_TOKEN`（classic `repo`+`read:user`+`read:org`——组织私有仓也要能读；fine-grained 需对 celestia-island 组织仓库授权 + Metadata read）；未配置回退 `github.token`、降级 public 且不覆盖已有 all 快照（脚本拒绝降级；workflow 透传退出码，summary 打 `private scope: yes/no`）。
 - CI：`github-stats.yml` 每日 03:17 UTC + dispatch；有变更则更新 `chore/github-stats` 并创建/更新 base=master 的 PR（`🔄 Sync the GitHub activity snapshot.`），不 push master，走 squash PR。
 - 构建只读快照、不联网；抓取失败保留上一版；schema 变更与模板同 PR；GITHUB_TOKEN 推的分支不触发下游 workflow，快照 PR 的 checks 手动 dispatch。
 
