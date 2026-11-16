@@ -11,4 +11,7 @@ RUN zola build --base-url "$SITE_BASE_URL"
 
 FROM ghcr.io/static-web-server/static-web-server:2
 WORKDIR /
+# Cloudflare honours the origin cache-control; the upstream 1-year default would
+# pin stale CSS/JS after every deploy, so cap it at five minutes.
+ENV SERVER_CACHE_CONTROL="public, max-age=300"
 COPY --from=zola /home/public /public

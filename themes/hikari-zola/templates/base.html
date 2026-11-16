@@ -1,6 +1,9 @@
 {% import "partials/icons.html" as icons %}<!DOCTYPE html>
 <html lang="{{ lang | default(value=config.default_language) }}" class="no-js" data-theme="light">
 <head>
+{#- Cache-busting build id: Cloudflare/proxies may keep assets for a year, so
+    every deploy must reference a fresh URL. Extra can pin it in tests. -#}
+{%- set asset_v = config.extra.asset_version | default(value=now() | date(format="%Y%m%d%H%M")) -%}
 {% include "partials/head.html" %}
 </head>
 <body class="hk-page{% block body_class %}{% endblock body_class %}">
@@ -11,7 +14,7 @@
     {% block content %}{% endblock content %}
   </div>
   {% include "partials/footer.html" %}
-  <script type="module" src="{{ get_url(path='js/main.js') }}"></script>
+  <script type="module" src="{{ get_url(path='js/main.js') }}?v={{ asset_v }}"></script>
   {% block scripts %}{% endblock scripts %}
 </body>
 </html>
