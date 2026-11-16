@@ -5,6 +5,13 @@
 # squash-merge rule still applies to the generated data file. The snapshot is
 # committed as-is on the branch — this workflow holds no publish rights.
 #
+# Private scope: set the repository secret GH_STATS_TOKEN to a PAT that can read
+# private repositories (classic: repo + read:user; fine-grained: All repositories
+# + Metadata/Contents read + Profile read). Without it the script falls back to
+# the public scope and refuses to downgrade an existing "all" snapshot; this
+# workflow passes whichever token it got straight to the script and surfaces its
+# exit code unchanged.
+#
 # Note: pushes made with the workflow GITHUB_TOKEN do not trigger further
 # workflow runs (GitHub suppresses recursive runs), so checks.yml does not
 # auto-run on the bot PR. Dispatch it manually from the Actions tab if the
@@ -48,8 +55,23 @@ jobs:
           python-version: "3.12"
       - name: Refresh the snapshot
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Prefer the PAT secret so private repositories and private
+          # contributions are included; `github.token` only sees this one
+          # repository. The script decides whether the scope it got is usable
+          # and never downgrades an existing "all" snapshot — its exit code and
+          # output are passed through untouched.
+          GITHUB_TOKEN: ${{ secrets.GH_STATS_TOKEN || github.token }}
         run: python scripts/github_stats.py
+      - name: Report snapshot scope
+        env:
+          # True only when the PAT secret is configured for this repository.
+          PRIVATE_SCOPE: ${{ secrets.GH_STATS_TOKEN != '' }}
+        run: |
+          if [ "$PRIVATE_SCOPE" = "true" ]; then
+            echo "private scope: yes" | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "private scope: no" | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Detect snapshot changes
         id: changed
         run: |

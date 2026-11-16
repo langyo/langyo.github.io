@@ -140,9 +140,13 @@ toc = true                     # false 可关闭文章右侧目录
   `hk-cardgrid` `hk-postcard` `hk-postcard__link` `hk-postcard__idx` `hk-postcard__date`
   `hk-postcard__title` `hk-postcard__sum` `hk-postcard__tags`
   `hk-status` `hk-status__item` `hk-status__k` `hk-status__v`
-* GitHub 活动面板：`hk-gh` `hk-gh__stats` `hk-gh__stat` `hk-gh__stat-k` `hk-gh__stat-v`
-  `hk-gh__chart` `hk-gh__meta` `hk-gh__bars` `hk-gh__bar` `hk-gh__side`
+* 代码活动面板（科幻 HUD 三模块）：`hk-gh` `hk-gh__module` `hk-gh__module--telemetry`
+  `hk-gh__module--signal` `hk-gh__module--archive` `hk-gh__meta`
+  `hk-gh__stats` `hk-gh__stat` `hk-gh__stat-k` `hk-gh__stat-v` `hk-gh__stat-sub`
+  `hk-gh__bars` `hk-gh__bar` `hk-gh__trend` `hk-gh__trend-bar`
   `hk-gh__repos` `hk-gh__repo` `hk-gh__link` `hk-gh__repo-name` `hk-gh__repo-stars`
+  `hk-gh__streak` `hk-gh__ring` `hk-gh__ring-track` `hk-gh__ring-arc`
+  `hk-gh__streak-v` `hk-gh__streak-u` `hk-gh__streak-k`
 * 列表：`hk-pagehead` `hk-pagehead__title` `hk-pagehead__desc` `hk-pagehead__count`
   `hk-timeline` `hk-year` `hk-year__num` `hk-postlist` `hk-postrow` `hk-postrow__link`
   `hk-postrow__idx` `hk-postrow__title` `hk-postrow__date` `hk-taglist` `hk-tagrow`
@@ -203,7 +207,7 @@ just sync-hikari-tokens      # scripts/sync-hikari-tokens.py
 
 | 项 | 上限 | 主题实测 |
 |---|---|---|
-| `style.css` | 64 KB（gzip 12 KB） | **59,034 B / gzip 11,573 B** |
+| `style.css` | 64 KB（gzip 12 KB） | **63,174 B / gzip 12,232 B** |
 | `main.js` + 模块（不含 backdrop） | 14 KB | 12,217 B |
 | backdrop JS | 34 KB | 由 backdrop 组自测 |
 
