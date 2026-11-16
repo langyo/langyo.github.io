@@ -2,7 +2,15 @@
 #
 # Pages serves the output of "zola build" only — this workflow replaces the old
 # static-content deployment (static.yml, deleted) so the deployed artifact is
-# exactly what .github/workflows/checks.yml verified on the pull request.
+# the result of the same theme the checks workflow verified on the pull request.
+#
+# BASE URL (2026-11-16 fix): the canonical build (checks.yml, dockerfile,
+# local "just build") uses config.toml's base_url = https://langyo.xyz, the
+# production origin (a container behind Cloudflare). The Pages mirror lives at
+# https://langyo.github.io, so building it with langyo.xyz baked in made every
+# stylesheet/script/image URL point at the OLD production theme and the mirror
+# rendered as unstyled HTML. Configure Pages first and hand its base_url to
+# Zola so each deployment is self-consistent on its own origin.
 name: Deploy to GitHub Pages
 
 on:
@@ -31,6 +39,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      # Sets the deployment origin; its base_url output is what the artifact
+      # must reference (https://langyo.github.io today).
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@v5
       - name: Install Zola
         run: |
           set -euo pipefail
@@ -38,9 +51,7 @@ jobs:
           sudo install -m 0755 zola /usr/local/bin/zola
           zola --version
       - name: Build site
-        run: zola build
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
+        run: zola build --base-url "${{ steps.pages.outputs.base_url }}"
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
