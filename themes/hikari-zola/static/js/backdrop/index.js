@@ -8,8 +8,8 @@
  * the canvas silently. reduced-motion: manual drag only (one frame per input);
  * rAF stops on hidden tabs / off-screen anchor; saveData / deviceMemory<=4 halve.
  */
-import { buildRailgun } from './railgun.js?v=202611161730';
-import { createRenderer } from './gl.js?v=202611161730';
+import { buildRailgun } from './railgun.js?v=202611161805';
+import { createRenderer } from './gl.js?v=202611161805';
 
 const DEG = Math.PI / 180;
 const PITCH = 16 * DEG;          // base tilt
