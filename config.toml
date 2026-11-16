@@ -55,7 +55,6 @@ footer_recordation_text_moe = "萌ICP备20255233号"
 # --------------------------------------------------------------------------
 [extra.hero]
 kicker = "OPERATOR FILE"
-subtitle = "全栈工程师 · 氢能燃料电池科研"
 datalines = [
   { k = "CLASS", v = "FULL-STACK" },
   { k = "REGION", v = "SHANGHAI · CN" },
