@@ -26,6 +26,9 @@ themes/hikari-zola/
   （白 + 浅蓝 + 干净科技感）。层级靠线/切角/留白/字号反差，不靠阴影；阴影只用于 drawer 等浮层。
   hero 右侧是**全息投影舱**：发丝外框 + 四角括号 + 内层虚线投影场 + 地面椭圆辉光 + 极淡扫描线，
   舱内由 `data-hk-anchor` 锚定画布绘制点云电磁炮；小屏时退化为正文 CTA 下方的全宽横幅。
+  **交互**：舱体可拖拽旋转（`.hk-hero__figure` 是 pointer 面，按住时加 `.is-dragging`：抓取光标 +
+  括号/边框提亮 + 基座辉光略亮）；松手带惯性，idle 数秒后恢复自动缓慢旋转；
+  `prefers-reduced-motion: reduce` 下无自动旋转与惯性，只能手动拖拽（首帧静态）。
 * **符号**：`//` mono 标签、`FILE 0xNN` 编号、`◆` 菱形、四角括号 `.hk-frame`、切角
   `.hk-cut`/`hk-panel`、端点加粗分隔线、hazard 斜纹、网格/点阵底纹、十字 `.hk-tick`、
   属性条 `.hk-attr`、`SYS.STATUS` 读数、hero 扫描线。
@@ -197,9 +200,9 @@ just sync-hikari-tokens      # scripts/sync-hikari-tokens.py
 
 | 项 | 上限 | 主题实测 |
 |---|---|---|
-| `style.css` | 64 KB（gzip 12 KB） | **56,214 B / gzip 11,113 B** |
+| `style.css` | 64 KB（gzip 12 KB） | **57,142 B / gzip 11,266 B** |
 | `main.js` + 模块（不含 backdrop） | 14 KB | 12,217 B |
-| backdrop JS | 28 KB | 由 backdrop 组自测 |
+| backdrop JS | 34 KB | 由 backdrop 组自测 |
 
 ## 许可
 

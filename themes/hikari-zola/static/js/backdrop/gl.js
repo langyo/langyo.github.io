@@ -29,8 +29,8 @@ float kCore(float k) {    // hot-kernel weight
 void main() {
   float seed = aAttr.x, kind = aAttr.y, size = aAttr.z;
   vec3 p = aPos;
-  // hologram rings: spin in their own plane + bob; projector beams stay put
-  if (kind > 5.5 && kind < 6.5 && size > 2.5) {
+  // hologram rings: spin in their own plane + bob
+  if (kind > 5.5 && kind < 6.5) {
     float a = uTime * .30 + p.x * 1.7;
     float ca = cos(a), sa = sin(a);
     p = vec3(p.x, ca * p.y - sa * p.z, sa * p.y + ca * p.z);
@@ -47,7 +47,7 @@ void main() {
   gl_PointSize = max(1., size * uDpr * (.85 + .3 * seed));
   vCol = uPal[int(kind)];
   vK = kCore(kind);
-  vAlpha = kAlpha(kind) * uPulse * uGain * (1. + band) * (size < 2.5 ? .45 : 1.) * (.75 + .25 * fract(seed * 7.31));
+  vAlpha = kAlpha(kind) * uPulse * uGain * (1. + band) * (.75 + .25 * fract(seed * 7.31));
 }
 `;
 
@@ -141,6 +141,8 @@ export function createRenderer(canvas) {
 
   const mvp = new Float32Array(16);      // model matrix already in clip space
   let count = 0, hull = null, w = 1, h = 1;
+  const hc = [0, 0, 0];                  // hull centre = rotation pivot
+  let fs = 0.3, fx = 0, fy = 0;          // fixed scale + NDC centre (no per-frame fit)
 
   return {
     /** upload a cloud + its hull extremes (used for the fit) */
@@ -149,6 +151,13 @@ export function createRenderer(canvas) {
       gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
       count = data.length / 6;
       hull = hl;
+      let mnx = 1e9, mxx = -1e9, mny = 1e9, mxy = -1e9, mnz = 1e9, mxz = -1e9;
+      for (let i = 0; i < hl.length; i += 3) {
+        mnx = Math.min(mnx, hl[i]); mxx = Math.max(mxx, hl[i]);
+        mny = Math.min(mny, hl[i + 1]); mxy = Math.max(mxy, hl[i + 1]);
+        mnz = Math.min(mnz, hl[i + 2]); mxz = Math.max(mxz, hl[i + 2]);
+      }
+      hc[0] = (mnx + mxx) * 0.5; hc[1] = (mny + mxy) * 0.5; hc[2] = (mnz + mxz) * 0.5;
     },
 
     /** CSS-pixel viewport + device pixel ratio */
@@ -160,10 +169,50 @@ export function createRenderer(canvas) {
     },
 
     /**
+     * Freeze the projection: one worst-case fit over the whole yaw sweep and the
+     * pitch drag range. The gun therefore never rescales or re-centres while it
+     * turns (no per-frame bbox breathing).
+     * f = {cx, cy, w, h (NDC box), roll, p0, p1 (pitch range)}
+     */
+    setFit(f) {
+      if (!hull) return;
+      const aspect = w / h;
+      let bw = 0, bh = 0;
+      const cz2 = Math.cos(f.roll), sz2 = Math.sin(f.roll);
+      for (let i = 0; i < 32; i++) {
+        const yaw = (i / 32) * 6.2831853;
+        const cy2 = Math.cos(yaw), sy2 = Math.sin(yaw);
+        for (let j = 0; j < 3; j++) {
+          const pitch = f.p0 + (f.p1 - f.p0) * (j * 0.5);
+          const cx2 = Math.cos(pitch), sx2 = Math.sin(pitch);
+          const r0 = cz2 * cy2 - sz2 * sx2 * sy2, r1 = sz2 * cy2 + cz2 * sx2 * sy2;
+          const r3 = -sz2 * cx2, r4 = cz2 * cx2;
+          const r6 = cz2 * sy2 + sz2 * sx2 * cy2, r7 = sz2 * sy2 - cz2 * sx2 * cy2;
+          let mnx = 1e9, mxx = -1e9, mny = 1e9, mxy = -1e9;
+          for (let k = 0; k < hull.length; k += 3) {
+            const px = hull[k] - hc[0], py = hull[k + 1] - hc[1], pz = hull[k + 2] - hc[2];
+            const wx = r0 * px + r3 * py + r6 * pz;
+            const wy = r1 * px + r4 * py + r7 * pz;
+            if (wx < mnx) mnx = wx;
+            if (wx > mxx) mxx = wx;
+            if (wy < mny) mny = wy;
+            if (wy > mxy) mxy = wy;
+          }
+          bw = Math.max(bw, mxx - mnx);
+          bh = Math.max(bh, mxy - mny);
+        }
+      }
+      fs = Math.min(0.84 * f.w * aspect / (bw * 1.02), 0.70 * f.h / (bh * 1.02));
+      fx = f.cx; fy = f.cy;
+    },
+
+    /** move the (already scaled) projection centre — cheap, safe every frame */
+    setCenter(cx, cy) { fx = cx; fy = cy; },
+
+    /**
      * Draw one frame.
-     * st = {time, dark, yaw, pitch, roll, fit, bob, dim, breathe}
-     * fit = {cx, cy, w, h} in NDC: the projection box the gun must fill
-     * (bbox-adaptive scale, so the gun always uses the chamber).
+     * st = {time, dark, yaw, pitch, roll, bob, dim, breathe}; the projection
+     * box is frozen by setFit() so only the rotation changes per frame.
      */
     draw(st) {
       gl.clear(gl.COLOR_BUFFER_BIT);
@@ -177,26 +226,12 @@ export function createRenderer(canvas) {
       const r0 = cz * cy - sz * sx * sy, r1 = sz * cy + cz * sx * sy, r2 = -cx * sy;
       const r3 = -sz * cx, r4 = cz * cx, r5 = sx;
       const r6 = cz * sy + sz * sx * cy, r7 = sz * sy - cz * sx * cy, r8 = cx * cy;
-      // fit the rotated silhouette (hull extremes) into the target box
-      let mnx = 1e9, mxx = -1e9, mny = 1e9, mxy = -1e9;
-      for (let i = 0; i < hull.length; i += 3) {
-        const px = hull[i], py = hull[i + 1], pz = hull[i + 2];
-        const wx = r0 * px + r3 * py + r6 * pz;
-        const wy = r1 * px + r4 * py + r7 * pz;
-        if (wx < mnx) mnx = wx;
-        if (wx > mxx) mxx = wx;
-        if (wy < mny) mny = wy;
-        if (wy > mxy) mxy = wy;
-      }
-      const bw = mxx - mnx, bh = mxy - mny;
-      // 0.85 / 0.66 of the booth + 2% hull inflation ⇒ >=6% inset at every phase
-      const s = Math.min(0.85 * st.fit.w * aspect / (bw * 1.02), 0.66 * st.fit.h / (bh * 1.02));
-      // clip-space model matrix: ortho maps x/aspect and y directly
-      const k = s / aspect;
+      // frozen fit: rotate about the hull centre, translate to the fixed anchor
+      const s = fs, k = s / aspect;
       mvp[0] = r0 * k; mvp[4] = r3 * k; mvp[8] = r6 * k;
-      mvp[12] = st.fit.cx - (mnx + mxx) * 0.5 * k;
+      mvp[12] = fx - (r0 * hc[0] + r3 * hc[1] + r6 * hc[2]) * k;
       mvp[1] = r1 * s; mvp[5] = r4 * s; mvp[9] = r7 * s;
-      mvp[13] = st.fit.cy + (st.bob || 0) - (mny + mxy) * 0.5 * s;
+      mvp[13] = fy + (st.bob || 0) - (r1 * hc[0] + r4 * hc[1] + r7 * hc[2]) * s;
       mvp[2] = r2 * s; mvp[6] = r5 * s; mvp[10] = r8 * s;
       mvp[3] = 0; mvp[7] = 0; mvp[11] = 0; mvp[14] = 0; mvp[15] = 1;
 
