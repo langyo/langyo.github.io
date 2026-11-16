@@ -89,21 +89,44 @@
 
 .hk-postcard__link {
   @include hk-panel;
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px 12px;
   align-content: start;
   height: 100%;
   padding: 18px 18px 16px;
+  border-left: 2px solid var(--hk-line);
   color: inherit;
 
-  &:hover {
+  // Corner arrow badge: hidden until the card is hovered or keyboard-focused.
+  &::after {
+    content: "↗";
+    position: absolute;
+    top: 9px;
+    right: 12px;
+    color: var(--hk-fg-3);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1;
+    opacity: 0;
+    transition: opacity var(--duration-short) var(--ease-standard);
+  }
+
+  // Flat "illuminate" hover — no vertical displacement (spec: no translateY).
+  &:hover,
+  &:focus-visible {
     --hk-panel-bg: var(--hk-accent-soft);
+    border-left-color: var(--hk-accent);
     background: var(--hk-accent-line);
-    transform: translateY(-2px);
 
     .hk-postcard__title {
       color: var(--hk-link);
+    }
+
+    &::after {
+      color: var(--hk-accent);
+      opacity: 1;
     }
   }
 }
@@ -128,7 +151,8 @@
   line-height: 1.4;
 }
 
-.hk-postcard__sum {
+.hk-postcard__sum,
+.hk-work__desc {
   display: -webkit-box;
   grid-column: 1 / -1;
   overflow: hidden;
@@ -140,7 +164,8 @@
   -webkit-line-clamp: 3;
 }
 
-.hk-postcard__tags {
+.hk-postcard__tags,
+.hk-work__tags {
   display: flex;
   flex-wrap: wrap;
   grid-column: 1 / -1;
@@ -148,6 +173,99 @@
   margin: 2px 0 0;
   padding: 0;
   list-style: none;
+}
+
+// ── Works carousel (index) ────────────────────────────────────────────
+// Horizontal scroll-snap rail; mask fades both ends as a "more →" hint.
+.hk-works {
+  display: flex;
+  gap: 14px;
+  margin: 0;
+  padding: 0 0 4px;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 2px;
+  mask-image: linear-gradient(90deg, transparent, #000 20px, #000 calc(100% - 20px), transparent);
+}
+
+.hk-work {
+  flex: 0 0 auto;
+  width: min(320px, 84vw);
+  min-width: 0;
+  scroll-snap-align: start;
+}
+
+
+.hk-work__card {
+  @include hk-panel;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 10px;
+  align-content: start;
+  height: 100%;
+  padding: 16px;
+  border-left: 2px solid var(--hk-line);
+}
+
+// Flat "illuminate" hover, same language as the postcards (no displacement).
+.hk-work:hover .hk-work__card,
+.hk-work__card:focus-within {
+  --hk-panel-bg: var(--hk-accent-soft);
+  border-left-color: var(--hk-accent);
+  background: var(--hk-accent-line);
+
+  .hk-work__name {
+    color: var(--hk-link);
+  }
+}
+
+.hk-work__idx,
+.hk-work__stars {
+  @include hk-readout;
+  margin: 0;
+  color: var(--hk-fg-3);
+  font-size: 0.5625rem;
+  letter-spacing: 0.12em;
+}
+
+// Stars sit in the card's top-right slot regardless of DOM order.
+.hk-work__stars {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  letter-spacing: 0.04em;
+}
+
+// Optional repo link (entelecheia has no url, so it renders nothing).
+.hk-work__link {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin-top: 4px;
+  color: var(--hk-accent);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+
+  &:hover {
+    color: var(--hk-link);
+    text-decoration: underline;
+  }
+}
+
+.hk-work__name {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--hk-fg);
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+// Private-repo work chip: amber ink on the shared tag chassis.
+.hk-work__tag-pri {
+  color: var(--hk-warn-ink);
+  border-color: currentColor;
 }
 
 // ── Post rows / timeline ──────────────────────────────────────────────
@@ -543,11 +661,8 @@
   gap: 10px;
   min-width: 0;
 
-  // Span the whole right-hand stack so the ring owns the left column and the
-  // auto-placed meta/lists flow tightly down column two.
   @media (min-width: 980px) {
     grid-column: 1;
-    grid-row: 2 / span 20;
   }
 }
 
@@ -615,11 +730,14 @@
   text-transform: uppercase;
 }
 
-// Wide screens: every panel-level meta line sits in the right column. The
-// dial's own meta is expected INSIDE .hk-gh__dial (it then flows under the ring
-// and is unaffected by this rule).
-@media (min-width: 980px) {
-  .hk-gh > .hk-gh__meta {
+// Wide screens: the right-hand stack lives in its own wrapper cell.
+.hk-gh__side {
+  display: grid;
+  gap: clamp(10px, 1.4vw, 16px);
+  align-content: start;
+  min-width: 0;
+
+  @media (min-width: 980px) {
     grid-column: 2;
   }
 }
@@ -631,9 +749,6 @@
   padding: 0;
   list-style: none;
 
-  @media (min-width: 980px) {
-    grid-column: 2;
-  }
 }
 
 .hk-gh__lang {
@@ -685,12 +800,10 @@
   display: grid;
   counter-reset: gh-repo;
   margin: 0;
-  padding: 0;
+  padding: 0 2px 0 0;
   list-style: none;
-
-  @media (min-width: 980px) {
-    grid-column: 2;
-  }
+  max-height: 232px;
+  overflow-y: auto;
 }
 
 .hk-gh__repo {
@@ -763,10 +876,12 @@
 
 .hk-gh__repo-stars {
   flex: none;
+  min-width: 3.2rem;
   color: var(--hk-fg-3);
   font-family: var(--font-mono);
   font-size: 0.625rem;
   font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 // The template prints a SYNCED footer line after the panel.

@@ -82,6 +82,31 @@
 <main id="main" class="hk-main">
   {% include "partials/hero.html" %}
 
+  <section class="hk-section hk-section--works">
+    <header class="hk-section__head">
+      <p class="hk-section__label">// WORKS</p>
+      <h2 class="hk-section__title">主要作品</h2>
+      <span class="hk-section__more">SCROLL →</span>
+    </header>
+    <ul class="hk-works">
+      {% for w in config.extra.works | default(value=[]) %}
+      <li class="hk-work">
+        <div class="hk-work__card">
+          <p class="hk-work__idx">WORK 0x{{ loop.index0 }}</p>
+          <h3 class="hk-work__name">{{ w.name | default(value="") }}</h3>
+          <p class="hk-work__desc">{{ w.desc | default(value="") }}</p>
+          <ul class="hk-work__tags">
+            {% for t in w.tags | default(value=[]) %}<li class="hk-tag">{{ t }}</li>{% endfor %}
+            {% if w.pri %}<li class="hk-tag hk-work__tag-pri">PRI</li>{% endif %}
+          </ul>
+          {% if w.stars %}<span class="hk-work__stars">★ {{ w.stars }}</span>{% endif %}
+          {% if w.url %}<a class="hk-work__link" href="{{ w.url | safe }}" target="_blank" rel="noopener noreferrer">GITHUB ↗</a>{% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+
   <section class="hk-section hk-section--latest">
     <header class="hk-section__head">
       <p class="hk-section__label">// RECENT LOGS</p>
@@ -122,8 +147,9 @@
 </div>
 
 
-      <p class="hk-gh__meta">// LANGS</p>
-      <ul class="hk-gh__langs">
+      <div class="hk-gh__side">
+        <p class="hk-gh__meta">// LANGS</p>
+        <ul class="hk-gh__langs">
         {% for lang in gh_langs %}{% set gh_ln = lang.n | default(value=0) %}{% set gh_lit = ((gh_ln / gh_lang_max) * 10) | round | int %}{% if gh_lit < 0 %}{% set gh_lit = 0 %}{% endif %}{% if gh_lit > 10 %}{% set gh_lit = 10 %}{% endif %}<li class="hk-gh__lang"><span class="hk-gh__lang-name">{{ lang.l | default(value="") }}</span><span class="hk-gh__lang-dots">{% for j in range(end=10) %}<i class="hk-gh__lang-dot{% if j < gh_lit %} hk-gh__lang-dot--on{% endif %}"></i>{% endfor %}</span><span class="hk-gh__lang-n">{{ gh_ln }}</span></li>{% endfor %}
       </ul>
 
@@ -132,7 +158,8 @@
         {% for r in gh_top %}{% set repo_url = r.url | default(value="https://github.com/langyo") %}{% set repo_name = r.name | default(value="") %}{% set repo_stars = r.stars | default(value=0) %}{% set repo_private = r.private | default(value=false) %}<li class="hk-gh__repo"><a class="hk-gh__link" href="{{ repo_url | safe }}"><span class="hk-gh__repo-name">{{ repo_name }}</span>{% if repo_private %}<span class="hk-gh__repo-tag hk-gh__repo-tag--pri">PRI</span>{% else %}<span class="hk-gh__repo-tag hk-gh__repo-tag--pub">PUB</span>{% endif %}<span class="hk-gh__repo-stars">★ {{ repo_stars }}</span></a></li>{% endfor %}
       </ul>
 
-      <p class="hk-gh__meta">SYNCED {{ gh_synced }} · SCOPE {{ gh_scope }}</p>
+        <p class="hk-gh__meta">SYNCED {{ gh_synced }} · SCOPE {{ gh_scope }}</p>
+      </div>
     </div>
   </section>
 </main>
