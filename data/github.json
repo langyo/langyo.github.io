@@ -1325,7 +1325,7 @@
       "d": "2026-10-11"
     },
     {
-      "c": 261,
+      "c": 253,
       "d": "2026-10-12"
     },
     {
@@ -1465,11 +1465,11 @@
       "d": "2026-11-15"
     },
     {
-      "c": 140,
+      "c": 160,
       "d": "2026-11-16"
     }
   ],
-  "fetched_at": "2026-11-16T08:28:08Z",
+  "fetched_at": "2026-11-16T10:27:33Z",
   "langs": [
     {
       "l": "Rust",
@@ -1656,7 +1656,7 @@
       "d": "2026-11-15"
     },
     {
-      "c": 140,
+      "c": 160,
       "d": "2026-11-16"
     }
   ],
@@ -1665,7 +1665,7 @@
     "public": 159,
     "total": 211
   },
-  "schema": 3,
+  "schema": 4,
   "scope": "all",
   "streak": {
     "current": 141,
@@ -1675,43 +1675,55 @@
     {
       "lang": "",
       "name": "MCBBS-Client",
+      "private": false,
       "stars": 44,
       "url": "https://github.com/langyo/MCBBS-Client"
     },
     {
       "lang": "Python",
       "name": "minecraft-mod-mcp",
+      "private": false,
       "stars": 43,
       "url": "https://github.com/langyo/minecraft-mod-mcp"
     },
     {
       "lang": "",
       "name": "cppworld",
+      "private": false,
       "stars": 32,
       "url": "https://github.com/langyo/cppworld"
     },
     {
       "lang": "",
       "name": "redstone-computer-technology",
+      "private": false,
       "stars": 19,
       "url": "https://github.com/langyo/redstone-computer-technology"
     },
     {
       "lang": "Rust",
-      "name": "wowsp",
-      "stars": 17,
-      "url": "https://github.com/langyo/wowsp"
+      "name": "metis",
+      "private": true,
+      "stars": 0,
+      "url": "https://github.com/langyo/metis"
+    },
+    {
+      "lang": "Rust",
+      "name": "easy-hydro-erp",
+      "private": true,
+      "stars": 0,
+      "url": "https://github.com/langyo/easy-hydro-erp"
     }
   ],
   "totals": {
-    "contributions_private_year": 15563,
-    "contributions_year": 33241,
+    "contributions_private_year": 15560,
+    "contributions_year": 33253,
     "stars": 307
   },
   "types": {
-    "ISSUE": 9,
-    "PR": 164,
-    "PUSH": 54,
+    "ISSUE": 10,
+    "PR": 165,
+    "PUSH": 57,
     "REVIEW": 0
   },
   "weeks": [
@@ -1740,7 +1752,7 @@
       "w": "2026-10-04"
     },
     {
-      "c": 1252,
+      "c": 1244,
       "w": "2026-10-11"
     },
     {
@@ -1760,7 +1772,7 @@
       "w": "2026-11-08"
     },
     {
-      "c": 377,
+      "c": 397,
       "w": "2026-11-15"
     }
   ]

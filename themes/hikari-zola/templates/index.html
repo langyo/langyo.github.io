@@ -46,7 +46,7 @@
   {% if gh_stars_n > 0 %}{% set gh_stars_v = gh_stars_n %}{% endif %}
   {% if gh_followers_n > 0 %}{% set gh_followers_v = gh_followers_n %}{% endif %}
   {% if gh_contrib_n > 0 %}{% set gh_contrib_v = gh_contrib_n %}{% endif %}
-  {% if gh_pub > 0 %}{% set gh_repos_sub = gh_pub ~ " PUB · <b>" ~ gh_pri ~ " PRI</b>" %}{% endif %}
+  {% if gh_pub > 0 %}{% set gh_repos_sub = gh_pub ~ " PUB · " ~ gh_pri ~ " PRI" %}{% endif %}
   {% if gh_stars_n > 0 %}{% set gh_stars_sub = "PUB ONLY" %}{% endif %}
 
   {% set gh_recent = gh.recent28 | default(value=[]) %}
@@ -72,6 +72,29 @@
   {% set_global gh_w = w.c | default(value=0) %}
   {% if gh_w > gh_weeks_max %}{% set_global gh_weeks_max = gh_w %}{% endif %}
 {% endfor %}
+{#- oscilloscope: 28 samples, x=i*10 (0..270), y=72-(c/max)*66 -> y in 6..72 of the 280x80 viewBox -#}
+{% set_global gh_wave_pts = "" %}
+{% set_global gh_wave_total = 0 %}
+{% set_global gh_wave_peak = 0 %}
+{% for d in gh_recent %}
+  {% set_global gh_c = d.c | default(value=0) %}
+  {% set_global gh_wave_total = gh_wave_total + gh_c %}
+  {% if gh_c > gh_wave_peak %}{% set_global gh_wave_peak = gh_c %}{% endif %}
+  {% set_global gh_y = (72 - ((gh_c * 66) / gh_recent_max)) | round | int %}
+  {% set_global gh_x = loop.index0 * 10 %}
+  {% set_global gh_wave_pts = gh_wave_pts ~ gh_x ~ "," ~ gh_y ~ " " %}
+{% endfor %}
+{% if not gh_wave_pts %}{% set gh_wave_pts = "0,72 270,72" %}{% endif %}
+{% set gh_wave_points = gh_wave_pts | trim %}
+{% set gh_recent_count = gh_recent | length %}
+{% set gh_peak_v = "—" %}
+{% set gh_avg_v = "—" %}
+{% set gh_total_v = "—" %}
+{% if gh_recent_count > 0 %}
+  {% set gh_peak_v = gh_wave_peak %}
+  {% set gh_total_v = gh_wave_total %}
+  {% set gh_avg_v = (gh_wave_total / gh_recent_count) | round | int %}
+{% endif %}
 {#- streak ring: round(current/longest*100), clamp 0..100, 6% visual baseline -#}
 {% set gh_ring = 0 %}
 {% if gh_best_n > 0 %}
@@ -106,20 +129,24 @@
       <div class="hk-gh__module hk-gh__module--telemetry">
         <p class="hk-gh__meta">// TELEMETRY</p>
         <ul class="hk-gh__stats">
-          <li class="hk-gh__stat"><span class="hk-gh__stat-k">REPOS</span><span class="hk-gh__stat-v">{{ gh_repos_v }}</span>{% if gh_repos_sub %}<span class="hk-gh__stat-sub">{{ gh_repos_sub | safe }}</span>{% endif %}</li>
+          <li class="hk-gh__stat"><span class="hk-gh__stat-k">REPOS</span><span class="hk-gh__stat-v">{{ gh_repos_v }}</span>{% if gh_repos_sub %}<span class="hk-gh__stat-sub">{{ gh_repos_sub }}</span>{% endif %}</li>
           <li class="hk-gh__stat"><span class="hk-gh__stat-k">STARS</span><span class="hk-gh__stat-v">{{ gh_stars_v }}</span>{% if gh_stars_sub %}<span class="hk-gh__stat-sub">{{ gh_stars_sub }}</span>{% endif %}</li>
           <li class="hk-gh__stat"><span class="hk-gh__stat-k">FOLLOWERS</span><span class="hk-gh__stat-v">{{ gh_followers_v }}</span></li>
           <li class="hk-gh__stat"><span class="hk-gh__stat-k">CONTRIB · 1Y</span><span class="hk-gh__stat-v">{{ gh_contrib_v }}</span></li>
         </ul>
       </div>
-      <div class="hk-gh__module hk-gh__module--signal">
-        <p class="hk-gh__meta">// SIGNAL · 28D</p>
-        <ul class="hk-gh__bars">
-          {% for d in gh_recent %}{% set gh_c = d.c | default(value=0) %}{% set gh_pct = ((gh_c * 100) / gh_recent_max) | round | int %}{% if gh_pct < 6 %}{% set gh_pct = 6 %}{% endif %}{% if gh_pct > 100 %}{% set gh_pct = 100 %}{% endif %}<li class="hk-gh__bar" style="--v: {{ gh_pct }}%" title="{{ d.d | default(value="") }} · {{ gh_c }}"></li>{% endfor %}
-        </ul>
-        <p class="hk-gh__meta">// TREND · 12W</p>
-        <ul class="hk-gh__trend">
-          {% for w in gh_weeks %}{% set gh_w = w.c | default(value=0) %}{% set gh_wpct = ((gh_w * 100) / gh_weeks_max) | round | int %}{% if gh_wpct < 6 %}{% set gh_wpct = 6 %}{% endif %}{% if gh_wpct > 100 %}{% set gh_wpct = 100 %}{% endif %}<li class="hk-gh__trend-bar" style="--v: {{ gh_wpct }}%" title="{{ w.w | default(value="") }} · {{ gh_w }}"></li>{% endfor %}
+      <div class="hk-gh__module hk-gh__module--trace">
+        <div class="hk-gh__scope">
+          <svg class="hk-gh__wave" viewBox="0 0 280 80" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+            <polyline class="hk-gh__wave-glow" points="{{ gh_wave_points }}"/>
+            <polyline class="hk-gh__wave-line" points="{{ gh_wave_points }}"/>
+          </svg>
+          <i class="hk-gh__beam" aria-hidden="true"></i>
+        </div>
+        <p class="hk-gh__meta">PEAK {{ gh_peak_v }} · AVG {{ gh_avg_v }} · TOT {{ gh_total_v }}</p>
+        <p class="hk-gh__meta">// PULSE · 12W</p>
+        <ul class="hk-gh__pulse">
+          {% for w in gh_weeks %}{% set gh_w = w.c | default(value=0) %}{% set gh_wpct = ((gh_w * 100) / gh_weeks_max) | round | int %}{% if gh_wpct < 6 %}{% set gh_wpct = 6 %}{% endif %}{% if gh_wpct > 100 %}{% set gh_wpct = 100 %}{% endif %}<li class="hk-gh__pulse-node" style="--v: {{ gh_wpct }}%"></li>{% endfor %}
         </ul>
       </div>
       <div class="hk-gh__module hk-gh__module--archive">
@@ -129,13 +156,15 @@
           {% set repo_url = r.url | default(value="https://github.com/langyo") %}
           {% set repo_name = r.name | default(value="") %}
           {% set repo_stars = r.stars | default(value=0) %}
-          <li class="hk-gh__repo"><a class="hk-gh__link" href="{{ repo_url | safe }}"><span class="hk-gh__repo-name">{{ repo_name }}</span><span class="hk-gh__repo-stars">★ {{ repo_stars }}</span></a></li>
+          {% set repo_private = r.private | default(value=false) %}
+          <li class="hk-gh__repo"><a class="hk-gh__link" href="{{ repo_url | safe }}"><span class="hk-gh__repo-name">{{ repo_name }}</span>{% if repo_private %}<span class="hk-gh__repo-tag hk-gh__repo-tag--pri">PRI</span>{% else %}<span class="hk-gh__repo-tag hk-gh__repo-tag--pub">PUB</span>{% endif %}<span class="hk-gh__repo-stars">★ {{ repo_stars }}</span></a></li>
           {% endfor %}
         </ul>
         <div class="hk-gh__streak">
           <svg class="hk-gh__ring" viewBox="0 0 36 36" aria-hidden="true" focusable="false">
             <circle class="hk-gh__ring-track" cx="18" cy="18" r="15.5" pathLength="100"/>
             <circle class="hk-gh__ring-arc" cx="18" cy="18" r="15.5" pathLength="100" style="--p: {{ gh_ring }}"/>
+            <line class="hk-gh__sweep" x1="18" y1="18" x2="18" y2="2.5"/>
           </svg>
           <span class="hk-gh__streak-v">{{ gh_cur_v }}{% if gh_cur_n > 0 %}<span class="hk-gh__streak-u">D</span>{% endif %}</span>
           <span class="hk-gh__streak-k">STREAK · BEST {{ gh_best_v }}{% if gh_best_n > 0 %}D{% endif %}</span>

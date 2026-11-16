@@ -65,6 +65,10 @@
   --hk-link: rgb(31 111 208);
   --hk-ink: rgb(var(--color-text));
   --hk-on-ink: rgb(var(--color-background));
+  // Instrument inset (oscilloscope/terminal glass): dark in BOTH themes, so the
+  // phosphor trace always reads as light-on-dark. Pinned literal per contract
+  // palette; dark mode deepens it one step in hk-dark-seeds.
+  --hk-screen: rgb(10 26 40);
   --hk-shadow-1: 0 1px 2px rgb(0 0 0 / 16%);
   --hk-shadow-2: 0 12px 32px rgb(0 0 0 / 24%);
   --hk-page-max: 1180px;
@@ -110,6 +114,7 @@
   --hk-link: rgb(140 209 255);
   --hk-fg-3: rgb(var(--color-text-tertiary));
   --hk-warn-ink: rgb(var(--color-accent));
+  --hk-screen: rgb(5 15 24);
   color-scheme: dark;
 }
 
