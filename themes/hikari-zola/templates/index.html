@@ -3,11 +3,36 @@
 {% import "partials/icons.html" as icons %}
 {% block content %}
 {% set posts = get_section(path="posts/_index.md") %}
-{% set tags_tax = get_taxonomy(kind="tags") %}
-{% set entry_count = posts.pages | length %}
-{% set tag_count = tags_tax.items | length %}
-{% set latest_date = "" %}
-{% if posts.pages %}{% set latest_date = posts.pages | first | get(key="date") | date(format="%Y.%m.%d") %}{% endif %}
+{% set gh = load_data(path="data/github.json", required=false) %}
+{% set gh_login = "langyo" %}
+{% set gh_repos = "—" %}
+{% set gh_stars = "—" %}
+{% set gh_followers = "—" %}
+{% set gh_contrib = "—" %}
+{% set gh_recent = [] %}
+{% set gh_top = [] %}
+{% set gh_streak_current = "—" %}
+{% set gh_streak_longest = "—" %}
+{% set gh_synced = "—" %}
+{% if gh %}
+  {% set gh_login = gh.login | default(value=gh_login) %}
+  {% set gh_repos = gh.totals.repos_scanned | default(value="—") %}
+  {% set gh_stars = gh.totals.stars | default(value="—") %}
+  {% set gh_followers = gh.profile.followers | default(value="—") %}
+  {% set gh_contrib = gh.totals.contributions_year | default(value="—") %}
+  {% set gh_recent = gh.recent28 | default(value=[]) %}
+  {% set gh_top = gh.top_repos | default(value=[]) %}
+  {% set gh_streak_current = gh.streak.current | default(value="—") %}
+  {% set gh_streak_longest = gh.streak.longest | default(value="—") %}
+  {% if gh.fetched_at %}{% set gh_synced = gh.fetched_at | date(format="%Y.%m.%d") %}{% endif %}
+{% endif %}
+{% set_global gh_recent_total = 0 %}
+{% set_global gh_max = 1 %}
+{% for d in gh_recent %}
+  {% set_global gh_c = d.c | default(value=0) %}
+  {% set_global gh_recent_total = gh_recent_total + gh_c %}
+  {% if gh_c > gh_max %}{% set_global gh_max = gh_c %}{% endif %}
+{% endfor %}
 <main id="main" class="hk-main">
   {% include "partials/hero.html" %}
 
@@ -26,42 +51,39 @@
     {% endif %}
   </section>
 
-  <section class="hk-section hk-section--about">
-    <header class="hk-section__head">
-      <p class="hk-section__label">// OPERATOR</p>
-      <h2 class="hk-section__title">关于</h2>
-      <a class="hk-section__more" href="/about/">完整档案 {{ icons::arrow_right(size=14) }}</a>
-    </header>
-    <div class="hk-aboutteaser">
-      <div>
-        <ul class="hk-dossier__attrs">
-          {% for a in config.extra.profile.attributes | default(value=[]) | slice(end=4) %}
-          <li class="hk-attr"><span class="hk-attr__k">{{ a.k }}</span><span class="hk-attr__bar"><i class="hk-attr__fill" style="--v: {{ a.v }}%"></i></span><span class="hk-attr__v">{{ a.v }}</span></li>
-          {% endfor %}
-        </ul>
-        <ul class="hk-tags">
-          {% for r in config.extra.profile.roles | default(value=[]) %}<li class="hk-tag">{{ r }}</li>{% endfor %}
-        </ul>
-      </div>
-      <div>
-        <p class="hk-dossier__handle">{{ config.extra.profile.name | default(value="") }}{% if config.extra.profile.location %} / {{ config.extra.profile.location }}{% endif %}</p>
-        <a class="hk-btn hk-btn--ghost" href="/about/">操作员档案</a>
-      </div>
-    </div>
-  </section>
-
   <section class="hk-section hk-section--status">
     <header class="hk-section__head">
-      <p class="hk-section__label">// SYSTEM</p>
-      <h2 class="hk-section__title">状态读数</h2>
+      <p class="hk-section__label">// GITHUB · ACTIVITY</p>
+      <h2 class="hk-section__title">代码活动</h2>
+      <a class="hk-section__more" href="https://github.com/langyo" target="_blank" rel="noopener noreferrer">@langyo</a>
     </header>
-    <ul class="hk-status">
-      {{ m::status_item(k="ENTRIES", v=entry_count) }}
-      {{ m::status_item(k="TAGS", v=tag_count) }}
-      {% if latest_date %}{{ m::status_item(k="LAST", v=latest_date) }}{% endif %}
-      {{ m::status_item(k="BUILD", v=now() | date(format="%Y.%m.%d")) }}
-      {{ m::status_item(k="NODE", v=config.base_url | replace(from="https://", to="") | replace(from="http://", to="")) }}
-    </ul>
+    <div class="hk-gh">
+      <ul class="hk-gh__stats">
+        <li class="hk-gh__stat"><span class="hk-gh__stat-k">REPOS</span><span class="hk-gh__stat-v">{{ gh_repos }}</span></li>
+        <li class="hk-gh__stat"><span class="hk-gh__stat-k">STARS</span><span class="hk-gh__stat-v">{{ gh_stars }}</span></li>
+        <li class="hk-gh__stat"><span class="hk-gh__stat-k">FOLLOWERS</span><span class="hk-gh__stat-v">{{ gh_followers }}</span></li>
+        <li class="hk-gh__stat"><span class="hk-gh__stat-k">CONTRIB · 1Y</span><span class="hk-gh__stat-v">{{ gh_contrib }}</span></li>
+      </ul>
+      <div class="hk-gh__chart">
+        <p class="hk-gh__meta">// LAST 28 DAYS · {{ gh_recent_total }}</p>
+        <ul class="hk-gh__bars">
+          {% for d in gh_recent %}{% set gh_c = d.c | default(value=0) %}{% set gh_d = d.d | default(value="") %}{% set gh_pct = ((gh_c * 100) / gh_max) | round(method="floor") | int %}{% if gh_pct < 6 %}{% set gh_pct = 6 %}{% endif %}<li class="hk-gh__bar" style="--v: {{ gh_pct }}%" title="{{ gh_d }} · {{ gh_c }}"></li>{% endfor %}
+        </ul>
+      </div>
+      <div class="hk-gh__side">
+        <p class="hk-gh__meta">// TOP REPOS</p>
+        <ul class="hk-gh__repos">
+          {% for r in gh_top %}
+          {% set repo_url = r.url | default(value="https://github.com/langyo") %}
+          {% set repo_name = r.name | default(value="") %}
+          {% set repo_stars = r.stars | default(value=0) %}
+          <li class="hk-gh__repo"><a class="hk-gh__link" href="{{ repo_url | safe }}"><span class="hk-gh__repo-name">{{ repo_name }}</span><span class="hk-gh__repo-stars">{{ repo_stars }}</span></a></li>
+          {% endfor %}
+        </ul>
+        <p class="hk-gh__meta">// STREAK {{ gh_streak_current }}D · BEST {{ gh_streak_longest }}D</p>
+      </div>
+    </div>
+    <p class="hk-gh__meta">SYNCED {{ gh_synced }} · @{{ gh_login }}</p>
   </section>
 </main>
 {% endblock content %}

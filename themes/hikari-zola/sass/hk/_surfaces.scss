@@ -415,29 +415,187 @@
   line-height: 1.45;
 }
 
-// ── About teaser (index) ───────────────────────────────────────────────
-.hk-aboutteaser {
+// ── GitHub activity panel (index) ─────────────────────────────────────
+// Three-bay HUD panel: readout cells · 28-day contribution bars · top repos.
+// Everything is token-driven so light/dark (and the accent gradient) follow the
+// palette; numbers use tabular figures so columns never jitter.
+.hk-gh {
   @include hk-panel;
   display: grid;
-  align-items: start;
-  gap: 14px 32px;
-  padding: clamp(18px, 2.4vw, 28px);
+  gap: clamp(16px, 2.2vw, 26px);
+  padding: clamp(16px, 2.2vw, 24px);
 
-  // The teaser reuses the dossier attribute list / tag row; strip the card
-  // framing there so it reads as a summary panel, not a second ID card.
-  .hk-dossier__attrs {
-    margin-top: 0;
-    padding-top: 0;
-    border-top: 0;
+  @media (min-width: 900px) {
+    // The left bay carries four readouts, so it gets the extra width; the chart
+    // keeps the largest share.
+    grid-template-columns: minmax(300px, 1.16fr) minmax(0, 1.34fr) minmax(200px, 0.82fr);
+    align-items: start;
+  }
+}
+
+// Four readouts: 4-up inside the left bay on desktop, 2x2 once stacked.
+.hk-gh__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @media (min-width: 900px) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.hk-gh__stat {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 7px 8px;
+  border: var(--hk-hair) solid var(--hk-line);
+  background: var(--hk-sunken);
+}
+
+.hk-gh__stat-k {
+  overflow-wrap: anywhere;
+  color: var(--hk-fg-3);
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.hk-gh__stat-v {
+  overflow: hidden;
+  color: var(--hk-fg);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.hk-gh__chart {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.hk-gh__meta {
+  margin: 0;
+  color: var(--hk-fg-3);
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+// 28 slim bars on a fixed-height baseline; each height comes from --v.
+// (The template emits a <ul>, so the list defaults are reset here.)
+.hk-gh__bars {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(2px, 1fr);
+  align-items: end;
+  gap: 3px;
+  height: 104px;
+  padding-bottom: 2px;
+  border-bottom: var(--hk-hair) solid var(--hk-line);
+}
+
+.hk-gh__bar {
+  position: relative;
+  display: block;
+  height: 100%;
+  min-width: 0;
+
+  // Always leaves a 2px mark on the baseline, so zero days still read.
+  &::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: max(var(--v, 0%), 2px);
+    border-radius: 1px 1px 0 0;
+    background: linear-gradient(to top, rgb(var(--color-primary) / 55%), rgb(var(--hk-cyanish) / 85%));
+    transition: filter var(--duration-short) var(--ease-standard);
   }
 
-  .hk-tags {
-    margin-top: 12px;
+  &:hover::after {
+    filter: brightness(1.18);
   }
+}
 
-  @media (min-width: 860px) {
-    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+.hk-gh__side {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  min-width: 0;
+}
+
+.hk-gh__repos {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hk-gh__repo {
+  min-width: 0;
+  border-bottom: var(--hk-hair) solid var(--hk-line);
+}
+
+.hk-gh__link {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 0;
+  color: var(--hk-fg-2);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--hk-fg);
+
+    .hk-gh__repo-name {
+      color: var(--hk-link);
+    }
   }
+}
+
+.hk-gh__repo-name {
+  overflow: hidden;
+  color: var(--hk-fg);
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-gh__repo-stars {
+  flex: none;
+  color: var(--hk-fg-3);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 899px) {
+  .hk-gh__bars {
+    height: 88px;
+  }
+}
+
+// The template prints a "SYNCED … · @langyo" footer line right after the panel;
+// give it breathing room without adding markup.
+.hk-gh + .hk-gh__meta {
+  margin-top: 10px;
 }
 
 // ── 404 ────────────────────────────────────────────────────────────────
@@ -478,22 +636,6 @@
   -webkit-mask: url("/img/sword-mark.svg") center / contain no-repeat;
   mask: url("/img/sword-mark.svg") center / contain no-repeat;
   opacity: 0.1;
-  pointer-events: none;
-}
-
-// Alice silhouette watermarked into the index "about" panel.
-.hk-aboutteaser::after {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  right: 8px;
-  bottom: -6px;
-  width: min(240px, 42%);
-  height: 112%;
-  background: var(--hk-fg-3);
-  -webkit-mask: url("/img/silhouette-alice.svg") right bottom / contain no-repeat;
-  mask: url("/img/silhouette-alice.svg") right bottom / contain no-repeat;
-  opacity: 0.14;
   pointer-events: none;
 }
 
