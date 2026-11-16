@@ -80,6 +80,7 @@ export function mountBackdrop(el, opts = {}) {
   if (variant === 'off') { el.style.display = 'none'; return null; }
 
   const canvas = prepare(el);
+  canvas.style.display = 'none';        // shown only after a correctly sized draw
   // ambient must be dimmed (0.25) unless the CSS already did
   if (variant === 'ambient'
       && parseFloat(getComputedStyle(el).opacity) * parseFloat(getComputedStyle(canvas).opacity) >= 1) {
@@ -95,17 +96,32 @@ export function mountBackdrop(el, opts = {}) {
     try { anchor = document.querySelector(sel.trim()); } catch (e) { anchor = null; }
   }
 
-  let renderer = null;
-  try { renderer = createRenderer(canvas); } catch (e) { renderer = null; }
-  if (!renderer) { canvas.style.display = 'none'; return null; }   // silent fallback
-
-  const ctrl = { variant, count: 0, stats: { buildMs: 0, firstFrameMs: 0 }, destroy: null };
+  const ctrl = { variant, count: 0, stats: { buildMs: 0, firstFrameMs: 0 }, destroy: () => {} };
   el.__hkBackdrop = ctrl;
 
+  // context creation can fail transiently right after load → retry once, then hide
+  let renderer = null;
+  const makeRenderer = () => {
+    try { return createRenderer(canvas); } catch (e) { return null; }
+  };
+  renderer = makeRenderer();
+  if (!renderer) {
+    setTimeout(() => {
+      renderer = makeRenderer();
+      if (renderer) boot();
+      else canvas.style.display = 'none';
+    }, 500);
+    return ctrl;
+  }
+
+    boot();
+  return ctrl;
+
+  function boot() {
   const st = {
     yaw: REST_YAW, pitchD: 0, vel: SPIN,
     w: 0, h: 0, dpr: 0, last: 0, raf: 0, running: false,
-    fitW: 0, fitH: 0, gunOn: true, idle: 0,
+    fitW: 0, fitH: 0, gunOn: true, idle: 0, ready: false, bad: 0,
   };
   let drag = null;
 
@@ -114,10 +130,9 @@ export function mountBackdrop(el, opts = {}) {
     const vw = st.w || innerWidth, vh = st.h || innerHeight;
     if (anchor) {
       const r = anchor.getBoundingClientRect();
-      if (r.width > 40 && r.height > 30) {
-        return { cx: r.left + r.width * 0.5, cy: r.top + r.height * 0.46, w: r.width, h: r.height,
-          on: r.bottom > -160 && r.top < vh + 160 };
-      }
+      if (r.width < 8 || r.height < 8) return null;        // layout not settled: retry
+      return { cx: r.left + r.width * 0.5, cy: r.top + r.height * 0.46, w: r.width, h: r.height,
+        on: r.bottom > -160 && r.top < vh + 160 };
     }
     return variant === 'ambient'
       ? { cx: vw * 0.58, cy: vh * 0.52, w: vw * 0.55, h: vh * 0.55, on: true }
@@ -128,6 +143,8 @@ export function mountBackdrop(el, opts = {}) {
   const place = () => {
     const vw = st.w || innerWidth, vh = st.h || innerHeight;
     const b = box();
+    if (!b) return false;
+    st.ready = true;
     const cx = (2 * b.cx) / vw - 1, cy = 1 - (2 * b.cy) / vh;
     const bw = (2 * b.w) / vw, bh = (2 * b.h) / vh;
     if (Math.abs(bw - st.fitW) > 0.002 || Math.abs(bh - st.fitH) > 0.002) {
@@ -137,14 +154,15 @@ export function mountBackdrop(el, opts = {}) {
       renderer.setCenter(cx, cy);
     }
     st.gunOn = b.on;
+    return true;
   };
 
   const draw = (now, first) => {
-    if (!st.w) return;
+    sizeTo();                                  // self-heal the drawing buffer
+    if (!st.w || !place()) return;             // per-frame: glued to the booth
     const t = now / 1000;
     const dt = st.last ? Math.min(0.05, t - st.last) : 0.016;
     st.last = t;
-    place();                                   // per-frame: glued to the booth
     if (!reduced && !drag) {
       if (now - st.idle > IDLE) st.vel += (SPIN - st.vel) * Math.min(1, dt * 2.2);
       else st.vel *= Math.pow(0.92, dt * 60);
@@ -160,6 +178,7 @@ export function mountBackdrop(el, opts = {}) {
       dim: st.w < 560 ? 0.85 : 1,
       breathe: !reduced,
     });
+    canvas.style.display = 'block';            // first good frame → visible
     if (first) ctrl.stats.firstFrameMs = performance.now() - t0;
   };
 
@@ -172,11 +191,13 @@ export function mountBackdrop(el, opts = {}) {
     ctrl.stats.buildMs = performance.now() - t;
   };
 
-  const resize = () => {
+  /** enforce canvas.width/height = viewport × dpr; true when it changed */
+  const sizeTo = () => {
     const w = Math.max(1, el.clientWidth || innerWidth);
     const h = Math.max(1, el.clientHeight || innerHeight);
     const dpr = Math.min(window.devicePixelRatio || 1, lowPower() ? 1.5 : DPR_CAP);
-    if (w === st.w && h === st.h && dpr === st.dpr) { place(); return; }
+    const bw = Math.round(w * dpr), bh = Math.round(h * dpr);
+    if (w === st.w && h === st.h && dpr === st.dpr && canvas.width === bw && canvas.height === bh) return false;
     st.w = w; st.h = h; st.dpr = dpr;
     st.fitW = st.fitH = 0;                     // force a refit at the new size
     canvas.style.width = w + 'px';
@@ -184,6 +205,11 @@ export function mountBackdrop(el, opts = {}) {
     renderer.resize(w, h, dpr);
     const want = pointCount(el);
     if (!ctrl.count || Math.abs(want - ctrl.count) / ctrl.count > 0.2) build();
+    return true;
+  };
+
+  const resize = () => {
+    sizeTo();
     place();
     if (reduced || !st.running) draw(performance.now(), !ctrl.stats.firstFrameMs);
   };
@@ -191,7 +217,9 @@ export function mountBackdrop(el, opts = {}) {
   const frame = (now) => {
     if (!st.running) return;
     st.raf = requestAnimationFrame(frame);
-    try { draw(now, false); } catch (e) { stop(); canvas.style.display = 'none'; }
+    try { draw(now, false); st.bad = 0; } catch (e) {
+      if (++st.bad > 10) { stop(); canvas.style.display = 'none'; }
+    }
   };
   const start = () => {
     if (reduced || st.running) return;
@@ -205,8 +233,17 @@ export function mountBackdrop(el, opts = {}) {
     st.raf = 0;
   };
   const sync = () => {
-    if (reduced) { if (!ctrl.stats.firstFrameMs) draw(performance.now(), true); return; }
+    if (reduced) { draw(performance.now(), !ctrl.stats.firstFrameMs); return; }
     if (st.gunOn && !document.hidden) start(); else stop();
+  };
+  /** retry (n × 100 ms) until the booth has a usable rect; keeps the page alive */
+  const kick = (n) => {
+    if (n <= 0 || ctrl.destroyed) return;
+    setTimeout(() => {
+      if (ctrl.destroyed) return;
+      resize();
+      if (place()) sync(); else kick(n - 1);
+    }, 100);
   };
 
   /* drag to spin (on the anchor), plus scroll / resize / visibility */
@@ -262,7 +299,9 @@ export function mountBackdrop(el, opts = {}) {
   if (mqDarkChange.addEventListener) mqDarkChange.addEventListener('change', onTheme);
 
   ctrl.destroy = () => {
+    ctrl.destroyed = true;
     stop();
+    if (ro) ro.disconnect();
     mo.disconnect();
     if (mqDarkChange.removeEventListener) mqDarkChange.removeEventListener('change', onTheme);
     document.removeEventListener('visibilitychange', onVis);
@@ -282,7 +321,26 @@ export function mountBackdrop(el, opts = {}) {
 
   resize();                       // sizes the canvas + renders the first frame
   sync();                         // start the loop unless reduced motion / offscreen
-  return ctrl;
+  kick(30);                       // up to ~3 s of retries while layout settles
+
+  // late-layout hooks: fonts / load / first frames / booth resize all re-place
+  addEventListener('load', () => { resize(); sync(); });
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => { resize(); sync(); }).catch(() => {});
+  }
+  let rafN = 0;
+  const firstFrames = () => {
+    if (ctrl.destroyed) return;
+    resize();
+    if (++rafN < 3) requestAnimationFrame(firstFrames);
+  };
+  requestAnimationFrame(firstFrames);
+  let ro = null;
+  if (window.ResizeObserver) {
+    ro = new ResizeObserver(() => { resize(); sync(); });
+    try { ro.observe(anchor || el); } catch (e) { ro = null; }
+  }
+  }
 }
 
 function autoMount() {

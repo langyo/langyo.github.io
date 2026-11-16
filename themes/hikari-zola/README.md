@@ -62,7 +62,6 @@ footer_recordation_text = "..."          # 备案（可选）
 
 [extra.hero]                              # 首页 hero
 kicker = "MILLENNIUM · OPERATOR FILE"
-subtitle = "..."
 datalines = [ { k = "CLASS", v = "FULL-STACK" } ]
 cta = [ { label = "进入记录", url = "/posts/" } ]
 
@@ -132,7 +131,7 @@ toc = true                     # false 可关闭文章右侧目录
   `hk-btn__arrow` `hk-chip` `hk-chip--solid` `hk-tag` `hk-dataline` `hk-dataline__k` `hk-dataline__v`
   `hk-rule` `hk-rule--vert` `hk-rule--diamond` `hk-diamond` `hk-cut` `hk-frame` `hk-stamp`
   `hk-tick` `hk-hazard` `hk-meter` `hk-skip`
-* hero：`hk-hero` `hk-hero__grid` `hk-hero__body` `hk-hero__title` `hk-hero__caret` `hk-hero__sub`
+* hero：`hk-hero` `hk-hero__grid` `hk-hero__body` `hk-hero__title` `hk-hero__caret`
   `hk-hero__meta` `hk-hero__cta` `hk-hero__figure` `hk-hero__frame`
   `hk-hero__silhouette` `hk-hero__ticks` `hk-hero__side` `hk-hero__scroll`
 * 首页区块：`hk-section` `hk-section--latest` `hk-section--about` `hk-section--status`
