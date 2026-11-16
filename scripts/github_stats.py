@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fetch and snapshot GitHub activity for the homepage status panel (schema v3).
+"""Fetch and snapshot GitHub activity for the homepage status panel (schema v4).
 
 The site never talks to GitHub at runtime: this script writes a data snapshot
 that Zola loads at build time via load_data(path="data/github.json").
@@ -16,7 +16,7 @@ all    Preferred path. Requires GITHUB_TOKEN or GH_TOKEN. Uses the GraphQL
 public Fallback path without a usable token: REST API plus the public
        contributions HTML. Private counts are 0 and scope is "public".
 
-Snapshot schema v3 (consumed by templates; keep key names stable)
+Snapshot schema v4 (consumed by templates; keep key names stable)
 -----------------------------------------------------------------
     schema, login, fetched_at, scope: "all" | "public",
     profile  {followers, following, created_at}
@@ -28,17 +28,30 @@ Snapshot schema v3 (consumed by templates; keep key names stable)
     streak   {current, longest}
     best_day {d, c}
     types    {PUSH, PR, ISSUE, REVIEW}
-    top_repos[{name, stars, lang, url}, ...]   public repositories only
+    top_repos[{name, stars, lang, url, private}, ...]   6 repos: up to 4 top public + at least 2 private
     langs    [{l, n}, ...]                     public repositories only
 
 Repos口径 (privacy grouping)
 ----------------------------
 total/public/private come from GraphQL viewer.repositories(ownerAffiliations:
 [OWNER]) grouped by the visibility field; totalCount is authoritative for
-total. stars, top_repos and langs are computed from PUBLIC repositories only.
-The REST /users/{user}/repos listing can surface a few public entries that the
-GraphQL owner-affiliation set no longer resolves (renamed/deleted/disabled
-repositories); the snapshot deliberately follows the GraphQL privacy grouping.
+total. totals.stars and langs are computed from PUBLIC repositories only.
+top_repos deliberately mixes visibility so the private repositories are
+visible too (the operator approved publishing private repository names):
+take up to 4 public repositories by stargazerCount, then at least 2 private
+repositories ordered by stargazerCount with pushedAt (newest first) as the
+tie-break, 6 entries total and the private flag marks private ones. The REST
+/users/{user}/repos listing can
+surface a few public entries that the GraphQL owner-affiliation set no longer
+resolves (renamed/deleted/disabled repositories); the snapshot deliberately
+follows the GraphQL privacy grouping.
+
+Privacy note
+------------
+Private repository names and URLs in top_repos are published with the site
+operator's explicit permission. Repository descriptions, file trees and
+per-contribution private details are never queried or stored: the GraphQL
+selection only asks for name, stars, language, url, visibility and isPrivate.
 
 Downgrade guard
 ---------------
@@ -93,7 +106,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SNAPSHOT = ROOT / "data" / "github.json"
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 USER = "langyo"
 API = "https://api.github.com"
 GRAPHQL_URL = API + "/graphql"
@@ -109,6 +122,9 @@ TIMEOUT = 30
 RETRIES = 3  # retries after the first attempt
 MAX_REPO_PAGES = 20
 MAX_EVENT_PAGES = 3
+TOP_REPOS_LIMIT = 6
+PUBLIC_TOP_LIMIT = 4
+PRIVATE_TOP_MIN = 2
 EVENT_WINDOW_DAYS = 90
 RETRYABLE_HTTP = frozenset({408, 425, 429, 500, 502, 503, 504})
 
@@ -152,7 +168,7 @@ query($cursor: String) {
     repositories(first: 100, ownerAffiliations: [OWNER], after: $cursor) {
       totalCount
       pageInfo { hasNextPage endCursor }
-      nodes { name stargazerCount url visibility primaryLanguage { name } }
+      nodes { name stargazerCount url visibility isPrivate pushedAt primaryLanguage { name } }
     }
   }
 }
@@ -270,6 +286,15 @@ def graphql_profile() -> dict:
     }
 
 
+def _pushed_sort_key(node: dict) -> int:
+    """Negative pushedAt epoch so the newest repository sorts first."""
+    raw = str(node.get("pushedAt") or "")
+    try:
+        return -int(datetime.fromisoformat(raw.replace("Z", "+00:00")).timestamp())
+    except ValueError:
+        return 0
+
+
 def graphql_repos() -> dict:
     first = graphql(REPOS_QUERY, {"cursor": None}).get("viewer", {}).get("repositories")
     if not isinstance(first, dict):
@@ -303,16 +328,32 @@ def graphql_repos() -> dict:
         )
 
     public_nodes = [node for node in unique if str(node.get("visibility") or "") == "PUBLIC"]
-    private_count = sum(1 for node in unique if str(node.get("visibility") or "") == "PRIVATE")
+    private_nodes = [node for node in unique if str(node.get("visibility") or "") == "PRIVATE"]
+    private_count = len(private_nodes)
     language_counts = Counter(
         str((node.get("primaryLanguage") or {}).get("name"))
         for node in public_nodes
         if (node.get("primaryLanguage") or {}).get("name")
     )
-    ranked = sorted(
+
+    ranked_public = sorted(
         public_nodes,
         key=lambda node: (-int(node.get("stargazerCount") or 0), str(node.get("name") or "")),
     )
+    ranked_private = sorted(
+        private_nodes,
+        key=lambda node: (
+            -int(node.get("stargazerCount") or 0),
+            _pushed_sort_key(node),
+            str(node.get("name") or ""),
+        ),
+    )
+    public_pick = ranked_public[:PUBLIC_TOP_LIMIT]
+    private_slots = max(PRIVATE_TOP_MIN, TOP_REPOS_LIMIT - len(public_pick))
+    private_pick = ranked_private[:private_slots]
+    top_nodes = (public_pick + private_pick)[:TOP_REPOS_LIMIT]
+    if len(top_nodes) < TOP_REPOS_LIMIT:
+        top_nodes = top_nodes + ranked_public[PUBLIC_TOP_LIMIT:][: TOP_REPOS_LIMIT - len(top_nodes)]
 
     return {
         "total": total or len(unique),
@@ -325,8 +366,9 @@ def graphql_repos() -> dict:
                 "stars": int(node.get("stargazerCount") or 0),
                 "lang": str((node.get("primaryLanguage") or {}).get("name") or ""),
                 "url": str(node.get("url") or ""),
+                "private": bool(node.get("isPrivate")),
             }
-            for node in ranked[:5]
+            for node in top_nodes
         ],
         "langs": [
             {"l": language, "n": count}
@@ -486,8 +528,9 @@ def build_public_snapshot() -> dict:
                 "stars": int(repo.get("stargazers_count") or 0),
                 "lang": str(repo.get("language") or ""),
                 "url": str(repo.get("html_url") or ""),
+                "private": False,
             }
-            for repo in ranked[:5]
+            for repo in ranked[:6]
         ],
         "langs": [
             {"l": language, "n": count}
@@ -677,9 +720,20 @@ def print_summary(snapshot: dict) -> None:
         + " REVIEW="
         + str(types["REVIEW"])
     )
-    for repo in snapshot["top_repos"][:3]:
+    for repo in snapshot["top_repos"][:6]:
         language = repo["lang"] or "n/a"
-        print("  top repo     : " + repo["name"] + " stars=" + str(repo["stars"]) + " [" + language + "]")
+        marker = "private" if repo.get("private") else "public"
+        print(
+            "  top repo     : "
+            + repo["name"]
+            + " stars="
+            + str(repo["stars"])
+            + " ["
+            + language
+            + "] ("
+            + marker
+            + ")"
+        )
 
 
 def main(argv: list) -> int:

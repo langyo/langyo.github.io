@@ -415,10 +415,10 @@
   line-height: 1.45;
 }
 
-// ── Activity panel (index) — sci-fi HUD console ───────────────────────
-// Three framed modules on one cut-corner panel: telemetry readouts · signal
-// bars/trend · archive ranking + streak ring. Faint grid ground, corner
-// brackets and hairline sub-frames; every colour rides --hk-* tokens.
+// ── Activity panel (index) — GITS console ─────────────────────────────
+// One cut-corner panel with three framed modules: telemetry readouts · a
+// phosphor oscilloscope with a pulse chain · archive ranking + a radar ring.
+// Everything is token-driven (light/dark follows the palette automatically).
 .hk-gh {
   position: relative;
   isolation: isolate;
@@ -453,7 +453,7 @@
   }
 
   @media (min-width: 980px) {
-    grid-template-columns: minmax(300px, 350px) minmax(0, 1fr) minmax(226px, 260px);
+    grid-template-columns: minmax(280px, 330px) minmax(0, 1fr) minmax(240px, 280px);
     align-items: start;
   }
 }
@@ -477,7 +477,125 @@
   text-transform: uppercase;
 }
 
-// ── TELEMETRY: readout cells ──────────────────────────────────────────
+// The scope line that prints the panel's data scope.
+.hk-gh__scope {
+  position: relative;
+  display: block;
+  height: 132px;
+  overflow: hidden;
+  background-color: var(--hk-screen);
+  background-image:
+    linear-gradient(to right, rgb(var(--hk-cyanish) / 10%) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(var(--hk-cyanish) / 10%) 1px, transparent 1px),
+    repeating-linear-gradient(to bottom, rgb(var(--hk-cyanish) / 7%) 0 1px, transparent 1px 4px);
+  background-size: 14px 14px, 14px 14px, auto;
+  border: var(--hk-hair) solid var(--hk-line);
+}
+
+// ── TRACE: oscilloscope ────────────────────────────────────────────────
+.hk-gh__module--signal,
+.hk-gh__module--trace {
+  position: relative;
+}
+
+.hk-gh__wave {
+  position: absolute;
+  inset: 5px;
+  width: calc(100% - 10px);
+  height: calc(100% - 10px);
+  overflow: visible;
+}
+
+.hk-gh__wave-line,
+.hk-gh__wave-glow {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+  animation: hk-gh-glitch 3.4s steps(1, end) infinite;
+}
+
+.hk-gh__wave-line {
+  stroke: rgb(var(--hk-cyanish));
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 3px rgb(var(--hk-cyanish) / 75%));
+}
+
+.hk-gh__wave-glow {
+  stroke: rgb(var(--hk-cyanish) / 30%);
+  stroke-width: 5;
+  filter: blur(2px);
+}
+
+// Sub-pixel horizontal jitter that reads as a signal glitch.
+@keyframes hk-gh-glitch {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  18% {
+    transform: translateX(-0.5px);
+  }
+
+  36% {
+    transform: translateX(0.5px);
+  }
+
+  61% {
+    transform: translateX(-0.4px);
+  }
+
+  82% {
+    transform: translateX(0.4px);
+  }
+}
+
+// Vertical scan beam, swept left to right.
+.hk-gh__beam {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 0 calc(50% - 1px), rgb(var(--hk-cyanish) / 90%) 50%, transparent calc(50% + 1px) 100%);
+  opacity: 0.8;
+  animation: hk-gh-beam 2.5s linear infinite;
+}
+
+@keyframes hk-gh-beam {
+  from {
+    transform: translateX(-50%);
+  }
+
+  to {
+    transform: translateX(50%);
+  }
+}
+
+// ── PULSE: 12-week pulse chain ─────────────────────────────────────────
+.hk-gh__pulse {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  align-items: center;
+  justify-items: center;
+  gap: 2px;
+  margin: 0;
+  padding: 8px 0 9px;
+  list-style: none;
+  border-bottom: var(--hk-hair) solid var(--hk-line);
+}
+
+// Diamonds whose brightness scales with --v; size uses the percentage in
+// font-size (resolved against the 1rem inherited size) so no JS is needed.
+.hk-gh__pulse-node {
+  width: 1em;
+  height: 1em;
+  transform: rotate(45deg);
+  font-size: calc(4px + var(--v, 0%) * 0.4);
+  background: rgb(var(--hk-cyanish));
+  opacity: calc(35% + var(--v, 0%) * 0.65);
+  box-shadow: 0 0 5px rgb(var(--hk-cyanish) / 45%);
+}
+
+// ── TELEMETRY ──────────────────────────────────────────────────────────
 .hk-gh__stats {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -487,6 +605,10 @@
   list-style: none;
   background: var(--hk-line);
   border: var(--hk-hair) solid var(--hk-line);
+}
+
+.hk-gh__module--telemetry .hk-gh__stats {
+  border: 0;
 }
 
 .hk-gh__stat {
@@ -500,6 +622,30 @@
   &:hover {
     background: var(--hk-elev);
   }
+
+  // Digits glitch once when the cell is hovered.
+  &:hover .hk-gh__stat-v {
+    animation: hk-gh-jitter 0.24s steps(4, end) 1;
+  }
+}
+
+@keyframes hk-gh-jitter {
+  0%,
+  100% {
+    transform: translate(0) skewX(0);
+  }
+
+  25% {
+    transform: translate(-1px, 0.5px) skewX(-2deg);
+  }
+
+  50% {
+    transform: translate(0.5px, -0.5px) skewX(1deg);
+  }
+
+  75% {
+    transform: translate(-0.5px, 0) skewX(-1deg);
+  }
 }
 
 .hk-gh__stat-k {
@@ -512,6 +658,7 @@
 }
 
 .hk-gh__stat-v {
+  display: inline-block;
   overflow: hidden;
   color: var(--hk-fg);
   font-family: var(--font-mono);
@@ -536,129 +683,11 @@
   }
 }
 
-// ── SIGNAL: main bars + secondary trend ───────────────────────────────
-.hk-gh__module--telemetry .hk-gh__stats {
-  // The module already carries the frame; drop the stats' own outer border.
-  border: 0;
-}
-
+// ── ARCHIVE: ranking + radar ring ──────────────────────────────────────
 .hk-gh__module--archive {
-  // Ranking on top, streak ring pinned to the module's bottom edge.
   align-content: space-between;
 }
 
-.hk-gh__module--signal {
-  position: relative;
-
-  // Extremely faint scanlines over the module (text sits above them).
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background-image: repeating-linear-gradient(to bottom, rgb(var(--color-primary) / 9%) 0 1px, transparent 1px 4px);
-    opacity: 0.5;
-  }
-}
-
-.hk-gh__bars {
-  position: relative;
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(2px, 1fr);
-  align-items: end;
-  gap: 3px;
-  height: 96px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  border-bottom: var(--hk-hair) solid var(--hk-line);
-  overflow: hidden;
-
-  // Scanning highlight band (disabled under reduced-motion).
-  &::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 42%;
-    pointer-events: none;
-    background: linear-gradient(90deg, transparent, rgb(var(--hk-cyanish) / 16%), transparent);
-    animation: hk-gh-scan 2.1s linear infinite;
-  }
-}
-
-@keyframes hk-gh-scan {
-  from {
-    transform: translateX(-120%);
-  }
-
-  to {
-    transform: translateX(260%);
-  }
-}
-
-.hk-gh__bar {
-  position: relative;
-  display: block;
-  height: 100%;
-  min-width: 0;
-
-  &::after {
-    content: "";
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    height: max(var(--v, 0%), 2px);
-    border-radius: 1px 1px 0 0;
-    background: linear-gradient(to top, rgb(var(--color-primary) / 60%), rgb(var(--hk-cyanish) / 90%));
-    box-shadow: 0 0 6px rgb(var(--color-primary) / 22%);
-    transition: filter var(--duration-short) var(--ease-standard);
-  }
-
-  // Week tick every 7th day, sitting on the baseline.
-  &:nth-child(7n + 1)::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    bottom: -3px;
-    z-index: 1;
-    width: 1px;
-    height: 3px;
-    background: var(--hk-line-strong);
-  }
-
-  &:hover::after {
-    filter: brightness(1.15);
-  }
-}
-
-.hk-gh__trend {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 3px;
-  justify-content: space-between;
-  align-items: end;
-  gap: 3px;
-  height: 26px;
-  margin: 4px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-// Weekly secondary bars: --v comes from the template, kept faint (40%) and slim.
-.hk-gh__trend-bar {
-  display: block;
-  height: max(var(--v, 0%), 2px);
-  min-height: 2px;
-  border-radius: 1px;
-  background: linear-gradient(to top, rgb(var(--color-primary) / 70%), rgb(var(--hk-cyanish) / 70%));
-  opacity: 0.4;
-}
-
-// ── ARCHIVE: numbered ranking + streak ring ───────────────────────────
 .hk-gh__repos {
   display: grid;
   counter-reset: gh-repo;
@@ -686,9 +715,9 @@
 
 .hk-gh__link {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
   padding: 7px 0 7px 8px;
   border-left: 2px solid transparent;
   color: var(--hk-fg-2);
@@ -699,15 +728,41 @@
     border-left-color: var(--hk-accent);
     background: var(--hk-accent-soft);
     color: var(--hk-fg);
+
+    .hk-gh__repo-tag {
+      filter: brightness(1.25);
+    }
   }
 }
 
 .hk-gh__repo-name {
+  flex: 1 1 auto;
   overflow: hidden;
   color: var(--hk-fg);
   font-size: 0.8125rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+// PUB / PRI chips: boxed mono micro-labels.
+.hk-gh__repo-tag {
+  flex: none;
+  padding: 0 4px;
+  border: 1px solid currentColor;
+  font-family: var(--font-mono);
+  font-size: 0.4375rem;
+  letter-spacing: 0.1em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.hk-gh__repo-tag--pub {
+  color: rgb(var(--hk-cyanish));
+  border-color: rgb(var(--hk-cyanish) / 55%);
+}
+
+.hk-gh__repo-tag--pri {
+  color: var(--hk-warn-ink);
 }
 
 .hk-gh__repo-stars {
@@ -718,7 +773,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-// Streak ring: SVG circles, arc length driven by --p (pathLength=100).
+// ── STREAK: ring + radar sweep ─────────────────────────────────────────
 .hk-gh__streak {
   display: flex;
   align-items: center;
@@ -731,6 +786,7 @@
   width: 54px;
   height: 54px;
   flex: none;
+  overflow: visible;
   transform: rotate(-90deg);
 }
 
@@ -742,10 +798,6 @@
 
 .hk-gh__ring-arc {
   fill: none;
-  // Solid cyan-ink stroke with a primary glow reads as a primary-to-cyanish arc
-  // without depending on an SVG paint server (a missing url() paints nothing).
-  // If the template ships <linearGradient id="hk-gh-ring-grad">, switching this
-  // to stroke: url(#hk-gh-ring-grad) is the only change needed.
   stroke: rgb(var(--hk-cyanish));
   stroke-width: 2.4;
   stroke-linecap: round;
@@ -757,6 +809,21 @@
 @keyframes hk-gh-ring-grow {
   from {
     stroke-dasharray: 0 100;
+  }
+}
+
+// Radar sweep: a thin radius line spinning inside the ring.
+.hk-gh__sweep {
+  stroke: rgb(var(--hk-cyanish) / 85%);
+  stroke-width: 1;
+  transform-box: view-box;
+  transform-origin: 18px 18px;
+  animation: hk-gh-sweep 8s linear infinite;
+}
+
+@keyframes hk-gh-sweep {
+  to {
+    transform: rotate(360deg);
   }
 }
 
@@ -784,8 +851,28 @@
   text-transform: uppercase;
 }
 
-html[data-theme="dark"] .hk-gh__ring-arc {
-  filter: drop-shadow(0 0 6px var(--hk-glow));
+// ── Glow calibration ───────────────────────────────────────────────────
+// Dark mode gets one extra step of phosphor bloom.
+html[data-theme="dark"] {
+  .hk-gh__wave-line {
+    filter: drop-shadow(0 0 5px rgb(var(--hk-cyanish) / 90%));
+  }
+
+  .hk-gh__beam {
+    opacity: 1;
+  }
+
+  .hk-gh__pulse-node {
+    box-shadow: 0 0 8px rgb(var(--hk-cyanish) / 65%);
+  }
+
+  .hk-gh__ring-arc {
+    filter: drop-shadow(0 0 6px var(--hk-glow));
+  }
+
+  .hk-gh__sweep {
+    stroke: rgb(var(--hk-cyanish));
+  }
 }
 
 // The template prints a SYNCED footer line after the panel.
@@ -794,11 +881,18 @@ html[data-theme="dark"] .hk-gh__ring-arc {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hk-gh__bars::after {
-    display: none;
+  .hk-gh__beam,
+  .hk-gh__sweep,
+  .hk-gh__wave-line,
+  .hk-gh__wave-glow {
+    animation: none;
   }
 
   .hk-gh__ring-arc {
+    animation: none;
+  }
+
+  .hk-gh__stat:hover .hk-gh__stat-v {
     animation: none;
   }
 }
