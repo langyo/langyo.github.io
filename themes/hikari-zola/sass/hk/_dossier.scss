@@ -1,6 +1,7 @@
-// hikari-zola — dossier: the /about operator file — sticky ID card (avatar,
-// VERIFIED stamp, attribute meters) beside the long-form body, plus the two
-// reusable sub-blocks (skill groups, career log).
+// hikari-zola — dossier: the /about operator file — sticky ID card (name,
+// handle, role chips, attribute meters) beside the long-form body, plus the two
+// reusable sub-blocks (skill groups, career log). The avatar/figure and stamp
+// are gone from the template, so their styles were removed with them.
 @use "./mixins" as *;
 
 .hk-dossier {
@@ -16,33 +17,16 @@
 .hk-dossier__card {
   @include hk-panel;
   align-self: start;
+  // Never taller than the viewport slot it sticks in; the surplus scrolls.
+  max-height: calc(100vh - var(--hk-topbar-h) - 48px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: clamp(16px, 2.2vw, 24px);
 
   @media (min-width: 1000px) {
     position: sticky;
     top: calc(var(--hk-topbar-h) + 24px);
   }
-}
-
-.hk-dossier__figure {
-  position: relative;
-  margin-bottom: 16px;
-  background: var(--hk-sunken);
-}
-
-.hk-dossier__avatar {
-  display: block;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 1;
-  object-fit: cover;
-  border: var(--hk-hair) solid var(--hk-line);
-}
-
-.hk-dossier__figure .hk-stamp {
-  position: absolute;
-  right: 6px;
-  bottom: 6px;
 }
 
 .hk-dossier__name {
@@ -64,16 +48,16 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin: 14px 0 0;
+  margin: 12px 0 0;
   padding: 0;
   list-style: none;
 }
 
 .hk-dossier__attrs {
   display: grid;
-  gap: 10px;
-  margin: 16px 0 0;
-  padding: 16px 0 0;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 12px 0 0;
   border-top: var(--hk-hair) solid var(--hk-line);
   list-style: none;
 }
@@ -116,8 +100,8 @@
 }
 
 .hk-dossier__contact {
-  margin-top: 16px;
-  padding-top: 14px;
+  margin-top: 12px;
+  padding-top: 12px;
   border-top: var(--hk-hair) solid var(--hk-line);
   font-family: var(--font-mono);
   font-size: 0.6875rem;

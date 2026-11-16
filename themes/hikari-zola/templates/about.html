@@ -1,18 +1,12 @@
 {% extends "base.html" %}
 {% import "partials/icons.html" as icons %}
 {% block content %}
-{% set avatar = config.extra.profile.avatar | default(value="img/alice-badge.webp") %}
 <main id="main" class="hk-main hk-main--dossier">
   <header class="hk-pagehead hk-frame">
-    <p class="hk-label"><span class="hk-tick" aria-hidden="true"></span>// OPERATOR FILE</p>
-    <p class="hk-pagehead__desc">{{ page.description | default(value=config.description) }}</p>
+    <p class="hk-label"><span class="hk-tick" aria-hidden="true"></span>// 基本档案</p>
   </header>
   <div class="hk-dossier hk-frame">
     <aside class="hk-dossier__card hk-cut">
-      <div class="hk-dossier__figure">
-        <img class="hk-dossier__avatar" src="{{ get_url(path=avatar) }}" alt="" width="240" height="240" decoding="async">
-        <span class="hk-stamp">VERIFIED</span>
-      </div>
       <h1 class="hk-dossier__name">{{ config.extra.profile.codename | default(value=config.title) }}</h1>
       <p class="hk-dossier__handle">{{ config.extra.profile.name | default(value="") }}{% if config.extra.profile.location %} / {{ config.extra.profile.location }}{% endif %}</p>
       <ul class="hk-dossier__roles">

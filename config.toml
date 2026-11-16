@@ -58,7 +58,7 @@ kicker = "OPERATOR FILE"
 datalines = [
   { k = "CLASS", v = "FULL-STACK" },
   { k = "REGION", v = "SHANGHAI · CN" },
-  { k = "CORE", v = "RUST / TS / C" },
+  { k = "CORE", v = "RUST / TS" },
   { k = "UPTIME", v = "10+ YRS" },
   { k = "STATUS", v = "ONLINE" },
 ]
@@ -70,12 +70,54 @@ cta = [
 # --------------------------------------------------------------------------
 # PROFILE / DOSSIER
 # --------------------------------------------------------------------------
+# 主要作品：首页「主要作品」横轮播的数据（精确一句话介绍 + 标签）。
+[[extra.works]]
+name = "wowsp"
+desc = "战舰世界面板：回放复盘与游戏内 Overlay。"
+tags = ["RUST", "OVERLAY"]
+url = "https://github.com/langyo/wowsp"
+stars = 17
+
+[[extra.works]]
+name = "entelecheia"
+desc = "多智能体协作平台：让多个智能体在统一环境里分工协同。"
+tags = ["RUST", "MULTI-AGENT"]
+pri = true
+
+[[extra.works]]
+name = "ratatui-markdown"
+desc = "ratatui 的 Markdown 渲染组件：Mermaid 图表、语法高亮、可折叠树与滚动组件。"
+tags = ["RUST", "TUI"]
+url = "https://github.com/celestia-island/ratatui-markdown"
+stars = 49
+
+[[extra.works]]
+name = "hikari"
+desc = "基于 WASI 构建的 Rust UI 框架；本站的设计系统即由它驱动。"
+tags = ["TS", "WASI", "UI"]
+url = "https://github.com/celestia-island/hikari"
+stars = 25
+
+[[extra.works]]
+name = "tairitsu"
+desc = "由 WASM Component Model 驱动的全栈框架。"
+tags = ["TS", "WASM", "FULL-STACK"]
+url = "https://github.com/celestia-island/tairitsu"
+stars = 12
+
+[[extra.works]]
+name = "yuuka"
+desc = "用一条简单宏生成复杂嵌套结构的 Rust 辅助库。"
+tags = ["RUST", "MACRO"]
+url = "https://github.com/celestia-island/yuuka"
+stars = 14
+
 [extra.profile]
 codename = "LANGYO"
 name = "伊欧"
 location = "上海 · 中国"
 avatar = "img/alice-badge.webp"
-roles = ["全栈工程师", "氢能燃料电池", "Rust 重构派", "音游半退坑"]
+roles = ["全栈工程师", "氢能燃料电池"]
 
 [[extra.profile.attributes]]
 k = "FRONTEND"

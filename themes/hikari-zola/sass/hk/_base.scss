@@ -9,8 +9,6 @@ html {
   color: var(--hk-fg);
   scroll-behavior: smooth;
   scroll-padding-top: calc(var(--hk-topbar-h) + 16px);
-  scrollbar-color: var(--hk-line-strong) transparent;
-  scrollbar-width: thin;
 }
 
 body {
@@ -83,21 +81,43 @@ button,
   }
 }
 
-// Thin flat native scrollbar; accent only under the cursor.
+// ── hikari scrollbar contract ─────────────────────────────────────────
+// One rail for every scroller: 8px, transparent track/corner, rounded thumb
+// inset 2px via content-box, accent only under the cursor. WebKit gets the
+// pseudo-element tune; Firefox the two legacy properties (listed per container
+// below so no component falls back to "auto").
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
+  background: transparent;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 8px;
   background: var(--hk-line-strong);
-  border: 3px solid transparent;
   background-clip: content-box;
 
   &:hover {
-    background: var(--hk-accent);
+    background-color: var(--hk-accent);
     background-clip: content-box;
   }
+}
+
+html,
+.hk-toc,
+.hk-dossier__card,
+.hk-gh__repos,
+.hk-works,
+.hk-prose pre,
+.hk-code pre {
+  scrollbar-color: var(--hk-line-strong) transparent;
+  scrollbar-width: thin;
 }
 
 @media (prefers-reduced-motion: reduce) {
