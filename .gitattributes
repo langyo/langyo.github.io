@@ -30,3 +30,21 @@ justfile text eol=lf
 
 # GitHub Actions workflows are pinned LF as well.
 .github/workflows/*.yml text eol=lf
+# Source text is LF on every platform. The quality gates measure the PUBLISHED
+# bytes (style.css, backdrop JS budgets) and "zola build" copies working-tree
+# files verbatim, so a CRLF checkout inflates them by ~0.7 KiB and fails gates
+# that CI (Linux) passes — 2026-11-16: local "just verify" reported
+# backdrop 28.5/28 KiB while the same commit passed in CI at 27.8/28.
+*.js text eol=lf
+*.mjs text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.html text eol=lf
+*.toml text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.py text eol=lf
+*.svg text eol=lf
+*.json text eol=lf
+justfile text eol=lf

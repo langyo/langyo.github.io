@@ -78,6 +78,8 @@ just verify                       # build + check_site --ci + internal link chec
   的产物直接跑会满屏假死链。要么用默认 base_url 的“基准构建”，要么 `--config` 指向仅改 base_url 的副本。
 - 链接检查只跑内链：`zola check --skip-external-links`（正文引用外网，403/超时不可控，不因此失败）。
 - 验收线：`zola build` 0 error / 0 warning、内链检查通过、`check_site --ci` 通过。
+- **Pages 镜像**：`pages.yml` 先 `configure-pages` 再用其 `base_url` 构建（当前 `https://langyo.github.io`），
+  镜像必须自洽；生产 `langyo.xyz` 由容器构建、用 config.toml 的默认 base_url，两者各自引用自己的 origin。
 
 ## 6. 样式纪律
 
