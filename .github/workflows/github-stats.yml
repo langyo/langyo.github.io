@@ -1,0 +1,104 @@
+# Refresh the GitHub activity snapshot and propose it as a pull request.
+#
+# The bot never pushes to master: it creates or updates the chore/github-stats
+# branch and opens (or refreshes) a PR against master, so the normal review /
+# squash-merge rule still applies to the generated data file. The snapshot is
+# committed as-is on the branch — this workflow holds no publish rights.
+#
+# Note: pushes made with the workflow GITHUB_TOKEN do not trigger further
+# workflow runs (GitHub suppresses recursive runs), so checks.yml does not
+# auto-run on the bot PR. Dispatch it manually from the Actions tab if the
+# snapshot diff ever needs the full gate before merge.
+name: GitHub Activity Snapshot
+
+on:
+  schedule:
+    # Daily at 03:17 UTC — off the hour, so it does not join the runner stampede.
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+# Never let two snapshot runs race for the same branch/PR.
+concurrency:
+  group: github-stats
+  cancel-in-progress: false
+
+env:
+  SNAPSHOT: data/github.json
+  BRANCH: chore/github-stats
+  PR_TITLE: "🔄 Sync the GitHub activity snapshot."
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Full history keeps the branch recreation below simple (no shallow
+          # fetch surprises); the repository is small.
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Refresh the snapshot
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/github_stats.py
+      - name: Detect snapshot changes
+        id: changed
+        run: |
+          if [ -n "$(git status --porcelain "$SNAPSHOT")" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Open or update the snapshot pull request
+        if: steps.changed.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          body='Automated refresh of `data/github.json`, produced by `scripts/github_stats.py`. Review the delta and squash-merge; do not hand-edit the snapshot.'
+
+          existing="$(gh pr list --head "$BRANCH" --base master --state open --json number --jq '.[0].number // empty')"
+
+          if [ -n "$existing" ]; then
+            # Update the open PR in place: deleting its branch would close the PR.
+            cp "$SNAPSHOT" "$RUNNER_TEMP/snapshot.json"
+            git checkout -- "$SNAPSHOT"
+            git fetch origin "$BRANCH"
+            git checkout -B "$BRANCH" "origin/$BRANCH"
+            cp "$RUNNER_TEMP/snapshot.json" "$SNAPSHOT"
+          else
+            # No open PR: drop a stale same-name remote branch, then branch off master.
+            # Master is never force-pushed and never written by this workflow.
+            git push origin --delete "$BRANCH" 2>/dev/null || true
+            git checkout -B "$BRANCH"
+          fi
+
+          git add "$SNAPSHOT"
+
+          if git diff --cached --quiet; then
+            echo "snapshot matches the branch head; nothing to publish"
+            exit 0
+          fi
+
+          git commit -m "$PR_TITLE"
+          git push --set-upstream origin "$BRANCH"
+
+          if [ -n "$existing" ]; then
+            gh pr edit "$existing" --body "$body"
+            echo "updated pull request #$existing"
+          else
+            gh pr create --base master --head "$BRANCH" --title "$PR_TITLE" --body "$body"
+          fi

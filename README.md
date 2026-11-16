@@ -8,6 +8,15 @@ webfont、没有前端框架。页面的视觉参考明日方舟的扁平 HUD �
 白 + 浅蓝科技感，主角是天童爱丽丝；hero 右侧的全息投影舱里悬浮着一台缓慢旋转的自研
 WebGL2 点云电磁炮 —— RG·SUPERNOVA。
 
+## 功能
+
+- 文章归档与标签：按年份时间线的记录、标签页与 Atom feed。
+- 操作员档案 `/about/`：frontmatter 驱动的 dossier 页面（属性条 / 技能 / 履历）。
+- 全息电磁炮 hero：可拖拽转台的 WebGL2 点云投影舱 + HUD 读数。
+- **首页 GitHub 活动面板**：读取 `data/github.json` 快照（每日由 CI 自动提 PR 刷新），
+  构建与访问都不发起第三方请求。
+- 明暗主题、响应式、`prefers-reduced-motion`；零 JS 也可读，仅系统字体 + 原生 ES module。
+
 ## 设计
 
 - **明日方舟**：扁平、硬边、发丝线分层；mono 大写微标签、`//` 前缀、编号、切角卡片、
@@ -71,6 +80,16 @@ just sync-hikari-tokens --from ../hikari/packages/vue # 离线：从本地 hikar
 just sync-hikari-tokens --check                      # 只检查是否漂移，不写文件
 ```
 
+GitHub 活动快照（首页面板数据）需要手动刷新时：
+
+```console
+just sync-github     # 抓取并写 data/github.json（需要 GitHub token 与网络）
+just github-check    # 只检查快照是否存在且最新，不写文件
+```
+
+> CI 每日 03:17 UTC 自动抓取并提 PR（分支 `chore/github-stats`，base master），
+> 构建与访问只读 `data/github.json` 快照、不发起第三方请求。
+
 > **base_url 提示**：`check_site.py` 用 `config.toml` 的 `base_url` 判断本站 host，
 > 所以 `zola build --base-url http://127.0.0.1:PORT` 的本地产物直接跑会报大量假死链。
 > 要么对使用默认 `base_url` 的“基准构建”跑检查，要么把 `--config` 指向仅改
@@ -94,15 +113,18 @@ langyo.github.io/
 ├── content/                 内容：首页、关于页、posts/*.md
 ├── assets/source/           原始素材（大图 / 裁切前原图），不参与构建、不发布
 ├── static/                  发布用资源：static/img/ 派生图 + favicon（原样拷贝）
+├── data/
+│   └── github.json          首页 GitHub 活动面板快照（脚本生成，勿手改）
 ├── scripts/                 零第三方依赖的 Python 工具
 │   ├── check_site.py        构建产物静态门禁
 │   ├── sync-hikari-tokens.py hikari token vendoring 同步
+│   ├── github_stats.py      GitHub 活动快照抓取（just sync-github / github-check）
 │   └── assets/              图片处理管线
 ├── themes/hikari-zola/      自研主题
 │   ├── templates/           Tera 模板与 partials
 │   ├── sass/                style.scss + hk/ 站点层 + vendor/hikari token
 │   └── static/              js（含 backdrop/）与主题装饰图
-├── .github/workflows/       pages.yml（部署）、checks.yml（PR 门禁）+ canonical callers
+├── .github/workflows/       pages.yml（部署）、checks.yml（PR 门禁）、github-stats.yml（每日快照 PR）+ canonical callers
 ├── dockerfile               Zola 构建 + static-web-server
 ├── justfile                 统一入口（import 共享 devtools recipes）
 └── AGENTS.md                仓库级协作与实现规则

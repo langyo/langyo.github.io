@@ -71,6 +71,15 @@ fmt:
 sync-hikari-tokens *ARGS='':
     {{python}} scripts/sync-hikari-tokens.py {{ARGS}}
 
+# Refresh the GitHub activity snapshot that feeds the home-page panel.
+# Needs network + a GitHub token (CI runs it daily); writes data/github.json.
+sync-github *ARGS='':
+    {{python}} scripts/github_stats.py {{ARGS}}
+
+# Verify data/github.json exists and is current, without writing it (script --check).
+github-check *ARGS='':
+    {{python}} scripts/github_stats.py --check {{ARGS}}
+
 # Prepare the theme artwork (crops, dual tone, webp budget) from the source art.
 art *ARGS='':
     {{python}} scripts/assets/prepare_art.py {{ARGS}}

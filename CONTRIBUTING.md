@@ -17,6 +17,9 @@ the theme.
 - large unsolicited rewrites or a different visual language;
 - new runtime dependencies, web fonts, icon packs, CSS frameworks or CDN links —
   the theme is deliberately dependency-free;
+- hand-edited generated files: the GitHub activity snapshot (`data/github.json`) and the
+  vendored hikari tokens are produced by `just sync-github` / `just sync-hikari-tokens`
+  (or by CI) — regenerate them instead of editing;
 - machine-generated pull requests that were never built locally;
 - design documents, changelogs or roadmap files inside the source tree. The pull
   request description *is* the design record and the merged history is the

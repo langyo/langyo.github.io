@@ -138,8 +138,11 @@ toc = true                     # false 可关闭文章右侧目录
 * 首页区块：`hk-section` `hk-section--latest` `hk-section--about` `hk-section--status`
   `hk-section__head` `hk-section__label` `hk-section__title` `hk-section__more`
   `hk-cardgrid` `hk-postcard` `hk-postcard__link` `hk-postcard__idx` `hk-postcard__date`
-  `hk-postcard__title` `hk-postcard__sum` `hk-postcard__tags` `hk-aboutteaser`
+  `hk-postcard__title` `hk-postcard__sum` `hk-postcard__tags`
   `hk-status` `hk-status__item` `hk-status__k` `hk-status__v`
+* GitHub 活动面板：`hk-gh` `hk-gh__stats` `hk-gh__stat` `hk-gh__stat-k` `hk-gh__stat-v`
+  `hk-gh__chart` `hk-gh__meta` `hk-gh__bars` `hk-gh__bar` `hk-gh__side`
+  `hk-gh__repos` `hk-gh__repo` `hk-gh__link` `hk-gh__repo-name` `hk-gh__repo-stars`
 * 列表：`hk-pagehead` `hk-pagehead__title` `hk-pagehead__desc` `hk-pagehead__count`
   `hk-timeline` `hk-year` `hk-year__num` `hk-postlist` `hk-postrow` `hk-postrow__link`
   `hk-postrow__idx` `hk-postrow__title` `hk-postrow__date` `hk-taglist` `hk-tagrow`
@@ -200,7 +203,7 @@ just sync-hikari-tokens      # scripts/sync-hikari-tokens.py
 
 | 项 | 上限 | 主题实测 |
 |---|---|---|
-| `style.css` | 64 KB（gzip 12 KB） | **57,142 B / gzip 11,266 B** |
+| `style.css` | 64 KB（gzip 12 KB） | **59,034 B / gzip 11,573 B** |
 | `main.js` + 模块（不含 backdrop） | 14 KB | 12,217 B |
 | backdrop JS | 34 KB | 由 backdrop 组自测 |
 
