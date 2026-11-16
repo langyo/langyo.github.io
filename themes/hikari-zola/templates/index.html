@@ -45,7 +45,6 @@
       </div>
       <div>
         <p class="hk-dossier__handle">{{ config.extra.profile.name | default(value="") }}{% if config.extra.profile.location %} / {{ config.extra.profile.location }}{% endif %}</p>
-        {% if config.extra.hero.lede %}<p>{{ config.extra.hero.lede }}</p>{% endif %}
         <a class="hk-btn hk-btn--ghost" href="/about/">操作员档案</a>
       </div>
     </div>
@@ -64,11 +63,5 @@
       {{ m::status_item(k="NODE", v=config.base_url | replace(from="https://", to="") | replace(from="http://", to="")) }}
     </ul>
   </section>
-
-  {% if section.content %}
-  <section class="hk-section">
-    <div class="hk-prose">{{ section.content | safe }}</div>
-  </section>
-  {% endif %}
 </main>
 {% endblock content %}
