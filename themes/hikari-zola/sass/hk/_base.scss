@@ -82,55 +82,32 @@ button,
 }
 
 // ── Scrollbars ────────────────────────────────────────────────────────
-// Two tiers:
-//   * document + un-taken scrollers (html, pre/code) keep the native bar,
-//     tuned thin + palette colours;
-//   * in-page regions (.hk-toc / .hk-works / .hk-gh__repos /
-//     .hk-dossier__card) hide the native bar — js/scrollbars.js wraps them in
-//     .hk-scrollbox and paints the hikari overlay chrome instead.
-html,
-pre,
-.hk-code pre {
+// Native bars everywhere, just tuned to the palette: thin, transparent track,
+// rounded thumb that lights up on hover. No custom overlay chrome.
+* {
   scrollbar-width: thin;
   scrollbar-color: var(--hk-line-strong) transparent;
 }
 
-.hk-toc,
-.hk-works,
-.hk-gh__repos,
-.hk-dossier__card {
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-// Shell the overlay script injects around each region (the rails position
-// against it, so it must establish the containing block and clip them).
-.hk-scrollbox {
-  position: relative;
-  overflow: hidden;
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
-// Wrapping a sticky region makes the shell its containing block, which kills
-// the child's stickiness. Hand the sticky role to the shell for the two regions
-// that rely on it (TOC rail, dossier ID card).
-.hk-scrollbox:has(> .hk-toc),
-.hk-scrollbox:has(> .hk-dossier__card) {
-  position: sticky;
-  top: calc(var(--hk-topbar-h) + 24px);
-  align-self: start;
-}
-
-// Palette mapping for the vendored overlay chrome (structure stays upstream:
-// track is transparent, thumb owns geometry/z-index).
-.hk-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 8px;
   background: var(--hk-line-strong);
+  background-clip: content-box;
 
-  .is-hovering &,
-  &.is-dragging {
+  &:hover {
     background: var(--hk-accent);
+    background-clip: content-box;
   }
 }
 
