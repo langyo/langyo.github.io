@@ -1,10 +1,8 @@
-// HUD topbar behaviour: mobile drawer, scroll progress bar, ESC / outside click.
 const drawer = document.querySelector("[data-hk-drawer]");
 const toggles = Array.from(document.querySelectorAll("[data-hk-nav-toggle]"));
 const progressBar = document.querySelector("[data-hk-progress] .hk-progress__bar") || document.querySelector(".hk-progress__bar");
 let open = false;
 let frame = 0;
-
 function setIcons(expanded) {
   const label = expanded ? "关闭菜单" : "菜单";
   toggles.forEach((button) => {
@@ -16,7 +14,6 @@ function setIcons(expanded) {
     });
   });
 }
-
 function setDrawer(next, restoreFocus) {
   if (!drawer) return;
   open = next;
@@ -25,10 +22,6 @@ function setDrawer(next, restoreFocus) {
   document.body.style.overflow = next ? "hidden" : "";
   setIcons(next);
   if (next) {
-    // The drawer flips from visibility:hidden through a CSS transition, so a
-    // focus() issued in the same task (or the very next frame) is ignored and
-    // activeElement stays on the burger. Poll once per frame until the element
-    // actually accepts focus, with a bounded budget.
     const first = drawer.querySelector("a, button");
     if (first) {
       const focusWhenReady = (tries) => {
@@ -43,9 +36,7 @@ function setDrawer(next, restoreFocus) {
     toggles[0].focus({ preventScroll: true });
   }
 }
-
 toggles.forEach((button) => button.addEventListener("click", () => setDrawer(!open, true)));
-
 if (drawer) {
   drawer.querySelectorAll("a").forEach((link) => link.addEventListener("click", () => setDrawer(false, false)));
   document.addEventListener("keydown", (event) => {
@@ -58,13 +49,9 @@ if (drawer) {
     setDrawer(false, true);
   });
 }
-
-// The drawer is hidden by CSS on wide viewports: never leave the page in a
-// locked-scroll state after a resize while it is open.
 addEventListener("resize", () => {
   if (open && getComputedStyle(drawer).display === "none") setDrawer(false, true);
 });
-
 function updateProgress() {
   frame = 0;
   if (!progressBar) return;
@@ -73,11 +60,9 @@ function updateProgress() {
   const percent = max > 0 ? Math.min(100, Math.max(0, (window.scrollY / max) * 100)) : 0;
   progressBar.style.setProperty("--hk-progress", percent.toFixed(2) + "%");
 }
-
 function scheduleProgress() {
   if (!frame) frame = requestAnimationFrame(updateProgress);
 }
-
 if (progressBar) {
   addEventListener("scroll", scheduleProgress, { passive: true });
   addEventListener("resize", scheduleProgress);
