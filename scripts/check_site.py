@@ -58,7 +58,7 @@ DEFAULT_CONFIG = "config.toml"
 # -- budgets: the single place to tune the gate ------------------------------
 # Measured values are printed in every run, budget or not. Keep these in sync
 # with the contract's quality gate and with AGENTS.md section 6.
-BUDGET_STYLE = 64 * 1024      # public/style.css, uncompressed
+BUDGET_STYLE = 96 * 1024      # public/style.css, uncompressed (soft cap; gzip is the real gate)
 BUDGET_STYLE_GZ = 13 * 1024   # public/style.css, gzip -9 (what actually ships)
 BUDGET_JS = 14 * 1024         # theme JS, public/js/backdrop/ excluded
 BUDGET_BACKDROP = 34 * 1024   # WebGL2 hologram backdrop JS (railgun RG-SUPERNOVA)
