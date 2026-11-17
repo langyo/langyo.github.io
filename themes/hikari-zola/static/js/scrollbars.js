@@ -5,9 +5,9 @@ const fix = (el) => {
   const x = !(el.scrollHeight - el.clientHeight > 4);
   if (x && !(el.scrollWidth - el.clientWidth > 4)) return;
   const C = x ? 'scrollWidth' : 'scrollHeight', Z = x ? 'scrollLeft' : 'scrollTop',
-        L = x ? 'clientWidth' : 'clientHeight', E = x ? 'clientX' : 'clientY',
-        D = x ? 'width' : 'height', T = x ? 'X' : 'Y', cs = getComputedStyle(el),
-        w = document.createElement('div'), t = document.createElement('div'), h = document.createElement('div');
+    L = x ? 'clientWidth' : 'clientHeight', E = x ? 'clientX' : 'clientY',
+    D = x ? 'width' : 'height', T = x ? 'X' : 'Y', cs = getComputedStyle(el),
+    w = document.createElement('div'), t = document.createElement('div'), h = document.createElement('div');
   w.className = 'hk-scrollbox';
   t.className = 'hk-scrollbar-track';
   h.className = 'hk-scrollbar-thumb';
@@ -17,6 +17,7 @@ const fix = (el) => {
   t.appendChild(h);
   el.parentNode.insertBefore(w, el);
   w.append(el, t);
+  const cap = (id) => { try { w.setPointerCapture(id); } catch (_) {} };
   const y = () => {
     const s = Math.max(20, el[L] * el[L] / el[C]), g = el[L] - s, m = el[C] - el[L];
     h.style[D] = s + 'px';
@@ -30,7 +31,7 @@ const fix = (el) => {
   };
   w.onmouseenter = () => t.classList.add('is-hovering');
   w.onmouseleave = () => t.classList.remove('is-hovering');
-  el.addEventListener('wheel', (e) => {              // wheel pans this region's own axis
+  el.addEventListener('wheel', (e) => {
     const d = x ? e.deltaY : e.deltaX;
     if (Math.abs(d) > Math.abs(x ? e.deltaX : e.deltaY)) { e.preventDefault(); el[Z] += d; }
   }, { passive: false });
@@ -38,23 +39,23 @@ const fix = (el) => {
   w.addEventListener('pointerdown', (e) => {
     const th = e.target === h;
     if (e.button > 0 || (!th && !el.contains(e.target))) return;
-    g = [e[E], el[Z], th ? (el[C] - el[L]) / Math.max(1, el[L] - h.offsetHeight) : -1, th ? 1 : 0];
+    g = [e[E], el[Z], th ? (el[C] - el[L]) / ((el[L] - h.offsetHeight) || 1) : -1, th ? 1 : 0, e.pointerId];
     PAN = 0;
-    if (th) { h.classList.add('is-dragging'); e.preventDefault(); }
-    try { w.setPointerCapture(e.pointerId); } catch (_) {}
+    // capture here would move the derived click onto the wrapper (links die): only the thumb may
+    if (th) { h.classList.add('is-dragging'); e.preventDefault(); cap(e.pointerId); }
   });
   w.addEventListener('pointermove', (e) => {
     if (!g) return;
     const d = e[E] - g[0];
-    if (!g[3] && Math.abs(d) < 4) return;            // 4px: a click stays a click
-    if (!g[3]) { g[3] = 1; PAN = 1; w.classList.add('is-dragging'); }
+    if (!g[3] && Math.abs(d) < 4) return;
+    if (!g[3]) { g[3] = 1; PAN = 1; w.classList.add('is-dragging'); cap(g[4]); }
     el[Z] = g[1] + d * g[2];
     e.preventDefault();
   });
   const stop = () => { g = null; h.classList.remove('is-dragging'); w.classList.remove('is-dragging'); };
   w.addEventListener('pointerup', stop);
   w.addEventListener('pointercancel', stop);
-  w.addEventListener('click', (e) => {               // swallow the click a pan would fire
+  w.addEventListener('click', (e) => {
     if (PAN) { e.preventDefault(); e.stopPropagation(); PAN = 0; }
   }, true);
   el.__sb = y;

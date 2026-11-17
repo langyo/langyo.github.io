@@ -546,14 +546,16 @@
 
   // Interior: surface + faint engineering grid.
   &::before {
+    --hk-grid: rgb(var(--color-border) / 42%);
+
     content: "";
     position: absolute;
     z-index: -1;
     inset: var(--hk-hair);
     background-color: var(--hk-surface);
     background-image:
-      linear-gradient(to right, rgb(var(--color-border) / 42%) 1px, transparent 1px),
-      linear-gradient(to bottom, rgb(var(--color-border) / 42%) 1px, transparent 1px);
+      linear-gradient(to right, var(--hk-grid) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--hk-grid) 1px, transparent 1px);
     background-size: 22px 22px;
     @include hk-cut;
   }
@@ -697,6 +699,38 @@
   stroke: var(--hk-warn);
 }
 
+// ── Dark-mode line convergence ────────────────────────────────────────
+// A full ring of bright channel-primary ticks + dense dashed rows reads cheap
+// on a dark page: desaturate the ticks toward the strong line ink and weaken
+// the structural hairlines one step. Scoped to dark only — light is untouched.
+@mixin hk-gh-dim {
+  .hk-gh::before {
+    --hk-grid: rgb(var(--color-border) / 24%);
+  }
+
+  .hk-gh__dial-day {
+    stroke: color-mix(in srgb, var(--hk-accent) 45%, var(--hk-line-strong));
+  }
+
+  .hk-gh__dial-day--peak {
+    stroke: color-mix(in srgb, var(--hk-warn) 65%, var(--hk-line-strong));
+  }
+
+  .hk-gh__repo {
+    border-bottom-color: color-mix(in srgb, var(--hk-line) 70%, transparent);
+  }
+}
+
+html[data-theme="dark"] {
+  @include hk-gh-dim;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) {
+    @include hk-gh-dim;
+  }
+}
+
 // Centre readout: an absolutely centred square mirrors the svg box so the
 // numbers stay dead-centre while the ring rotates underneath.
 .hk-gh__dial-core {
@@ -747,17 +781,28 @@
   margin: 0;
   padding: 0;
   list-style: none;
-
 }
 
 .hk-gh__lang {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto 3.25rem;
   align-items: center;
   gap: 10px;
   min-width: 0;
   padding: 5px 0;
-  border-bottom: var(--hk-hair) solid var(--hk-line);
+
+  // The row rule doubles as a share bar: accent up to --v, hairline for the
+  // remainder. (No --v yet -> plain separator.)
+  &::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: linear-gradient(to right, var(--hk-accent) 0 var(--v, 0%), var(--hk-line) var(--v, 0%) 100%);
+  }
 }
 
 .hk-gh__lang-name {
