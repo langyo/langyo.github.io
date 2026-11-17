@@ -33,7 +33,7 @@ skip_prefixes = [
 [extra]
 # Module cache-busting token shared by templates and the ES module imports.
 # Bump with `python scripts/bump_modules.py` — do not hand-edit.
-module_v = "202611171659"
+module_v = "202611171733"
 author = { name = "langyo", email = "langyo.china@gmail.com" }
 menu = [
   { name = "记录", url = "/posts/" },

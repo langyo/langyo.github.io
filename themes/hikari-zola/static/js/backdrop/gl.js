@@ -113,7 +113,6 @@ export function createRenderer(canvas) {
     if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
       throw new Error(gl.getProgramInfoLog(prog) || 'link failed');
     }
-    // attribute + uniform locations (uniform names are 'u' + Capitalised key)
     loc = {
       aPos: gl.getAttribLocation(prog, 'aPos'),
       aAttr: gl.getAttribLocation(prog, 'aAttr'),
