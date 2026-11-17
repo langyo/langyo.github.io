@@ -31,14 +31,6 @@ const fix = (el) => {
    };
    w.onmouseenter = () => t.classList.add('is-hovering');
    w.onmouseleave = () => t.classList.remove('is-hovering');
-   el.addEventListener('wheel', (e) => {
-  const d = x ? e.deltaY : e.deltaX;
-  if (Math.abs(d) <= Math.abs(x ? e.deltaX : e.deltaY)) return;
-  const m = el[C] - el[L], to = el[Z] + d;
-  if ((to < 0 && el[Z] <= 0) || (to > m && el[Z] >= m)) return; // chain to the page at the ends
-  e.preventDefault();
-  el[Z] = Math.max(0, Math.min(m, to));
-   }, { passive: false });
    let g = null, PAN = 0;
    w.addEventListener('pointerdown', (e) => {
   const th = e.target === h;

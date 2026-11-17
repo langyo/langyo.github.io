@@ -8,8 +8,8 @@
  * the canvas silently. reduced-motion: manual drag only (one frame per input);
  * rAF stops on hidden tabs / off-screen anchor; saveData / deviceMemory<=4 halve.
  */
-import { buildRailgun } from './railgun.js?v=202611171010';
-import { createRenderer } from './gl.js?v=202611171010';
+import { buildRailgun } from './railgun.js?v=202611171715';
+import { createRenderer } from './gl.js?v=202611171715';
 
 const DEG = Math.PI / 180;
 const PITCH = 16 * DEG;          // base tilt
@@ -120,7 +120,7 @@ export function mountBackdrop(el, opts = {}) {
   function boot() {
   const st = {
     yaw: REST_YAW, pitchD: 0, vel: SPIN,
-    w: 0, h: 0, dpr: 0, last: 0, raf: 0, running: false,
+    w: 0, h: 0, dpr: 0, last: 0, raf: 0, running: false, warned: 0,
     fitW: 0, fitH: 0, gunOn: true, idle: 0, ready: false, bad: 0,
   };
   let drag = null;
@@ -179,7 +179,7 @@ export function mountBackdrop(el, opts = {}) {
       breathe: !reduced,
     });
     canvas.style.display = 'block';            // first good frame → visible
-    if (first) ctrl.stats.firstFrameMs = performance.now() - t0;
+    if (!ctrl.stats.firstFrameMs) ctrl.stats.firstFrameMs = performance.now() - t0;
   };
 
   const build = () => {
@@ -218,7 +218,11 @@ export function mountBackdrop(el, opts = {}) {
     if (!st.running) return;
     st.raf = requestAnimationFrame(frame);
     try { draw(now, false); st.bad = 0; } catch (e) {
-      if (++st.bad > 10) { stop(); canvas.style.display = 'none'; }
+      if (!st.warned) { st.warned = 1; try { console.warn('[backdrop]', e); } catch (_) {} }
+      if (++st.bad > 10) {                       // never leave the canvas dead
+        st.bad = 0; stop();
+        setTimeout(() => { if (!ctrl.destroyed) { sizeTo(); resize(); sync(); } }, 400);
+      }
     }
   };
   const start = () => {
@@ -293,6 +297,26 @@ export function mountBackdrop(el, opts = {}) {
   addEventListener('resize', resize);
   document.addEventListener('visibilitychange', onVis);
 
+  // a lost context would otherwise leave a silent black booth forever
+  canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); stop(); }, false);
+  canvas.addEventListener('webglcontextrestored', () => {
+    try {
+      st.fitW = st.fitH = 0;
+      build();
+      sizeTo();
+      resize();
+      sync();
+    } catch (err) { /* keep the page alive */ }
+  }, false);
+
+  // if no frame ever reached the canvas, force placement/draw attempts for a while
+  const watchdog = () => {
+    if (ctrl.destroyed || canvas.style.display === 'block') return;
+    try { sizeTo(); resize(); sync(); } catch (e) {}
+    setTimeout(watchdog, 500);
+  };
+  const wd = setTimeout(watchdog, 1200);
+
   const mo = new MutationObserver(onTheme);
   mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   const mqDarkChange = darkMQ();
@@ -300,6 +324,7 @@ export function mountBackdrop(el, opts = {}) {
 
   ctrl.destroy = () => {
     ctrl.destroyed = true;
+    clearTimeout(wd);
     stop();
     if (ro) ro.disconnect();
     mo.disconnect();
