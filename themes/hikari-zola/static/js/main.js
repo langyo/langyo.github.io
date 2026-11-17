@@ -1,5 +1,5 @@
 document.documentElement.classList.replace("no-js", "js");
-const V = "?v=202611171645";
+const V = "?v=202611171659";
 const has = (selector) => document.querySelector(selector) !== null;
 const load = (path) => import(path + V).catch(() => {});
 const jobs = [];
@@ -12,5 +12,5 @@ if (has(".hk-reveal")) {
 if (has("[data-hk-toc]")) jobs.push(load("./toc.js"));
 if (has("pre.z-code")) jobs.push(load("./copy.js"));
 if (has("[data-hk-backdrop]")) jobs.push(load("./backdrop/index.js"));
-jobs.push(load("./scrollbars.js"));
+jobs.push(load("./rail.js"));
 void Promise.all(jobs);

@@ -34,7 +34,7 @@ themes/hikari-zola/
     style.scss      唯一入口
     hk/             站点层：_palette / _base / 组件样式
     vendor/hikari/  hikari 官方 token 逐字副本（禁止手改，见 §6）
-  static/js/        原生 ES module：main.js + prefs/nav/reveal/toc/copy
+  static/js/        原生 ES module：main.js + rail/prefs/nav/reveal/toc/copy
     backdrop/       WebGL2 全息点云电磁炮 RG·SUPERNOVA（独立预算 34KB）
   static/img/       主题装饰图
 ```
@@ -80,6 +80,7 @@ just verify                       # build + check_site --ci + internal link chec
 - **缓存**：模板给入口资源加构建期 `?v=`、模块间 import 也带固定版本号；容器里 `SERVER_CACHE_CONTROL_HEADERS=false`
   （否则 SWS 默认给资源一年缓存，Cloudflare 会一直发旧 CSS/JS）。改 JS/CSS 后若线上仍是旧内容，先查 `cf-cache-status`。
 - **Pages 镜像**：`pages.yml` 用 `configure-pages` 的 base_url 构建；生产 `langyo.xyz` 走容器，origin 由 `dockerfile` 的 `ARG SITE_BASE_URL`（默认 `https://langyo.xyz`）决定，镜像名 `homepage`，服务器上 `homepage` 容器监听 3000。
+- **镜像标签**：只用 `latest`，不打 `v1/v2/...` 之类的编号 tag；GitHub 上也不打 release/tag。
 
 ## 6. 样式纪律
 
