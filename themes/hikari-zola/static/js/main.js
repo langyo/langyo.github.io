@@ -1,5 +1,5 @@
 document.documentElement.classList.replace("no-js", "js");
-const V = "?v=202611171715";
+const V = "?v=202611171645";
 const has = (selector) => document.querySelector(selector) !== null;
 const load = (path) => import(path + V).catch(() => {});
 const jobs = [];
