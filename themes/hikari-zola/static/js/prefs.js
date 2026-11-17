@@ -1,10 +1,7 @@
-// Theme preference: html[data-theme], localStorage "hk-theme", meta theme-color,
-// and the two-state toggle button (aria-pressed + sun/moon icon swap).
 const KEY = "hk-theme";
 const COLORS = { light: "#f7faff", dark: "#07121c" };
 const root = document.documentElement;
 const system = () => (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-
 function stored() {
   try {
     const value = localStorage.getItem(KEY);
@@ -13,13 +10,11 @@ function stored() {
     return null;
   }
 }
-
 function current() {
   const attr = root.getAttribute("data-theme");
   if (attr === "light" || attr === "dark") return attr;
   return stored() || system();
 }
-
 function sync(theme) {
   const dark = theme === "dark";
   const label = dark ? "切换到亮色主题" : "切换到暗色主题";
@@ -37,17 +32,14 @@ function sync(theme) {
     });
   });
 }
-
 document.querySelectorAll("[data-hk-theme-toggle]").forEach((button) => {
   button.addEventListener("click", () => {
     const next = current() === "dark" ? "light" : "dark";
-    try { localStorage.setItem(KEY, next); } catch (error) { /* private mode */ }
+    try { localStorage.setItem(KEY, next); } catch (error) {  }
     sync(next);
   });
 });
-
 sync(current());
-
 const preference = matchMedia("(prefers-color-scheme: dark)");
 const onPreference = () => { if (!stored()) sync(system()); };
 if (preference.addEventListener) preference.addEventListener("change", onPreference);

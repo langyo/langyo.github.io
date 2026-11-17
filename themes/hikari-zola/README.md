@@ -207,9 +207,14 @@ just sync-hikari-tokens      # scripts/sync-hikari-tokens.py
 
 * 每页恰好一个 h1；`a.hk-skip[href="#main"]` 跳转链接；`html.no-js` 首行替换为 `js`。
 * 全局 `:focus-visible { outline: 2px solid var(--hk-accent); outline-offset: 2px }`。
-* 滚动条统一 hikari 契约：8px 轨道（透明）、`--hk-line-strong` 圆角 thumb 内缩 2px、hover 变
-  `--hk-accent`、corner 透明；覆盖 html / `.hk-toc` / `.hk-dossier__card` / `.hk-gh__repos` /
-  `.hk-works` / `pre` / `.hk-code pre`（Firefox 用 `scrollbar-width: thin` + `scrollbar-color`）。
+* 滚动条分两级：**文档级**滚动（html）与未接管的 `pre`/`.hk-code pre` 用原生 thin + 色板
+  `scrollbar-color`；**容器内滚动**（`.hk-toc` / `.hk-works` / `.hk-gh__repos` / `.hk-dossier__card`）
+  交给 hikari overlay 体系——`js/scrollbars.js`（backdrop 组）把它们包进 `.hk-scrollbox` 并注入
+  vendor `_scrollbar.scss` 的 `.hk-scrollbar-track/.hk-scrollbar-thumb`，原生条同时隐藏
+  （`scrollbar-width: none` + `::-webkit-scrollbar { display: none }`）。overlay thumb 走
+  `--hk-line-strong`，悬停/拖拽加深为 `--hk-accent`，track 保持透明。
+* 被 overlay 包装的 sticky 容器（TOC / 档案卡）由 `.hk-scrollbox:has(> …)` 接管 `position: sticky`，
+  否则包装层会成为新的包含块、粘性失效。
 * 卡片 hover 一律"点亮"不位移：左边框转 accent、面板底转 `--hk-accent-soft`、标题转 link 色、
   右上角 ↗ 出现（postcard / work 卡）。
 * 对比度（实测，见审计）：正文 15.4:1 / 次要 6.2:1 / 链接 4.7:1（亮）、16.5/8.3/11.4（暗）；
@@ -225,7 +230,7 @@ just sync-hikari-tokens      # scripts/sync-hikari-tokens.py
 
 | 项 | 上限 | 主题实测 |
 |---|---|---|
-| `style.css` | 64 KB（gzip 13 KB） | **65,018 B / gzip 12,446 B** |
+| `style.css` | 64 KB（gzip 13 KB） | **65,024 B / gzip 12,424 B** |
 | `main.js` + 模块（不含 backdrop） | 14 KB | 12,217 B |
 | backdrop JS | 34 KB | 由 backdrop 组自测 |
 
