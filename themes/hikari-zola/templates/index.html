@@ -150,7 +150,7 @@
       <div class="hk-gh__side">
         <p class="hk-gh__meta">// LANGS</p>
         <ul class="hk-gh__langs">
-        {% for lang in gh_langs %}{% set gh_ln = lang.n | default(value=0) %}{% set gh_lit = ((gh_ln / gh_lang_max) * 10) | round | int %}{% if gh_lit < 0 %}{% set gh_lit = 0 %}{% endif %}{% if gh_lit > 10 %}{% set gh_lit = 10 %}{% endif %}<li class="hk-gh__lang"><span class="hk-gh__lang-name">{{ lang.l | default(value="") }}</span><span class="hk-gh__lang-dots">{% for j in range(end=10) %}<i class="hk-gh__lang-dot{% if j < gh_lit %} hk-gh__lang-dot--on{% endif %}"></i>{% endfor %}</span><span class="hk-gh__lang-n">{{ gh_ln }}</span></li>{% endfor %}
+        {% for lang in gh_langs %}{% set gh_ln = lang.n | default(value=0) %}{% set gh_lit = ((gh_ln / gh_lang_max) * 10) | round | int %}{% set gh_sep = ((gh_ln / gh_lang_max) * 100) | round | int %}{% if gh_sep > 100 %}{% set gh_sep = 100 %}{% endif %}{% if gh_lit < 0 %}{% set gh_lit = 0 %}{% endif %}{% if gh_lit > 10 %}{% set gh_lit = 10 %}{% endif %}<li class="hk-gh__lang" style="--v: {{ gh_sep }}%"><span class="hk-gh__lang-name">{{ lang.l | default(value="") }}</span><span class="hk-gh__lang-dots">{% for j in range(end=10) %}<i class="hk-gh__lang-dot{% if j < gh_lit %} hk-gh__lang-dot--on{% endif %}"></i>{% endfor %}</span><span class="hk-gh__lang-n">{{ gh_ln }}</span></li>{% endfor %}
       </ul>
 
       <p class="hk-gh__meta">// ARCHIVE</p>

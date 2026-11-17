@@ -25,3 +25,5 @@ __pycache__/
 # Tool caches / local scratch
 /target/
 .cache/
+# Headless-browser profiles dropped by local QA runs.
+edge-*/

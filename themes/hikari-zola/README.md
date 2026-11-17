@@ -230,7 +230,7 @@ just sync-hikari-tokens      # scripts/sync-hikari-tokens.py
 
 | 项 | 上限 | 主题实测 |
 |---|---|---|
-| `style.css` | 64 KB（gzip 13 KB） | **65,024 B / gzip 12,424 B** |
+| `style.css` | 96 KB（gzip 13 KB） | **66,083 B / gzip 12,536 B** |
 | `main.js` + 模块（不含 backdrop） | 14 KB | 12,217 B |
 | backdrop JS | 34 KB | 由 backdrop 组自测 |
 
