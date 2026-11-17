@@ -18,6 +18,13 @@ const fix = (el) => {
    el.parentNode.insertBefore(w, el);
    w.append(el, t);
    const cap = (id) => { try { w.setPointerCapture(id); } catch (_) {} };
+   // snap fights every incremental scroll: suspend it while the user drives us
+   let snapT = 0;
+   const noSnap = () => {
+     el.style.scrollSnapType = 'none';
+     clearTimeout(snapT);
+     snapT = setTimeout(() => { el.style.scrollSnapType = ''; }, 240);
+   };
    const y = () => {
   const s = Math.max(20, el[L] * el[L] / el[C]), g = el[L] - s, m = el[C] - el[L];
   h.style[D] = s + 'px';
@@ -31,6 +38,15 @@ const fix = (el) => {
    };
    w.onmouseenter = () => t.classList.add('is-hovering');
    w.onmouseleave = () => t.classList.remove('is-hovering');
+   el.addEventListener('wheel', (e) => {
+  const d = x ? e.deltaY : e.deltaX;
+  if (Math.abs(d) <= Math.abs(x ? e.deltaX : e.deltaY)) return;
+  const m = el[C] - el[L], to = el[Z] + d;
+  if ((to < 0 && el[Z] <= 0) || (to > m && el[Z] >= m)) return; // at an end: page scrolls
+  e.preventDefault();
+  noSnap();
+  el[Z] = Math.max(0, Math.min(m, to));
+   }, { passive: false });
    let g = null, PAN = 0;
    w.addEventListener('pointerdown', (e) => {
   const th = e.target === h;
@@ -44,11 +60,12 @@ const fix = (el) => {
   if (!g) return;
   const d = e[E] - g[0];
   if (!g[3] && Math.abs(d) < 4) return;
-  if (!g[3]) { g[3] = 1; PAN = 1; w.classList.add('is-dragging'); cap(g[4]); }
+  if (!g[3]) { g[3] = 1; PAN = 1; w.classList.add('is-dragging'); cap(g[4]); noSnap(); }
+  noSnap();
   el[Z] = g[1] + d * g[2];
   e.preventDefault();
    });
-   const stop = () => { g = null; h.classList.remove('is-dragging'); w.classList.remove('is-dragging'); };
+   const stop = () => { g = null; h.classList.remove('is-dragging'); w.classList.remove('is-dragging'); noSnap(); };
    w.addEventListener('pointerup', stop);
    w.addEventListener('pointercancel', stop);
    w.addEventListener('click', (e) => {
