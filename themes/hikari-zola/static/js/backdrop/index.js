@@ -8,8 +8,8 @@
  * the canvas silently. reduced-motion: manual drag only (one frame per input);
  * rAF stops on hidden tabs / off-screen anchor; saveData / deviceMemory<=4 halve.
  */
-import { buildRailgun } from './railgun.js?v=202611171659';
-import { createRenderer } from './gl.js?v=202611171659';
+import { buildRailgun } from './railgun.js?v=202611171733';
+import { createRenderer } from './gl.js?v=202611171733';
 
 const DEG = Math.PI / 180;
 const PITCH = 16 * DEG;          // base tilt
@@ -99,7 +99,6 @@ export function mountBackdrop(el, opts = {}) {
   const ctrl = { variant, count: 0, stats: { buildMs: 0, firstFrameMs: 0 }, destroy: () => {} };
   el.__hkBackdrop = ctrl;
 
-  // context creation can fail transiently right after load → retry once, then hide
   let renderer = null;
   const makeRenderer = () => {
     try { return createRenderer(canvas); } catch (e) { return null; }
@@ -229,6 +228,7 @@ export function mountBackdrop(el, opts = {}) {
     if (reduced || st.running) return;
     st.running = true;
     st.last = 0;
+    try { draw(performance.now(), !ctrl.stats.firstFrameMs); } catch (e) {}
     st.raf = requestAnimationFrame(frame);
   };
   const stop = () => {
@@ -236,9 +236,16 @@ export function mountBackdrop(el, opts = {}) {
     if (st.raf) cancelAnimationFrame(st.raf);
     st.raf = 0;
   };
+  // live: a cached flag would latch "offscreen" once the loop stopped
+  const visible = () => {
+    if (document.hidden) return false;
+    if (!anchor) return true;
+    const r = anchor.getBoundingClientRect();
+    return r.width > 4 && r.bottom > -160 && r.top < innerHeight + 160;
+  };
   const sync = () => {
     if (reduced) { draw(performance.now(), !ctrl.stats.firstFrameMs); return; }
-    if (st.gunOn && !document.hidden) start(); else stop();
+    if (visible()) start(); else stop();
   };
   /** retry (n × 100 ms) until the booth has a usable rect; keeps the page alive */
   const kick = (n) => {
@@ -297,21 +304,15 @@ export function mountBackdrop(el, opts = {}) {
   addEventListener('resize', resize);
   document.addEventListener('visibilitychange', onVis);
 
-  // a lost context would otherwise leave a silent black booth forever
+  // a lost context must not leave a silent empty booth
   canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); stop(); }, false);
   canvas.addEventListener('webglcontextrestored', () => {
-    try {
-      st.fitW = st.fitH = 0;
-      build();
-      sizeTo();
-      resize();
-      sync();
-    } catch (err) { /* keep the page alive */ }
+    try { st.fitW = st.fitH = 0; build(); sizeTo(); resize(); sync(); } catch (err) {}
   }, false);
 
-  // if no frame ever reached the canvas, force placement/draw attempts for a while
+  // until a frame lands, keep forcing placement
   const watchdog = () => {
-    if (ctrl.destroyed || canvas.style.display === 'block') return;
+    if (ctrl.destroyed || ctrl.stats.firstFrameMs) return;
     try { sizeTo(); resize(); sync(); } catch (e) {}
     setTimeout(watchdog, 500);
   };
@@ -327,6 +328,7 @@ export function mountBackdrop(el, opts = {}) {
     clearTimeout(wd);
     stop();
     if (ro) ro.disconnect();
+    if (io) io.disconnect();
     mo.disconnect();
     if (mqDarkChange.removeEventListener) mqDarkChange.removeEventListener('change', onTheme);
     document.removeEventListener('visibilitychange', onVis);
@@ -360,6 +362,12 @@ export function mountBackdrop(el, opts = {}) {
     if (++rafN < 3) requestAnimationFrame(firstFrames);
   };
   requestAnimationFrame(firstFrames);
+  let io = null;
+  if (window.IntersectionObserver && anchor) {
+    try { io = new IntersectionObserver(() => sync(), { rootMargin: '160px' }); io.observe(anchor); } catch (e) { io = null; }
+  }
+  addEventListener('pageshow', sync);
+
   let ro = null;
   if (window.ResizeObserver) {
     ro = new ResizeObserver(() => { resize(); sync(); });
