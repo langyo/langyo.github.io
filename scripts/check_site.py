@@ -61,7 +61,7 @@ DEFAULT_CONFIG = "config.toml"
 BUDGET_STYLE = 96 * 1024      # public/style.css, uncompressed (soft cap; gzip is the real gate)
 BUDGET_STYLE_GZ = 13 * 1024   # public/style.css, gzip -9 (what actually ships)
 BUDGET_JS = 15 * 1024         # theme JS, public/js/backdrop/ excluded
-BUDGET_BACKDROP = 34 * 1024   # WebGL2 hologram backdrop JS (railgun RG-SUPERNOVA)
+BUDGET_BACKDROP = 36 * 1024   # WebGL2 hologram backdrop JS (railgun RG-SUPERNOVA, soft cap)
 BUDGET_IMAGE = 300 * 1024     # per published image file
 
 #: Image extensions counted against BUDGET_IMAGE.

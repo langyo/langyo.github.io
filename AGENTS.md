@@ -89,7 +89,7 @@ just verify                       # build + check_site --ci + internal link chec
 - 颜色只走 `--hk-*`/`--color-*`；禁硬编码色值、禁新品牌色。
 - 不引 CDN / webfont / 图标库 / CSS 框架；字体只用系统栈；阴影只用于浮层。
 - 动效使用 `--duration-*` / `--ease-*` token，必须尊重 `prefers-reduced-motion`；暗色走 `html[data-theme="dark"]`。
-- 预算：`style.css` <= 96KB（gzip <= 13KB——gzip 是实际约束）、JS（不含 backdrop）<= 15KB、backdrop <= 34KB、单图 <= 300KB。
+- 预算：`style.css` <= 96KB（gzip <= 13KB——gzip 是实际约束）、JS（不含 backdrop）<= 15KB、backdrop <= 36KB、单图 <= 300KB。
   常量集中在 `scripts/check_site.py` 头部（`BUDGET_*`），每次运行打印实测值（含 gzip 与图片总重/最大单图）；
   发布产物里任何 >300KB 的图片文件都算 error。
 

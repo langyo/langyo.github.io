@@ -8,8 +8,8 @@
  * the canvas silently. reduced-motion: manual drag only (one frame per input);
  * rAF stops on hidden tabs / off-screen anchor; saveData / deviceMemory<=4 halve.
  */
-import { buildRailgun } from './railgun.js?v=202611171733';
-import { createRenderer } from './gl.js?v=202611171733';
+import { buildRailgun } from './railgun.js?v=202611171742';
+import { createRenderer } from './gl.js?v=202611171742';
 
 const DEG = Math.PI / 180;
 const PITCH = 16 * DEG;          // base tilt
@@ -216,6 +216,9 @@ export function mountBackdrop(el, opts = {}) {
   const frame = (now) => {
     if (!st.running) return;
     st.raf = requestAnimationFrame(frame);
+    // keep the buffer warm at a low rate when the booth is offscreen
+    if (!visible() && now - (st.slow || 0) < 130) return;
+    st.slow = now;
     try { draw(now, false); st.bad = 0; } catch (e) {
       if (!st.warned) { st.warned = 1; try { console.warn('[backdrop]', e); } catch (_) {} }
       if (++st.bad > 10) {                       // never leave the canvas dead
@@ -245,7 +248,7 @@ export function mountBackdrop(el, opts = {}) {
   };
   const sync = () => {
     if (reduced) { draw(performance.now(), !ctrl.stats.firstFrameMs); return; }
-    if (visible()) start(); else stop();
+    if (document.hidden) stop(); else start();
   };
   /** retry (n × 100 ms) until the booth has a usable rect; keeps the page alive */
   const kick = (n) => {
