@@ -1313,19 +1313,19 @@
       "d": "2026-10-08"
     },
     {
-      "c": 218,
+      "c": 202,
       "d": "2026-10-09"
     },
     {
-      "c": 219,
+      "c": 193,
       "d": "2026-10-10"
     },
     {
-      "c": 216,
+      "c": 172,
       "d": "2026-10-11"
     },
     {
-      "c": 249,
+      "c": 241,
       "d": "2026-10-12"
     },
     {
@@ -1465,11 +1465,19 @@
       "d": "2026-11-15"
     },
     {
-      "c": 171,
+      "c": 200,
       "d": "2026-11-16"
+    },
+    {
+      "c": 197,
+      "d": "2026-11-17"
+    },
+    {
+      "c": 25,
+      "d": "2026-11-18"
     }
   ],
-  "fetched_at": "2026-11-16T12:03:53Z",
+  "fetched_at": "2026-11-18T03:24:09Z",
   "langs": [
     {
       "l": "Rust",
@@ -1500,14 +1508,6 @@
     "following": 36
   },
   "recent28": [
-    {
-      "c": 110,
-      "d": "2026-10-20"
-    },
-    {
-      "c": 174,
-      "d": "2026-10-21"
-    },
     {
       "c": 174,
       "d": "2026-10-22"
@@ -1609,8 +1609,16 @@
       "d": "2026-11-15"
     },
     {
-      "c": 171,
+      "c": 200,
       "d": "2026-11-16"
+    },
+    {
+      "c": 197,
+      "d": "2026-11-17"
+    },
+    {
+      "c": 25,
+      "d": "2026-11-18"
     }
   ],
   "repos": {
@@ -1621,8 +1629,8 @@
   "schema": 4,
   "scope": "all",
   "streak": {
-    "current": 141,
-    "longest": 141
+    "current": 143,
+    "longest": 143
   },
   "top_repos": [
     {
@@ -1654,29 +1662,29 @@
       "url": "https://github.com/celestia-island/tairitsu"
     },
     {
+      "lang": "Rust",
+      "name": "evernight",
+      "private": true,
+      "stars": 0,
+      "url": "https://github.com/celestia-island/evernight"
+    },
+    {
       "lang": "TypeScript",
       "name": "shittim-chest",
       "private": true,
       "stars": 0,
       "url": "https://github.com/celestia-island/shittim-chest"
-    },
-    {
-      "lang": "Rust",
-      "name": "arona",
-      "private": true,
-      "stars": 0,
-      "url": "https://github.com/celestia-island/arona"
     }
   ],
   "totals": {
-    "contributions_private_year": 15562,
-    "contributions_year": 33260,
+    "contributions_private_year": 15606,
+    "contributions_year": 33417,
     "stars": 128
   },
   "types": {
-    "ISSUE": 10,
-    "PR": 163,
-    "PUSH": 56,
+    "ISSUE": 8,
+    "PR": 154,
+    "PUSH": 68,
     "REVIEW": 0
   },
   "weeks": [
@@ -1701,11 +1709,11 @@
       "w": "2026-09-27"
     },
     {
-      "c": 1517,
+      "c": 1475,
       "w": "2026-10-04"
     },
     {
-      "c": 1240,
+      "c": 1188,
       "w": "2026-10-11"
     },
     {
@@ -1725,7 +1733,7 @@
       "w": "2026-11-08"
     },
     {
-      "c": 408,
+      "c": 659,
       "w": "2026-11-15"
     }
   ]
