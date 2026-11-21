@@ -1257,31 +1257,31 @@
       "d": "2026-09-24"
     },
     {
-      "c": 184,
+      "c": 169,
       "d": "2026-09-25"
     },
     {
-      "c": 205,
+      "c": 189,
       "d": "2026-09-26"
     },
     {
-      "c": 175,
+      "c": 167,
       "d": "2026-09-27"
     },
     {
-      "c": 181,
+      "c": 162,
       "d": "2026-09-28"
     },
     {
-      "c": 159,
+      "c": 127,
       "d": "2026-09-29"
     },
     {
-      "c": 128,
+      "c": 116,
       "d": "2026-09-30"
     },
     {
-      "c": 204,
+      "c": 173,
       "d": "2026-10-01"
     },
     {
@@ -1481,11 +1481,15 @@
       "d": "2026-11-19"
     },
     {
-      "c": 111,
+      "c": 271,
       "d": "2026-11-20"
+    },
+    {
+      "c": 170,
+      "d": "2026-11-21"
     }
   ],
-  "fetched_at": "2026-11-20T03:24:12Z",
+  "fetched_at": "2026-11-21T03:23:13Z",
   "langs": [
     {
       "l": "Rust",
@@ -1516,10 +1520,6 @@
     "following": 36
   },
   "recent28": [
-    {
-      "c": 347,
-      "d": "2026-10-24"
-    },
     {
       "c": 421,
       "d": "2026-10-25"
@@ -1625,8 +1625,12 @@
       "d": "2026-11-19"
     },
     {
-      "c": 111,
+      "c": 271,
       "d": "2026-11-20"
+    },
+    {
+      "c": 170,
+      "d": "2026-11-21"
     }
   ],
   "repos": {
@@ -1637,8 +1641,8 @@
   "schema": 4,
   "scope": "all",
   "streak": {
-    "current": 145,
-    "longest": 145
+    "current": 146,
+    "longest": 146
   },
   "top_repos": [
     {
@@ -1670,29 +1674,29 @@
       "url": "https://github.com/celestia-island/tairitsu"
     },
     {
+      "lang": "Rust",
+      "name": "celestia-erp",
+      "private": true,
+      "stars": 0,
+      "url": "https://github.com/celestia-island/celestia-erp"
+    },
+    {
       "lang": "TypeScript",
       "name": "shittim-chest",
       "private": true,
       "stars": 0,
       "url": "https://github.com/celestia-island/shittim-chest"
-    },
-    {
-      "lang": "Rust",
-      "name": "entelecheia",
-      "private": true,
-      "stars": 0,
-      "url": "https://github.com/celestia-island/entelecheia"
     }
   ],
   "totals": {
-    "contributions_private_year": 15664,
-    "contributions_year": 33737,
+    "contributions_private_year": 15631,
+    "contributions_year": 33934,
     "stars": 128
   },
   "types": {
-    "ISSUE": 1,
-    "PR": 196,
-    "PUSH": 49,
+    "ISSUE": 4,
+    "PR": 161,
+    "PUSH": 71,
     "REVIEW": 0
   },
   "weeks": [
@@ -1709,11 +1713,11 @@
       "w": "2026-09-13"
     },
     {
-      "c": 1917,
+      "c": 1886,
       "w": "2026-09-20"
     },
     {
-      "c": 1054,
+      "c": 952,
       "w": "2026-09-27"
     },
     {
@@ -1741,7 +1745,7 @@
       "w": "2026-11-08"
     },
     {
-      "c": 1177,
+      "c": 1507,
       "w": "2026-11-15"
     }
   ]
