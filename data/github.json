@@ -1149,35 +1149,35 @@
       "d": "2026-09-04"
     },
     {
-      "c": 96,
+      "c": 95,
       "d": "2026-09-05"
     },
     {
-      "c": 55,
+      "c": 44,
       "d": "2026-09-06"
     },
     {
-      "c": 115,
+      "c": 100,
       "d": "2026-09-07"
     },
     {
-      "c": 148,
+      "c": 129,
       "d": "2026-09-08"
     },
     {
-      "c": 58,
+      "c": 57,
       "d": "2026-09-09"
     },
     {
-      "c": 89,
+      "c": 74,
       "d": "2026-09-10"
     },
     {
-      "c": 189,
+      "c": 162,
       "d": "2026-09-11"
     },
     {
-      "c": 219,
+      "c": 192,
       "d": "2026-09-12"
     },
     {
@@ -1461,7 +1461,7 @@
       "d": "2026-11-21"
     },
     {
-      "c": 219,
+      "c": 220,
       "d": "2026-11-22"
     },
     {
@@ -1469,15 +1469,19 @@
       "d": "2026-11-23"
     },
     {
-      "c": 55,
+      "c": 213,
       "d": "2026-11-24"
+    },
+    {
+      "c": 100,
+      "d": "2026-11-25"
     }
   ],
-  "fetched_at": "2026-11-24T03:24:46Z",
+  "fetched_at": "2026-11-25T03:25:10Z",
   "langs": [
     {
       "l": "Rust",
-      "n": 46
+      "n": 48
     },
     {
       "l": "Python",
@@ -1504,10 +1508,6 @@
     "following": 36
   },
   "recent28": [
-    {
-      "c": 160,
-      "d": "2026-10-28"
-    },
     {
       "c": 183,
       "d": "2026-10-29"
@@ -1605,7 +1605,7 @@
       "d": "2026-11-21"
     },
     {
-      "c": 219,
+      "c": 220,
       "d": "2026-11-22"
     },
     {
@@ -1613,20 +1613,24 @@
       "d": "2026-11-23"
     },
     {
-      "c": 55,
+      "c": 213,
       "d": "2026-11-24"
+    },
+    {
+      "c": 100,
+      "d": "2026-11-25"
     }
   ],
   "repos": {
     "private": 37,
-    "public": 31,
-    "total": 68
+    "public": 33,
+    "total": 70
   },
   "schema": 4,
   "scope": "all",
   "streak": {
-    "current": 149,
-    "longest": 149
+    "current": 150,
+    "longest": 150
   },
   "top_repos": [
     {
@@ -1658,34 +1662,34 @@
       "url": "https://github.com/celestia-island/tairitsu"
     },
     {
-      "lang": "TypeScript",
-      "name": "shittim-chest",
-      "private": true,
-      "stars": 0,
-      "url": "https://github.com/celestia-island/shittim-chest"
-    },
-    {
       "lang": "Rust",
       "name": "entelecheia",
       "private": true,
       "stars": 0,
       "url": "https://github.com/celestia-island/entelecheia"
+    },
+    {
+      "lang": "TypeScript",
+      "name": "shittim-chest",
+      "private": true,
+      "stars": 0,
+      "url": "https://github.com/celestia-island/shittim-chest"
     }
   ],
   "totals": {
-    "contributions_private_year": 15508,
-    "contributions_year": 34112,
+    "contributions_private_year": 15434,
+    "contributions_year": 34255,
     "stars": 129
   },
   "types": {
-    "ISSUE": 6,
-    "PR": 82,
-    "PUSH": 126,
+    "ISSUE": 1,
+    "PR": 110,
+    "PUSH": 113,
     "REVIEW": 0
   },
   "weeks": [
     {
-      "c": 873,
+      "c": 758,
       "w": "2026-09-06"
     },
     {
@@ -1729,7 +1733,7 @@
       "w": "2026-11-15"
     },
     {
-      "c": 585,
+      "c": 844,
       "w": "2026-11-22"
     }
   ]
