@@ -1105,51 +1105,51 @@
       "d": "2026-08-24"
     },
     {
-      "c": 168,
+      "c": 165,
       "d": "2026-08-25"
     },
     {
-      "c": 116,
+      "c": 99,
       "d": "2026-08-26"
     },
     {
-      "c": 159,
+      "c": 141,
       "d": "2026-08-27"
     },
     {
-      "c": 127,
+      "c": 108,
       "d": "2026-08-28"
     },
     {
-      "c": 141,
+      "c": 120,
       "d": "2026-08-29"
     },
     {
-      "c": 181,
+      "c": 159,
       "d": "2026-08-30"
     },
     {
-      "c": 198,
+      "c": 178,
       "d": "2026-08-31"
     },
     {
-      "c": 284,
+      "c": 271,
       "d": "2026-09-01"
     },
     {
-      "c": 310,
+      "c": 276,
       "d": "2026-09-02"
     },
     {
-      "c": 141,
+      "c": 130,
       "d": "2026-09-03"
     },
     {
-      "c": 268,
+      "c": 239,
       "d": "2026-09-04"
     },
     {
-      "c": 95,
+      "c": 83,
       "d": "2026-09-05"
     },
     {
@@ -1473,11 +1473,15 @@
       "d": "2026-11-24"
     },
     {
-      "c": 100,
+      "c": 415,
       "d": "2026-11-25"
+    },
+    {
+      "c": 144,
+      "d": "2026-11-26"
     }
   ],
-  "fetched_at": "2026-11-25T03:25:10Z",
+  "fetched_at": "2026-11-26T03:23:59Z",
   "langs": [
     {
       "l": "Rust",
@@ -1508,10 +1512,6 @@
     "following": 36
   },
   "recent28": [
-    {
-      "c": 183,
-      "d": "2026-10-29"
-    },
     {
       "c": 382,
       "d": "2026-10-30"
@@ -1617,8 +1617,12 @@
       "d": "2026-11-24"
     },
     {
-      "c": 100,
+      "c": 415,
       "d": "2026-11-25"
+    },
+    {
+      "c": 144,
+      "d": "2026-11-26"
     }
   ],
   "repos": {
@@ -1629,8 +1633,8 @@
   "schema": 4,
   "scope": "all",
   "streak": {
-    "current": 150,
-    "longest": 150
+    "current": 151,
+    "longest": 151
   },
   "top_repos": [
     {
@@ -1663,28 +1667,28 @@
     },
     {
       "lang": "Rust",
-      "name": "entelecheia",
+      "name": "celestia-erp",
       "private": true,
       "stars": 0,
-      "url": "https://github.com/celestia-island/entelecheia"
+      "url": "https://github.com/celestia-island/celestia-erp"
     },
     {
-      "lang": "TypeScript",
-      "name": "shittim-chest",
+      "lang": "Rust",
+      "name": "arona",
       "private": true,
       "stars": 0,
-      "url": "https://github.com/celestia-island/shittim-chest"
+      "url": "https://github.com/celestia-island/arona"
     }
   ],
   "totals": {
-    "contributions_private_year": 15434,
-    "contributions_year": 34255,
+    "contributions_private_year": 15301,
+    "contributions_year": 34495,
     "stars": 129
   },
   "types": {
     "ISSUE": 1,
-    "PR": 110,
-    "PUSH": 113,
+    "PR": 144,
+    "PUSH": 83,
     "REVIEW": 0
   },
   "weeks": [
@@ -1733,7 +1737,7 @@
       "w": "2026-11-15"
     },
     {
-      "c": 844,
+      "c": 1303,
       "w": "2026-11-22"
     }
   ]
