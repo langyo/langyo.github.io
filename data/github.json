@@ -1081,31 +1081,31 @@
       "d": "2026-08-18"
     },
     {
-      "c": 114,
+      "c": 93,
       "d": "2026-08-19"
     },
     {
-      "c": 77,
+      "c": 63,
       "d": "2026-08-20"
     },
     {
-      "c": 100,
+      "c": 86,
       "d": "2026-08-21"
     },
     {
-      "c": 129,
+      "c": 110,
       "d": "2026-08-22"
     },
     {
-      "c": 119,
+      "c": 104,
       "d": "2026-08-23"
     },
     {
-      "c": 182,
+      "c": 159,
       "d": "2026-08-24"
     },
     {
-      "c": 165,
+      "c": 155,
       "d": "2026-08-25"
     },
     {
@@ -1477,11 +1477,15 @@
       "d": "2026-11-25"
     },
     {
-      "c": 144,
+      "c": 320,
       "d": "2026-11-26"
+    },
+    {
+      "c": 76,
+      "d": "2026-11-27"
     }
   ],
-  "fetched_at": "2026-11-26T03:23:59Z",
+  "fetched_at": "2026-11-27T03:24:35Z",
   "langs": [
     {
       "l": "Rust",
@@ -1508,14 +1512,10 @@
   "org": "celestia-island",
   "profile": {
     "created_at": "2016-10-27T16:18:42Z",
-    "followers": 391,
+    "followers": 392,
     "following": 36
   },
   "recent28": [
-    {
-      "c": 382,
-      "d": "2026-10-30"
-    },
     {
       "c": 432,
       "d": "2026-10-31"
@@ -1621,8 +1621,12 @@
       "d": "2026-11-25"
     },
     {
-      "c": 144,
+      "c": 320,
       "d": "2026-11-26"
+    },
+    {
+      "c": 76,
+      "d": "2026-11-27"
     }
   ],
   "repos": {
@@ -1633,8 +1637,8 @@
   "schema": 4,
   "scope": "all",
   "streak": {
-    "current": 151,
-    "longest": 151
+    "current": 152,
+    "longest": 152
   },
   "top_repos": [
     {
@@ -1666,29 +1670,29 @@
       "url": "https://github.com/celestia-island/tairitsu"
     },
     {
-      "lang": "Rust",
-      "name": "celestia-erp",
+      "lang": "TypeScript",
+      "name": "e.celestia.world",
       "private": true,
       "stars": 0,
-      "url": "https://github.com/celestia-island/celestia-erp"
+      "url": "https://github.com/celestia-island/e.celestia.world"
     },
     {
       "lang": "Rust",
-      "name": "arona",
+      "name": "arcaea.celestia.world",
       "private": true,
       "stars": 0,
-      "url": "https://github.com/celestia-island/arona"
+      "url": "https://github.com/celestia-island/arcaea.celestia.world"
     }
   ],
   "totals": {
-    "contributions_private_year": 15301,
-    "contributions_year": 34495,
+    "contributions_private_year": 15215,
+    "contributions_year": 34631,
     "stars": 129
   },
   "types": {
-    "ISSUE": 1,
-    "PR": 144,
-    "PUSH": 83,
+    "ISSUE": 5,
+    "PR": 88,
+    "PUSH": 95,
     "REVIEW": 0
   },
   "weeks": [
@@ -1737,7 +1741,7 @@
       "w": "2026-11-15"
     },
     {
-      "c": 1303,
+      "c": 1555,
       "w": "2026-11-22"
     }
   ]
